@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'What data sources does GlobeX use?',
-    a: 'GlobeX aggregates data from UN Comtrade, DGCI&S (Directorate General of Commercial Intelligence and Statistics), national customs databases, trade registries, and verified commercial directories. Our data covers 203 countries with over 10 million trade records.',
+    a: 'GlobeX aggregates data directly from UN Comtrade (calendar year 2025 dataset), DGCI&S (Directorate General of Commercial Intelligence and Statistics), national customs registries, and verified commercial databases. Our coverage includes 223 destination countries and territories with over 10 million customs records.',
   },
   {
     q: 'Is GlobeX suitable for small exporters and MSMEs?',

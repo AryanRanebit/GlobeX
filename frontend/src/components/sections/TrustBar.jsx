@@ -1,10 +1,11 @@
 import React from 'react';
 import { AnimatedCounter } from '../ui/AnimatedCounter';
+import { TRADE_STATS } from '../../constants/tradeStats';
 
 const stats = [
-  { value: 203, suffix: '', label: 'Countries Covered' },
-  { value: 10, suffix: 'M+', label: 'Trade Records' },
-  { value: 500, suffix: '+', label: 'Indian Exporters' },
+  { value: TRADE_STATS.countriesCovered, suffix: '', label: 'Destination Markets' },
+  { value: 10, suffix: 'M+', label: 'Customs Records' },
+  { value: TRADE_STATS.activeExportersCount, suffix: '+', label: 'Indian Exporters' },
   { value: 50, suffix: 'K+', label: 'Verified Importers' },
 ];
 

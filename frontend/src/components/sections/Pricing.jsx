@@ -25,7 +25,7 @@ const plans = [
     description: 'For growing export businesses that need comprehensive trade intelligence and buyer databases.',
     features: [
       'Unlimited market analysis reports',
-      'Full 203 country rankings',
+      'Full 223 destination market rankings (UN Comtrade)',
       '500 importer leads per month',
       'Advanced competitor intelligence',
       'AI-generated research reports',

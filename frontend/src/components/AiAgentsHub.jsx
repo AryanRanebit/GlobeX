@@ -290,7 +290,7 @@ Sourcing-Team`
               AI Trade Agents Hub
             </h1>
             <p className="text-base text-[#94A3B8] leading-relaxed">
-              Power your international export pipeline with 5 specialized, autonomous AI agents. Run mock simulations below to see how each agent processes global shipping databases, compliance laws, and email copy templates in seconds.
+              Power your international export pipeline with 5 specialized, autonomous AI agents. Run interactive demos below to see how each agent processes global shipping databases, compliance laws, and email copy templates in seconds.
             </p>
           </div>
         </div>
@@ -393,12 +393,12 @@ Sourcing-Team`
                   {isSimulating ? (
                     <>
                       <Loader2 size={16} className="animate-spin" />
-                      Running Simulation...
+                      Running Demo...
                     </>
                   ) : (
                     <>
                       <Play size={16} fill="currentColor" />
-                      Run Mock Simulation
+                      Run Demo
                     </>
                   )}
                 </button>
@@ -447,7 +447,7 @@ Sourcing-Team`
               <div className="p-5 font-mono text-[13px] min-h-[180px] max-h-[260px] overflow-y-auto flex flex-col gap-1.5 bg-[#0F172A] text-slate-300">
                 {simulatedLogs.length === 0 ? (
                   <div className="text-slate-500 italic flex items-center justify-center h-[140px]">
-                    Click "Run Mock Simulation" above to watch the agent think and perform operations.
+                    Click "Run Demo" above to watch the agent think and perform operations.
                   </div>
                 ) : (
                   simulatedLogs.map((log, index) => (

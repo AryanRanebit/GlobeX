@@ -41,16 +41,17 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   return (
     <>
       {/* Top info bar */}
-      <div className="hidden md:block w-full bg-[#0F172A] text-white text-xs py-1.5">
-        <div className="section-container flex items-center justify-end gap-5">
-          <a href="mailto:sales@globexai.com" className="flex items-center gap-1.5 text-[#CBD5E1] hover:text-white transition-colors">
-            <Mail size={12} />
-            sales@globexai.com
-          </a>
-          <a href="tel:+919876543210" className="flex items-center gap-1.5 text-[#CBD5E1] hover:text-white transition-colors">
-            <Phone size={12} />
-            +91 98765 43210
-          </a>
+      <div className="hidden md:block w-full bg-[#0F172A] text-white text-[11px] py-1.5 border-b border-[#1E293B]">
+        <div className="section-container flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[#CBD5E1]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block" />
+            <span>Official Source: UN Comtrade 2025 Merchandise Export Statistics</span>
+          </div>
+          <div className="flex items-center gap-4 text-[#94A3B8]">
+            <span>Reporter: India (699)</span>
+            <span>223 Global Destination Markets</span>
+            <span className="text-[#38BDF8]">Live Customs Desk</span>
+          </div>
         </div>
       </div>
 

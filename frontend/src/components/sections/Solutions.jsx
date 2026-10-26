@@ -13,6 +13,7 @@ import {
   Globe2,
   Lock
 } from 'lucide-react';
+import { TRADE_STATS } from '../../constants/tradeStats';
 
 export default function Solutions({ onOpenAuth }) {
   return (
@@ -70,7 +71,7 @@ export default function Solutions({ onOpenAuth }) {
               {/* Floating Feature Badges */}
               <div className="absolute top-4 right-4 hidden md:flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#E2E8F0] shadow-md text-xs font-semibold text-[#0F172A]">
                 <Globe2 size={14} className="text-[#2563EB]" />
-                <span>203 Destination Markets Mapped</span>
+                <span>{TRADE_STATS.countriesCovered} Destination Markets (UN Comtrade)</span>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, ArrowRight, CheckCircle, TrendingUp, Sparkles, Building2, Globe2 } from 'lucide-react';
 import Globe from '../Globe';
+import { TRADE_STATS } from '../../constants/tradeStats';
 
 const QUICK_SEARCH_CHIPS = [
   { code: '6204.62', label: 'Cotton Trousers' },
@@ -42,8 +43,8 @@ export default function Hero({ onOpenAuth, onSearch }) {
   };
 
   const checks = [
-    'Trade data from 203 countries',
-    '10M+ customs records analyzed',
+    `Trade data from ${TRADE_STATS.countriesCovered} countries & territories`,
+    `${TRADE_STATS.customsRecordsAnalyzed} customs records analyzed`,
     'Verified importer databases',
   ];
 
@@ -149,9 +150,9 @@ export default function Hero({ onOpenAuth, onSearch }) {
                   <span className="text-[10px] font-bold text-[#2563EB] uppercase tracking-wider">Live Trade Flow</span>
                   <span className="inline-block w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
                 </div>
-                <p className="text-sm font-bold text-[#0F172A] leading-tight">$437B+ Indian Exports</p>
+                <p className="text-sm font-bold text-[#0F172A] leading-tight">{TRADE_STATS.totalExportValueFormatted} Indian Exports</p>
                 <p className="text-[11px] text-[#64748B] mt-0.5">
-                  <span className="text-[#059669] font-semibold">↑ 14.8% YoY</span> · 203 Destination Markets
+                  <span className="text-[#059669] font-semibold">CY2025</span> · {TRADE_STATS.countriesCovered} Destination Markets
                 </p>
               </div>
             </div>

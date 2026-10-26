@@ -22,10 +22,13 @@ export default function Footer({ onNavigate }) {
             <p className="text-[12px] text-[#94A3B8] leading-relaxed max-w-xs mb-4">
               Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find verified buyers, and grow your export revenue with data.
             </p>
-            <div className="space-y-1 text-[12px] text-[#94A3B8]">
-              <p>sales@globexai.com</p>
-              <p>+91 98765 43210</p>
-              <p>123 Tech Park, Phase 1, Mumbai 400001</p>
+            <div className="space-y-1.5 text-[12px] text-[#94A3B8]">
+              <p className="text-[#CBD5E1] font-semibold">Contact & Support:</p>
+              <p>Inquiries: Enterprise Desk (TBD)</p>
+              <p>Location: Mumbai, Maharashtra, India</p>
+              <p className="text-[11px] text-[#64748B] pt-1 border-t border-[#1E293B]">
+                Source: UN Comtrade, United Nations Statistics Division (UNSD), India merchandise exports 2025
+              </p>
             </div>
           </div>
 
