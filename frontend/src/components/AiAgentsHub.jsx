@@ -283,10 +283,10 @@ Sourcing-Team`
           </button>
           
           <div className="max-w-3xl">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#2563EB]/20 text-[#3B82F6] border border-[#2563EB]/30 mb-4 uppercase tracking-wider">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#D97706]/20 text-[#F59E0B] border border-[#D97706]/40 mb-4 uppercase tracking-wider">
               Autonomous Operations Command
             </span>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4 font-heading">
               AI Trade Agents Hub
             </h1>
             <p className="text-base text-[#94A3B8] leading-relaxed">
@@ -303,7 +303,7 @@ Sourcing-Team`
           {/* Left: Agent Selection Sidebar */}
           <div className="lg:col-span-4 flex flex-col gap-3">
             <div className="bg-white rounded-lg border border-[#E2E8F0] p-4">
-              <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block mb-3 pl-2">
+              <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block mb-3 pl-2">
                 Available Agents
               </span>
               

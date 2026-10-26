@@ -98,8 +98,8 @@ export default function DashboardHome() {
       {/* Welcome Section - Exactly One H1 */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F172A]">Welcome back, {user.name ? user.name.split(' ')[0] : 'Exporter'} 👋</h1>
-          <p className="text-sm text-[#64748B] mt-1">Here is what is happening with your export pipeline today.</p>
+          <h1 className="text-2xl font-bold text-[#0F172A] font-heading">Welcome back, {user.name ? user.name.split(' ')[0] : 'Exporter'} 👋</h1>
+          <p className="text-[15px] text-[#475569] mt-1">Here is what is happening with your export pipeline today.</p>
         </div>
 
         {/* State Simulation Controls */}

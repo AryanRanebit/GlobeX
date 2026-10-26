@@ -12,21 +12,21 @@ export default function Footer({ onNavigate }) {
             <a 
               href="#" 
               onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('landing'); }}
-              className="flex items-center gap-2 mb-3 inline-flex"
+              className="flex items-center gap-2 mb-3.5 inline-flex"
             >
               <div className="w-6 h-6 rounded bg-[#2563EB] flex items-center justify-center">
-                <BarChart3 size={12} color="#FFFFFF" strokeWidth={2.5} />
+                <BarChart3 size={13} color="#FFFFFF" strokeWidth={2.5} />
               </div>
-              <span className="text-sm font-bold text-white">GlobeX</span>
+              <span className="text-base font-bold text-white font-heading">GlobeX</span>
             </a>
-            <p className="text-[12px] text-[#94A3B8] leading-relaxed max-w-xs mb-4">
+            <p className="text-sm text-[#94A3B8] leading-relaxed max-w-sm mb-4">
               Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find verified buyers, and grow your export revenue with data.
             </p>
-            <div className="space-y-1.5 text-[12px] text-[#94A3B8]">
+            <div className="space-y-1.5 text-[13px] text-[#94A3B8]">
               <p className="text-[#CBD5E1] font-semibold">Contact & Support:</p>
               <p>Inquiries: Enterprise Desk (TBD)</p>
               <p>Location: Mumbai, Maharashtra, India</p>
-              <p className="text-[11px] text-[#64748B] pt-1 border-t border-[#1E293B]">
+              <p className="text-xs text-[#64748B] pt-1.5 border-t border-[#1E293B]">
                 Source: UN Comtrade, United Nations Statistics Division (UNSD), India merchandise exports 2025
               </p>
             </div>
@@ -34,8 +34,8 @@ export default function Footer({ onNavigate }) {
 
           {/* Solutions */}
           <div>
-            <h4 className="text-[11px] font-semibold text-[#CBD5E1] uppercase tracking-wider mb-3">Solutions</h4>
-            <ul className="space-y-2">
+            <h4 className="text-xs font-bold text-[#CBD5E1] uppercase tracking-wider mb-3.5 font-heading">Solutions</h4>
+            <ul className="space-y-2.5">
               {['Market Analysis', 'Lead Discovery', 'Competitor Intel', 'AI Trade Agents', 'Demand Forecasting'].map(item => (
                 <li key={item}>
                   <a 
@@ -46,7 +46,7 @@ export default function Footer({ onNavigate }) {
                         onNavigate('agents');
                       }
                     }}
-                    className="text-[12px] text-[#94A3B8] hover:text-white transition-colors"
+                    className="text-sm text-[#94A3B8] hover:text-white transition-colors"
                   >
                     {item}
                   </a>
@@ -57,20 +57,20 @@ export default function Footer({ onNavigate }) {
 
           {/* Company */}
           <div>
-            <h4 className="text-[11px] font-semibold text-[#CBD5E1] uppercase tracking-wider mb-3">Company</h4>
-            <ul className="space-y-2">
+            <h4 className="text-xs font-bold text-[#CBD5E1] uppercase tracking-wider mb-3.5 font-heading">Company</h4>
+            <ul className="space-y-2.5">
               {['About Us', 'Pricing', 'Blog', 'Careers', 'Contact'].map(item => (
-                <li key={item}><a href="#" className="text-[12px] text-[#94A3B8] hover:text-white transition-colors">{item}</a></li>
+                <li key={item}><a href="#" className="text-sm text-[#94A3B8] hover:text-white transition-colors">{item}</a></li>
               ))}
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="text-[11px] font-semibold text-[#CBD5E1] uppercase tracking-wider mb-3">Legal</h4>
-            <ul className="space-y-2">
+            <h4 className="text-xs font-bold text-[#CBD5E1] uppercase tracking-wider mb-3.5 font-heading">Legal</h4>
+            <ul className="space-y-2.5">
               {['Privacy Policy', 'Terms of Service', 'Data Security', 'Refund Policy', 'FAQs'].map(item => (
-                <li key={item}><a href="#" className="text-[12px] text-[#94A3B8] hover:text-white transition-colors">{item}</a></li>
+                <li key={item}><a href="#" className="text-sm text-[#94A3B8] hover:text-white transition-colors">{item}</a></li>
               ))}
             </ul>
           </div>
@@ -80,11 +80,11 @@ export default function Footer({ onNavigate }) {
       {/* Bottom bar */}
       <div className="border-t border-[#1E293B]">
         <div className="section-container py-4 flex flex-col md:flex-row items-center justify-between gap-2">
-          <p className="text-[11px] text-[#64748B]">© {new Date().getFullYear()} GlobeX. All rights reserved.</p>
+          <p className="text-xs text-[#64748B]">© {new Date().getFullYear()} GlobeX. All rights reserved.</p>
           <div className="flex gap-5">
-            <a href="#" className="text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors">Privacy</a>
-            <a href="#" className="text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors">Terms</a>
-            <a href="#" className="text-[11px] text-[#64748B] hover:text-[#94A3B8] transition-colors">Security</a>
+            <a href="#" className="text-xs text-[#64748B] hover:text-[#94A3B8] transition-colors">Privacy</a>
+            <a href="#" className="text-xs text-[#64748B] hover:text-[#94A3B8] transition-colors">Terms</a>
+            <a href="#" className="text-xs text-[#64748B] hover:text-[#94A3B8] transition-colors">Security</a>
           </div>
         </div>
       </div>

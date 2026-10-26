@@ -39,17 +39,17 @@ function FAQItem({ q, a }) {
     <div className="border-b border-[#E5E7EB]">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between py-4 text-left group"
+        className="w-full flex items-center justify-between py-4.5 text-left group"
       >
-        <span className="text-[14px] font-medium text-[#0F172A] pr-4 group-hover:text-[#2563EB] transition-colors">{q}</span>
+        <span className="text-base font-semibold text-[#0F172A] pr-4 group-hover:text-[#2563EB] transition-colors font-heading">{q}</span>
         <ChevronDown
-          size={16}
-          className={`text-[#94A3B8] shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          size={18}
+          className={`text-[#94A3B8] shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-[#2563EB]' : ''}`}
         />
       </button>
       {open && (
-        <div className="pb-4 pr-8">
-          <p className="text-[13px] text-[#64748B] leading-relaxed">{a}</p>
+        <div className="pb-5 pr-8">
+          <p className="text-[15px] md:text-base text-[#475569] leading-relaxed">{a}</p>
         </div>
       )}
     </div>
@@ -60,9 +60,9 @@ export default function FAQ() {
   return (
     <section id="faq" className="w-full bg-white py-14 md:py-16 border-b border-[#E5E7EB]">
       <div className="section-container">
-        <div className="text-center mb-10">
-          <span className="type-label text-[#2563EB] mb-2 block">FAQs</span>
-          <h2 className="type-h2 mb-3">Frequently Asked Questions</h2>
+        <div className="text-center mb-12">
+          <span className="type-label text-[#2563EB] mb-2 block font-semibold">FAQs</span>
+          <h2 className="type-h2 mb-3 font-heading font-bold text-[#0F172A]">Frequently Asked Questions</h2>
         </div>
 
         <div className="max-w-2xl mx-auto">

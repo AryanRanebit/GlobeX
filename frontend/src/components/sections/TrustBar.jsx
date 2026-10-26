@@ -15,11 +15,11 @@ export default function TrustBar() {
       <div className="section-container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
           {stats.map((stat, idx) => (
-            <div key={idx} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-[#0F172A] tracking-tight">
+            <div key={idx} className="text-center group">
+              <div className="text-2xl md:text-3xl font-extrabold text-[#0F172A] tracking-tight font-heading group-hover:text-[#2563EB] transition-colors">
                 <AnimatedCounter value={stat.value} suffix={stat.suffix} />
               </div>
-              <div className="text-xs font-medium text-[#64748B] mt-0.5">{stat.label}</div>
+              <div className="text-xs md:text-[13px] font-semibold text-[#64748B] mt-1 tracking-wide uppercase">{stat.label}</div>
             </div>
           ))}
         </div>

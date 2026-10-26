@@ -67,7 +67,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
             <div className="w-7 h-7 rounded bg-[#2563EB] flex items-center justify-center">
               <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
             </div>
-            <span className="text-base font-bold text-[#0F172A] tracking-tight">GlobeX</span>
+            <span className="text-lg font-bold text-[#0F172A] tracking-tight font-heading">GlobeX</span>
           </a>
 
           {/* Desktop Nav */}
@@ -77,7 +77,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleLinkClick(e, link)}
-                className={`text-[13px] font-medium transition-colors ${
+                className={`text-sm font-semibold transition-colors ${
                   link.isActive 
                     ? 'text-[#2563EB]' 
                     : 'text-[#64748B] hover:text-[#0F172A]'
@@ -89,16 +89,16 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={onOpenAuth}
-              className="text-[13px] font-medium text-[#334155] hover:text-[#0F172A] py-1.5 px-3 transition-colors"
+              className="text-sm font-semibold text-[#334155] hover:text-[#0F172A] py-1.5 px-3 transition-colors"
             >
               Sign In
             </button>
             <button
               onClick={onOpenAuth}
-              className="btn-primary text-[13px] py-2 px-4"
+              className="btn-primary text-sm font-semibold py-2 px-4.5 rounded-lg shadow-xs"
             >
               Book a Free Demo
             </button>

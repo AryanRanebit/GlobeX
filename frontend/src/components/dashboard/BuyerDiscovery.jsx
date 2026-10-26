@@ -200,8 +200,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
       {/* Header with exactly One H1 */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F172A]">Buyer Discovery & CRM</h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
+          <h1 className="text-2xl font-bold text-[#0F172A] font-heading">Buyer Discovery & CRM</h1>
+          <p className="text-[15px] text-[#475569] mt-0.5">
             Verified importers with historical customs import records, reliability scores, and direct email pitching.
           </p>
         </div>
