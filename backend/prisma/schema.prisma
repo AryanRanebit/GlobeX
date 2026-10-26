@@ -1,8 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// GlobeX AI — Prisma Schema
-// Complete database design for the export growth platform
-// ─────────────────────────────────────────────────────────────────────────────
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,7 +8,247 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
+model User {
+  id            String         @id @default(uuid())
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(USER)
+  companyName   String
+  companyType   String
+  industry      String
+  isVerified    Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  refreshToken  String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  auditLogs     AuditLog[]
+  leads         Lead[]
+  notifications Notification[]
+  opportunities Opportunity[]
+  outreaches    Outreach[]
+  products      Product[]
+  researchJobs  ResearchJob[]
+
+  @@index([email])
+  @@index([industry])
+  @@map("users")
+}
+
+model Product {
+  id              String        @id @default(uuid())
+  userId          String
+  productName     String
+  category        String
+  description     String
+  hsCode          String?
+  targetCountries String[]
+  unitPrice       Float?
+  currency        String        @default("USD")
+  certifications  String[]
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  leads           Lead[]
+  opportunities   Opportunity[]
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  researchJobs    ResearchJob[]
+
+  @@index([userId])
+  @@index([category])
+  @@map("products")
+}
+
+model Buyer {
+  id                   String     @id @default(uuid())
+  companyName          String
+  country              String
+  countryCode          String
+  industry             String
+  website              String?
+  email                String?
+  phone                String?
+  address              String?
+  leadScore            Int        @default(0)
+  annualRevenue        String?
+  employeeCount        String?
+  importVolume         String?
+  tags                 String[]
+  isVerified           Boolean    @default(false)
+  sourceProvider       String?
+  sourceUrl            String?
+  providerReference    String?
+  verificationStatus   String     @default("unverified")
+  verificationEvidence Json?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  leads                Lead[]
+  outreaches           Outreach[]
+
+  @@index([country])
+  @@index([industry])
+  @@index([leadScore])
+  @@index([verificationStatus])
+  @@map("buyers")
+}
+
+model Lead {
+  id           String     @id @default(uuid())
+  buyerId      String
+  userId       String
+  productId    String?
+  leadScore    Int        @default(0)
+  status       LeadStatus @default(NEW)
+  notes        String?
+  nextAction   String?
+  nextActionAt DateTime?
+  convertedAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  buyer        Buyer      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  product      Product?   @relation(fields: [productId], references: [id])
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([buyerId])
+  @@index([status])
+  @@index([leadScore])
+  @@map("leads")
+}
+
+model Outreach {
+  id         String         @id @default(uuid())
+  buyerId    String
+  userId     String
+  subject    String
+  content    String
+  tone       String         @default("professional")
+  language   String         @default("en")
+  status     OutreachStatus @default(DRAFT)
+  sentAt     DateTime?
+  openedAt   DateTime?
+  repliedAt  DateTime?
+  aiModel    String?
+  promptUsed String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  buyer      Buyer          @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([buyerId])
+  @@index([status])
+  @@map("outreaches")
+}
+
+model Compliance {
+  id             String   @id @default(uuid())
+  country        String
+  countryCode    String
+  documentName   String
+  description    String
+  category       String
+  authority      String?
+  processingTime String?
+  estimatedCost  String?
+  referenceUrl   String?
+  isRequired     Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([country])
+  @@index([countryCode])
+  @@map("compliance_requirements")
+}
+
+model Opportunity {
+  id          String   @id @default(uuid())
+  userId      String
+  productId   String?
+  country     String
+  countryCode String
+  demandScore Int
+  growthRate  String
+  competition String
+  marketSize  String?
+  trend       String?
+  insights    String?
+  source      String   @default("ai_analysis")
+  createdAt   DateTime @default(now())
+  product     Product? @relation(fields: [productId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([country])
+  @@index([demandScore])
+  @@map("opportunities")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String      @id @default(uuid())
+  userId    String?
+  action    AuditAction
+  entity    String
+  entityId  String?
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+  user      User?       @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model ResearchJob {
+  id             String    @id @default(uuid())
+  userId         String
+  productId      String?
+  status         JobStatus @default(QUEUED)
+  inputPayload   Json
+  result         Json?
+  error          String?
+  internalError  String?
+  attempts       Int       @default(0)
+  maxRetries     Int       @default(3)
+  nextRunAt      DateTime  @default(now())
+  lockedAt       DateTime?
+  lockedBy       String?
+  idempotencyKey String?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  product        Product?  @relation(fields: [productId], references: [id])
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([idempotencyKey])
+  @@index([nextRunAt])
+  @@index([lockedAt])
+  @@map("research_jobs")
+}
 
 enum Role {
   USER
@@ -58,278 +293,4 @@ enum JobStatus {
   RUNNING
   SUCCEEDED
   FAILED
-}
-
-// ─── User ────────────────────────────────────────────────────────────────────
-
-model User {
-  id            String    @id @default(uuid())
-  name          String
-  email         String    @unique
-  password      String
-  role          Role      @default(USER)
-  companyName   String
-  companyType   String    // e.g. "Manufacturer", "Trader", "MSME"
-  industry      String    // e.g. "Textiles", "Spices", "Engineering"
-  isVerified    Boolean   @default(false)
-  isActive      Boolean   @default(true)
-  refreshToken  String?
-  lastLoginAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  products      Product[]
-  leads         Lead[]
-  outreaches    Outreach[]
-  notifications Notification[]
-  auditLogs     AuditLog[]
-  opportunities Opportunity[]
-  researchJobs  ResearchJob[]
-
-  @@index([email])
-  @@index([industry])
-  @@map("users")
-}
-
-// ─── Product ─────────────────────────────────────────────────────────────────
-
-model Product {
-  id               String   @id @default(uuid())
-  userId           String
-  productName      String
-  category         String
-  description      String   @db.Text
-  hsCode           String?  // Harmonized System code for customs
-  targetCountries  String[] // Array of country codes e.g. ["US","DE","AE"]
-  unitPrice        Float?
-  currency         String   @default("USD")
-  certifications   String[] // e.g. ["ISO 9001", "FSSAI", "BIS"]
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  leads            Lead[]
-  opportunities    Opportunity[]
-  researchJobs     ResearchJob[]
-
-  @@index([userId])
-  @@index([category])
-  @@map("products")
-}
-
-// ─── Buyer ───────────────────────────────────────────────────────────────────
-
-model Buyer {
-  id           String   @id @default(uuid())
-  companyName  String
-  country      String
-  countryCode  String   // ISO 2-letter code
-  industry     String
-  website      String?
-  email        String?
-  phone        String?
-  address      String?
-  leadScore    Int      @default(0)   // 0–100 AI-generated score
-  annualRevenue String? // e.g. "$10M–$50M"
-  employeeCount String? // e.g. "100–500"
-  importVolume  String? // e.g. "High"
-  tags         String[] // e.g. ["organic", "bulk-importer"]
-  isVerified   Boolean  @default(false)
-  
-  // Evidence & Provenance (Phase 7)
-  sourceProvider       String?  // e.g. "opencorporates", "mock_provider"
-  sourceUrl            String?  // Traceable canonical source URL
-  providerReference    String?  // Canonical provider ID/company number
-  verificationStatus   String   @default("unverified") // unverified | partially_verified | verified_against_defined_criteria | verification_failed
-  verificationEvidence Json?    // Transparent evidence payload & audit trail
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  leads        Lead[]
-  outreaches   Outreach[]
-
-  @@index([country])
-  @@index([industry])
-  @@index([leadScore])
-  @@index([verificationStatus])
-  @@map("buyers")
-}
-
-// ─── Lead ────────────────────────────────────────────────────────────────────
-
-model Lead {
-  id          String     @id @default(uuid())
-  buyerId     String
-  userId      String
-  productId   String?
-  leadScore   Int        @default(0)
-  status      LeadStatus @default(NEW)
-  notes       String?    @db.Text
-  nextAction  String?
-  nextActionAt DateTime?
-  convertedAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  buyer       Buyer   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product     Product? @relation(fields: [productId], references: [id])
-
-  @@index([userId])
-  @@index([buyerId])
-  @@index([status])
-  @@index([leadScore])
-  @@map("leads")
-}
-
-// ─── Outreach ─────────────────────────────────────────────────────────────────
-
-model Outreach {
-  id          String         @id @default(uuid())
-  buyerId     String
-  userId      String
-  subject     String
-  content     String         @db.Text
-  tone        String         @default("professional") // professional | friendly | formal
-  language    String         @default("en")
-  status      OutreachStatus @default(DRAFT)
-  sentAt      DateTime?
-  openedAt    DateTime?
-  repliedAt   DateTime?
-  aiModel     String?        // which AI model generated this
-  promptUsed  String?        @db.Text
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  buyer       Buyer  @relation(fields: [buyerId], references: [id], onDelete: Cascade)
-  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([buyerId])
-  @@index([status])
-  @@map("outreaches")
-}
-
-// ─── Compliance ───────────────────────────────────────────────────────────────
-
-model Compliance {
-  id           String   @id @default(uuid())
-  country      String
-  countryCode  String
-  documentName String
-  description  String   @db.Text
-  category     String   // e.g. "Documentation", "Labeling", "Certification"
-  authority    String?  // issuing body
-  processingTime String? // e.g. "2–4 weeks"
-  estimatedCost String? // e.g. "$500–$1000"
-  referenceUrl String?
-  isRequired   Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@index([country])
-  @@index([countryCode])
-  @@map("compliance_requirements")
-}
-
-// ─── Opportunity ─────────────────────────────────────────────────────────────
-
-model Opportunity {
-  id           String   @id @default(uuid())
-  userId       String
-  productId    String?
-  country      String
-  countryCode  String
-  demandScore  Int      // 0–100
-  growthRate   String   // e.g. "18%"
-  competition  String   // Low | Medium | High
-  marketSize   String?  // e.g. "$2.4B"
-  trend        String?  // e.g. "Growing"
-  insights     String?  @db.Text
-  source       String   @default("ai_analysis") // ai_analysis | manual | import
-  createdAt    DateTime @default(now())
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product      Product? @relation(fields: [productId], references: [id])
-
-  @@index([userId])
-  @@index([country])
-  @@index([demandScore])
-  @@map("opportunities")
-}
-
-// ─── Notification ────────────────────────────────────────────────────────────
-
-model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
-  isRead    Boolean          @default(false)
-  metadata  Json?            // flexible payload
-  createdAt DateTime         @default(now())
-
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([isRead])
-  @@map("notifications")
-}
-
-// ─── AuditLog ─────────────────────────────────────────────────────────────────
-
-model AuditLog {
-  id         String      @id @default(uuid())
-  userId     String?
-  action     AuditAction
-  entity     String      // e.g. "Lead", "Product"
-  entityId   String?
-  oldValues  Json?
-  newValues  Json?
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime    @default(now())
-
-  user       User? @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-  @@index([entity])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-// ─── ResearchJob ─────────────────────────────────────────────────────────────
-
-model ResearchJob {
-  id              String      @id @default(uuid())
-  userId          String
-  productId       String?
-  status          JobStatus   @default(QUEUED)
-  inputPayload    Json
-  result          Json?
-  error           String?
-  internalError   String?     @db.Text
-  attempts        Int         @default(0)
-  maxRetries      Int         @default(3)
-  nextRunAt       DateTime    @default(now())
-  lockedAt        DateTime?
-  lockedBy        String?
-  idempotencyKey  String?
-  startedAt       DateTime?
-  completedAt     DateTime?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product         Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([status])
-  @@index([idempotencyKey])
-  @@index([nextRunAt])
-  @@index([lockedAt])
-  @@map("research_jobs")
 }
