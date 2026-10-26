@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -10,8 +10,20 @@ import {
   Search
 } from 'lucide-react';
 
-export default function DashboardLayout({ children, currentPage, onNavigate, onLogout }) {
+export default function DashboardLayout({ children, currentPage, onNavigate, onLogout, searchQuery = '', onSearchChange }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [headerSearch, setHeaderSearch] = useState(searchQuery);
+
+  useEffect(() => {
+    setHeaderSearch(searchQuery);
+  }, [searchQuery]);
+
+  const handleHeaderSearchSubmit = (e) => {
+    e.preventDefault();
+    if (onSearchChange) {
+      onSearchChange(headerSearch);
+    }
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
@@ -100,14 +112,16 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="relative hidden md:block">
+            <form onSubmit={handleHeaderSearchSubmit} className="relative hidden md:block">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
               <input 
                 type="text" 
+                value={headerSearch}
+                onChange={(e) => setHeaderSearch(e.target.value)}
                 placeholder="Search HS codes, buyers..." 
                 className="pl-9 pr-4 py-1.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-full text-sm w-64 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]"
               />
-            </div>
+            </form>
             <button className="relative p-2 text-[#64748B] hover:text-[#0F172A] transition-colors rounded-full hover:bg-[#F1F5F9]">
               <Bell size={18} />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#EF4444] rounded-full border border-white"></span>
