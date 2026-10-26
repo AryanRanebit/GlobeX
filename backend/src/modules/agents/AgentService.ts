@@ -30,8 +30,19 @@ export interface MarketResearchInput {
 
 export interface MarketResearchOutput {
   product: string;
+  category?: string;
+  candidateHsCodes?: {
+    hs_code: string;
+    description: string;
+    confidence: string;
+    classification_status: string;
+    rationale: string;
+  }[];
   analyzedAt: string;
   summary: string;
+  dataSourceMode?: string;
+  disclaimer?: string;
+  productId?: string;
   recommendedCountries: {
     country: string;
     countryCode: string;

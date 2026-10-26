@@ -2,9 +2,13 @@ import { createApp } from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { logger } from './utils/logger';
+import { researchJobWorker } from './modules/market/researchJob.worker';
 
 const startServer = async () => {
-  // await connectDatabase(); // MOCKED FOR HACKATHON DUE TO SUPABASE CONNECTION FAILURE
+  await connectDatabase();
+
+  // ─── Start Background Research Job Worker ─────────────────────
+  researchJobWorker.start();
 
   const app = createApp();
 
@@ -25,6 +29,7 @@ const startServer = async () => {
   // ─── Graceful Shutdown ────────────────────────────────────────
   const shutdown = async (signal: string) => {
     logger.info(`${signal} received — shutting down gracefully...`);
+    researchJobWorker.stop();
     server.close(async () => {
       await disconnectDatabase();
       logger.info('Server closed. Goodbye.');

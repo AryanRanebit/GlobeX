@@ -9,40 +9,38 @@ import type { SignupDto, LoginDto, UpdateProfileDto } from './auth.schema';
 
 export const authService = {
   async signup(dto: SignupDto) {
-    // MOCKED FOR HACKATHON BECAUSE SUPABASE IS DOWN
-    const tokens = generateTokenPair({ userId: 'mock-user-123', email: dto.email, role: 'USER' });
-    const safeUser = {
-      id: 'mock-user-123',
+    const existingUser = await authRepository.findByEmail(dto.email);
+    if (existingUser) throw new AppError('Email already in use', 400);
+
+    const hashedPassword = await bcrypt.hash(dto.password, 12);
+    const user = await authRepository.create({
       name: dto.name,
       email: dto.email,
-      role: 'USER',
+      password: hashedPassword,
       companyName: dto.companyName,
       companyType: dto.companyType,
       industry: dto.industry,
-      isVerified: true,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    });
+
+    const tokens = generateTokenPair({ userId: user.id, email: user.email, role: user.role });
+    await authRepository.updateRefreshToken(user.id, tokens.refreshToken);
+
+    const { password, refreshToken, ...safeUser } = user;
     return { user: safeUser, tokens };
   },
 
   async login(dto: LoginDto) {
-    // MOCKED FOR HACKATHON BECAUSE SUPABASE IS DOWN
-    const tokens = generateTokenPair({ userId: 'mock-user-123', email: dto.email, role: 'USER' });
-    const safeUser = {
-      id: 'mock-user-123',
-      name: 'Test User',
-      email: dto.email,
-      role: 'USER',
-      companyName: 'Test Company',
-      companyType: 'Other',
-      industry: 'General',
-      isVerified: true,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+    const user = await authRepository.findByEmail(dto.email);
+    if (!user) throw new AppError('Invalid email or password', 401);
+    if (!user.isActive) throw new AppError('Account is disabled', 403);
+
+    const isMatch = await bcrypt.compare(dto.password, user.password);
+    if (!isMatch) throw new AppError('Invalid email or password', 401);
+
+    const tokens = generateTokenPair({ userId: user.id, email: user.email, role: user.role });
+    await authRepository.updateRefreshToken(user.id, tokens.refreshToken);
+
+    const { password, refreshToken, ...safeUser } = user;
     return { user: safeUser, tokens };
   },
 

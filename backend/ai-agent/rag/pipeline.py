@@ -7,9 +7,15 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-import chromadb
-from chromadb.config import Settings as ChromaSettings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+try:
+    import chromadb
+    from chromadb.config import Settings as ChromaSettings
+    HAS_CHROMADB = True
+except ImportError:
+    chromadb = None
+    ChromaSettings = None
+    HAS_CHROMADB = False
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from rag.knowledge_base import TRADE_DOCUMENTS
@@ -50,6 +56,10 @@ class RAGPipeline:
             model="models/text-embedding-004",
             google_api_key=settings.google_api_key,
         )
+
+        if not HAS_CHROMADB:
+            log.warning("ChromaDB not installed. RAG will be disabled and return empty results.")
+            return
 
         self._client = chromadb.PersistentClient(
             path=str(settings.chroma_persist_dir),
@@ -131,7 +141,8 @@ class RAGPipeline:
             List of dicts with keys: content, metadata, distance.
         """
         if self._collection is None:
-            raise RuntimeError("RAG pipeline not initialised. Call initialise() first.")
+            log.warning("RAG pipeline missing ChromaDB, returning empty results.")
+            return []
 
         k = k or settings.retriever_k
         query_embedding = await asyncio.get_event_loop().run_in_executor(

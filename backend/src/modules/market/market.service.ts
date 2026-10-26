@@ -1,6 +1,7 @@
 import { prisma } from '../../config/database';
 import { marketResearchAgent } from '../agents/MarketResearchAgent';
 import type { AnalyzeMarketDto } from './market.schema';
+import { researchJobService } from './researchJob.service';
 
 export interface CountryOpportunity {
   country: string;
@@ -15,49 +16,142 @@ export interface CountryOpportunity {
 
 export interface MarketAnalysisResult {
   product: string;
+  category?: string;
+  candidateHsCodes?: any[];
+  candidateHsCode?: string | null;
   analyzedAt: string;
   recommendedCountries: CountryOpportunity[];
   summary: string;
+  dataSourceMode?: string;
+  disclaimer?: string;
+  productId?: string;
+  savedOpportunitiesCount?: number;
 }
 
 export const marketService = {
-  async analyze(userId: string, dto: AnalyzeMarketDto): Promise<MarketAnalysisResult> {
-    // ── AI Agent Hook ────────────────────────────────────────────
-    // This delegates to the MarketResearchAgent.
-    // The agent currently returns mock data — plug in real AI here.
+  /**
+   * Enqueues a research job for resilient background execution and returns immediately.
+   */
+  async analyze(
+    userId: string,
+    dto: AnalyzeMarketDto,
+    options?: { idempotencyKey?: string; maxRetries?: number }
+  ) {
+    return researchJobService.createJob(userId, dto, options);
+  },
+
+  /**
+   * Retrieves status and results for a specific research job.
+   */
+  async getJobStatus(jobId: string, userId: string) {
+    return researchJobService.getJob(jobId, userId);
+  },
+
+  /**
+   * Core synchronous execution of market research pipeline.
+   * Invoked by background ResearchJobWorker.
+   */
+  async executeResearch(userId: string, dto: AnalyzeMarketDto): Promise<MarketAnalysisResult> {
+    // ── 1. Call MarketResearchAgent (Python AI service) ──────────
     const agentResult = await marketResearchAgent.analyze({
       product: dto.product,
       targetRegions: dto.targetRegions,
     });
 
-    // ── Persist opportunities for the user ───────────────────────
-    if (dto.productId && agentResult.recommendedCountries.length > 0) {
+    if (!agentResult || !Array.isArray(agentResult.recommendedCountries)) {
+      throw new Error('Market research provider returned an invalid result structure.');
+    }
+
+    // ── 2. Link or create Product for the authenticated user ─────
+    let targetProductId = dto.productId;
+    if (targetProductId) {
+      const existing = await prisma.product.findFirst({
+        where: { id: targetProductId, userId },
+      });
+      if (!existing) targetProductId = undefined;
+    }
+
+    if (!targetProductId) {
+      // Look up by normalized product name for this user
+      const existingByName = await prisma.product.findFirst({
+        where: {
+          userId,
+          productName: { equals: agentResult.product, mode: 'insensitive' },
+        },
+      });
+
+      if (existingByName) {
+        targetProductId = existingByName.id;
+      } else {
+        const topCandidateHs = agentResult.candidateHsCodes?.[0]?.hs_code;
+        const newProduct = await prisma.product.create({
+          data: {
+            userId,
+            productName: agentResult.product,
+            category: agentResult.category || 'General Merchandise',
+            description: dto.description || `Export product analyzed via AI market intelligence.`,
+            hsCode: topCandidateHs || null,
+            targetCountries: agentResult.recommendedCountries.map(c => c.countryCode),
+            currency: 'USD',
+            isActive: true,
+          },
+        });
+        targetProductId = newProduct.id;
+      }
+    }
+
+    // ── 3. Persist opportunities with strict user ownership ──────
+    if (agentResult.recommendedCountries.length > 0) {
+      // Clear older opportunities for this product to avoid duplicates
+      if (targetProductId) {
+        await prisma.opportunity.deleteMany({
+          where: { userId, productId: targetProductId },
+        });
+      }
+
       await prisma.opportunity.createMany({
         data: agentResult.recommendedCountries.map((c) => ({
           userId,
-          productId: dto.productId,
+          productId: targetProductId,
           country: c.country,
           countryCode: c.countryCode,
           demandScore: c.demandScore,
           growthRate: c.growthRate,
           competition: c.competition,
-          marketSize: c.marketSize,
-          trend: c.trend,
-          insights: c.insights,
+          marketSize: c.marketSize || 'N/A',
+          trend: c.trend || 'Stable',
+          insights: c.insights || '',
           source: 'ai_analysis',
         })),
         skipDuplicates: true,
       });
     }
 
-    return agentResult;
+    return {
+      ...agentResult,
+      candidateHsCode: agentResult.candidateHsCodes?.[0]?.hs_code || null,
+      savedOpportunitiesCount: agentResult.recommendedCountries.length,
+      productId: targetProductId,
+    };
   },
 
+  /**
+   * Retrieves saved opportunities for the user.
+   */
   async getOpportunities(userId: string) {
     return prisma.opportunity.findMany({
       where: { userId },
       orderBy: { demandScore: 'desc' },
-      include: { product: { select: { productName: true } } },
+      include: {
+        product: {
+          select: {
+            id: true,
+            productName: true,
+            category: true,
+            hsCode: true,
+          },
+        },
+      },
     });
   },
 };

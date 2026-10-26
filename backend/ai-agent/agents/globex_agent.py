@@ -64,6 +64,7 @@ class GlobeXAgent:
             model=settings.gemini_model,
             google_api_key=settings.google_api_key,
             temperature=0.0,
+            max_retries=0,
         )
         self._llm_with_tools = self._llm.bind_tools(ALL_TOOLS)
 

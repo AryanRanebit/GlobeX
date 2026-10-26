@@ -9,6 +9,7 @@ router.use(authenticate);
 
 router.get('/', validate(buyerSearchSchema, 'query'), buyersController.search);
 router.get('/search', validate(buyerSearchSchema, 'query'), buyersController.search);
+router.post('/discover', buyersController.discover);
 router.get('/:id', buyersController.getById);
 
 export { router as buyersRoutes };

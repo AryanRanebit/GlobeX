@@ -189,10 +189,11 @@ Response: 200 OK
 
 ## 🌍 Market Intelligence
 
-### Analyze Market
+### Analyze Market (Create Background Research Job)
 ```http
 POST /market/analyze
 Authorization: Bearer <accessToken>
+X-Idempotency-Key: <optional-client-idempotency-key>
 Content-Type: application/json
 
 {
@@ -204,23 +205,79 @@ Content-Type: application/json
 Response: 200 OK
 {
   "success": true,
+  "message": "Market analysis job started",
   "data": {
-    "product": "Organic Honey",
-    "analyzedAt": "2024-01-15T10:30:00Z",
-    "summary": "Market analysis for Organic Honey identified...",
-    "recommendedCountries": [
-      {
-        "country": "Germany",
-        "countryCode": "DE",
-        "demandScore": 91,
-        "growthRate": "18%",
-        "competition": "Medium",
-        "marketSize": "$2.4B",
-        "trend": "Growing",
-        "insights": "Largest organic food market in Europe..."
-      }
-    ]
+    "jobId": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+    "id": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+    "status": "queued",
+    "createdAt": "2026-10-11T12:00:00Z"
   }
+}
+```
+
+### Get Research Job Status & Result
+```http
+GET /market/analyze/status/:jobId
+Authorization: Bearer <accessToken>
+
+Response: 200 OK (when succeeded)
+{
+  "success": true,
+  "data": {
+    "id": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+    "jobId": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+    "status": "succeeded",
+    "state": "succeeded",
+    "isCompleted": true,
+    "attempts": 1,
+    "maxRetries": 3,
+    "result": {
+      "product": "Organic Honey",
+      "category": "Natural Foods",
+      "candidateHsCode": "0409.00",
+      "analyzedAt": "2026-10-11T12:00:05Z",
+      "summary": "Market analysis for Organic Honey identified strong EU/US demand.",
+      "recommendedCountries": [
+        {
+          "country": "Germany",
+          "countryCode": "DE",
+          "demandScore": 91,
+          "growthRate": "18%",
+          "competition": "Medium",
+          "marketSize": "$2.4B",
+          "trend": "Growing",
+          "insights": "Largest organic food market in Europe."
+        }
+      ]
+    },
+    "error": null,
+    "createdAt": "2026-10-11T12:00:00Z",
+    "updatedAt": "2026-10-11T12:00:05Z"
+  }
+}
+```
+
+### List User Research Jobs
+```http
+GET /market/jobs?limit=20&offset=0
+Authorization: Bearer <accessToken>
+
+Response: 200 OK
+{
+  "success": true,
+  "message": "Research jobs retrieved successfully",
+  "data": [
+    {
+      "id": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+      "jobId": "f74e6f9a-1122-44bb-88cc-9900aabbccdd",
+      "status": "succeeded",
+      "isCompleted": true,
+      "attempts": 1,
+      "maxRetries": 3,
+      "result": { ... },
+      "createdAt": "2026-10-11T12:00:00Z"
+    }
+  ]
 }
 ```
 

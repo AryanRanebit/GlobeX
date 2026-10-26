@@ -29,6 +29,14 @@ def _get_llm() -> ChatGoogleGenerativeAI:
     )
 
 
+def _clean_json_content(content: Any) -> str:
+    raw = content
+    if isinstance(raw, list):
+        raw = raw[0].get("text", "") if isinstance(raw[0], dict) else str(raw[0])
+    raw = str(raw).strip()
+    return re.sub(r"```(?:json)?|```", "", raw).strip()
+
+
 # ── Pydantic Schemas ─────────────────────────────────────────────────────────
 
 class HSCodeResult(BaseModel):
@@ -131,8 +139,7 @@ Respond ONLY with a valid JSON object (no markdown backticks, no explanation):
 }}"""
 
     response = await llm.ainvoke(prompt)
-    raw = response.content.strip()
-    raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+    raw = _clean_json_content(response.content)
 
     result = json.loads(raw)
     log.info("HS code found", hs_code=result.get("hs_code"))
@@ -194,8 +201,7 @@ Respond ONLY with a valid JSON object (no markdown):
 }}"""
 
     response = await llm.ainvoke(prompt)
-    raw = response.content.strip()
-    raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+    raw = _clean_json_content(response.content)
 
     result = json.loads(raw)
     log.info("Duty calculated", total_duty_pct=result.get("total_duty_pct"))
@@ -243,8 +249,7 @@ Respond ONLY with a valid JSON object (no markdown):
 }}"""
 
     response = await llm.ainvoke(prompt)
-    raw = response.content.strip()
-    raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+    raw = _clean_json_content(response.content)
 
     result = json.loads(raw)
     log.info("Country rules retrieved", country=country)

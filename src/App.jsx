@@ -15,8 +15,29 @@ import AuthModal from './components/AuthModal';
 import AiAgentsHub from './components/AiAgentsHub';
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [currentPage, setCurrentPage] = useState(() => {
+    return window.location.pathname.startsWith('/agents') || window.location.hash === '#agents' ? 'agents' : 'landing';
+  });
   const [authOpen, setAuthOpen] = useState(false);
+
+  // Sync route on popstate and pushState
+  useEffect(() => {
+    const handleLocation = () => {
+      const isAgents = window.location.pathname.startsWith('/agents') || window.location.hash === '#agents';
+      setCurrentPage(isAgents ? 'agents' : 'landing');
+    };
+    window.addEventListener('popstate', handleLocation);
+    return () => window.removeEventListener('popstate', handleLocation);
+  }, []);
+
+  const navigateTo = (page) => {
+    setCurrentPage(page);
+    if (page === 'agents') {
+      window.history.pushState(null, '', '/agents');
+    } else {
+      window.history.pushState(null, '', '/');
+    }
+  };
 
   // Scroll to top on page navigation
   useEffect(() => {
@@ -25,36 +46,35 @@ export default function App() {
 
   return (
     <AuthProvider>
-    <div className="bg-white min-h-screen">
-      <Navbar 
-        onOpenAuth={() => setAuthOpen(true)} 
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-      />
-      
-      {currentPage === 'landing' ? (
-        <>
-          <Hero onOpenAuth={() => setAuthOpen(true)} />
-          <TrustBar />
-          <ProblemSection />
-          <Solutions />
-          <FeaturesMatrix />
-          <HowItWorks />
-          <DashboardPreview />
-          <Pricing onOpenAuth={() => setAuthOpen(true)} />
-          <FAQ />
-        </>
-      ) : (
-        <AiAgentsHub onBackToLanding={() => setCurrentPage('landing')} />
-      )}
-      
-      <Footer onNavigate={setCurrentPage} />
-      <AuthModal 
-        isOpen={authOpen} 
-        onClose={() => setAuthOpen(false)}
-        onAuthSuccess={() => { setAuthOpen(false); setCurrentPage('agents'); }}
-      />
-    </div>
+      <div className="bg-[#F1F5F9] min-h-screen flex flex-col">
+        {currentPage === 'landing' ? (
+          <div className="bg-white min-h-screen flex flex-col">
+            <Navbar 
+              onOpenAuth={() => setAuthOpen(true)} 
+              currentPage={currentPage}
+              onNavigate={navigateTo}
+            />
+            <Hero onOpenAuth={() => setAuthOpen(true)} />
+            <TrustBar />
+            <ProblemSection />
+            <Solutions />
+            <FeaturesMatrix />
+            <HowItWorks />
+            <DashboardPreview onNavigate={navigateTo} onOpenAuth={() => setAuthOpen(true)} />
+            <Pricing onOpenAuth={() => setAuthOpen(true)} />
+            <FAQ />
+            <Footer onNavigate={navigateTo} />
+          </div>
+        ) : (
+          <AiAgentsHub onBackToLanding={() => navigateTo('landing')} />
+        )}
+        
+        <AuthModal 
+          isOpen={authOpen} 
+          onClose={() => setAuthOpen(false)}
+          onAuthSuccess={() => { setAuthOpen(false); navigateTo('agents'); }}
+        />
+      </div>
     </AuthProvider>
   );
 }

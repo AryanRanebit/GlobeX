@@ -35,6 +35,9 @@ const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:800
 
 class MarketResearchAgentImpl implements IMarketResearchAgent {
   async analyze(input: MarketResearchInput): Promise<MarketResearchOutput> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
     try {
       const response = await fetch(`${AGENT_SERVICE_URL}/agents/market-research`, {
         method: 'POST',
@@ -44,49 +47,53 @@ class MarketResearchAgentImpl implements IMarketResearchAgent {
           target_regions: input.targetRegions || null,
           user_industry: input.userIndustry || null,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
         throw new Error(`Agent service responded with status ${response.status}`);
       }
 
-      const data = (await response.json()) as any;
-      return {
-        product: data.product,
-        analyzedAt: data.analyzedAt,
-        summary: data.summary,
-        recommendedCountries: data.recommendedCountries.map((c: any) => ({
-          country: c.country,
-          countryCode: c.countryCode,
-          demandScore: c.demandScore,
-          growthRate: c.growthRate,
-          competition: c.competition,
-          marketSize: c.marketSize,
-          trend: c.trend,
-          insights: c.insights,
-        })),
-      };
-    } catch (error) {
-      console.warn('MarketResearchAgent failed, falling back to mock data:', error);
-      
-      // Fallback: Select top countries based on mock data
-      const allCountries = Object.entries(MOCK_COUNTRY_DATA);
-      const selected = allCountries
-        .sort(() => Math.random() - 0.3)
-        .slice(0, 5)
-        .map(([country, data]) => ({
-          country,
-          countryCode: this.toCode(country),
-          ...data,
-        }))
-        .sort((a, b) => b.demandScore - a.demandScore);
+      let data: any;
+      try {
+        data = await response.json();
+      } catch (err) {
+        throw new Error('MarketResearchAgent failed to parse response JSON');
+      }
+
+      if (!data || !Array.isArray(data.recommendedCountries)) {
+        throw new Error('MarketResearchAgent returned malformed data: recommendedCountries is missing');
+      }
 
       return {
-        product: input.product,
-        analyzedAt: new Date().toISOString(),
-        summary: `Market analysis for "${input.product}" identified ${selected.length} high-potential export destinations. Germany and USA show the strongest demand with organic and health-food trends driving growth (Mock Fallback).`,
-        recommendedCountries: selected,
+        product: data.product || input.product,
+        category: data.category,
+        candidateHsCodes: data.candidateHsCodes || [],
+        analyzedAt: data.analyzedAt || new Date().toISOString(),
+        summary: data.summary || 'Market research completed.',
+        dataSourceMode: data.dataSourceMode || 'ai_qualitative_estimate',
+        disclaimer: data.disclaimer,
+        recommendedCountries: data.recommendedCountries.map((c: any) => ({
+          country: c.country,
+          countryCode: (c.countryCode || 'XX').slice(0, 2).toUpperCase(),
+          demandScore: typeof c.demandScore === 'number' ? Math.max(0, Math.min(100, c.demandScore)) : 70,
+          growthRate: c.growthRate || 'N/A',
+          competition: ['Low', 'Medium', 'High'].includes(c.competition) ? c.competition : 'Medium',
+          marketSize: c.marketSize || 'N/A',
+          trend: c.trend || 'Stable',
+          insights: c.insights || '',
+        })),
       };
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Error('MarketResearchAgent request timed out after 30 seconds');
+      }
+      if (error.message.includes('status') || error.message.includes('malformed') || error.message.includes('parse')) {
+        throw error;
+      }
+      throw new Error(`MarketResearchAgent failed: ${error.message}`);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

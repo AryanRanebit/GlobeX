@@ -4,6 +4,7 @@ REST API endpoints for chat, sessions, tools, and RAG management.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 import uuid
@@ -18,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from agents.globex_agent import globex_agent
+from agents.product_understanding import understand_product, ProductNormalizationResult
 from database.models import Session, get_db
 from memory.memory_manager import MemoryManager
 from rag.pipeline import rag_pipeline
@@ -113,10 +115,43 @@ class RAGQueryRequest(BaseModel):
 
 # ── Agent Specific Request Schemas ───────────────────────────────────────────
 
+class BuyerDiscoveryAgentRequest(BaseModel):
+    product: str
+    target_countries: list[str] | None = None
+
+class ProductUnderstandingRequest(BaseModel):
+    product_name: str
+    description: str | None = None
+    materials: list[str] | None = None
+
 class MarketResearchRequest(BaseModel):
     product: str
     target_regions: list[str] | None = None
     user_industry: str | None = None
+    description: str | None = None
+    materials: list[str] | None = None
+
+class MarketResearchCountry(BaseModel):
+    country: str
+    countryCode: str
+    demandScore: int = Field(..., ge=0, le=100)
+    growthRate: str
+    competition: str
+    marketSize: str | None = None
+    trend: str | None = None
+    insights: str
+    dataReliability: str = "estimate"
+
+class MarketResearchResponse(BaseModel):
+    product: str
+    category: str
+    candidateHsCodes: list[dict[str, Any]] = Field(default_factory=list)
+    analyzedAt: str
+    summary: str
+    dataSourceMode: str = "ai_qualitative_estimate"
+    liveTradeDataProvider: str = "none_configured"
+    recommendedCountries: list[MarketResearchCountry]
+    disclaimer: str
 
 
 class LeadScoringAgentRequest(BaseModel):
@@ -130,6 +165,13 @@ class OutreachAgentRequest(BaseModel):
     tone: str
     language: str
     custom_context: str | None = None
+
+
+class ComplianceAgentRequest(BaseModel):
+    product: str
+    destination_country: str = "Germany"
+    hs_code: str | None = None
+    origin_country: str = "India"
 
 
 # ── Chat Endpoints ───────────────────────────────────────────────────────────
@@ -311,48 +353,180 @@ async def rag_status() -> dict:
 
 # ── Agent Specific Endpoints ──────────────────────────────────────────────────
 
+def _build_limited_analysis_fallback(norm: ProductNormalizationResult, target_regions: list[str] | None = None) -> MarketResearchResponse:
+    """Return a clearly labeled limited analysis when live LLM is unavailable or fails."""
+    countries = [
+        MarketResearchCountry(
+            country="United States",
+            countryCode="US",
+            demandScore=75,
+            growthRate="N/A (unverified estimate)",
+            competition="Medium",
+            marketSize="N/A",
+            trend="Stable",
+            insights=f"Primary global importer for {norm.category}. Quantitative trade records require live customs API integration.",
+            dataReliability="estimate"
+        ),
+        MarketResearchCountry(
+            country="United Arab Emirates",
+            countryCode="AE",
+            demandScore=70,
+            growthRate="N/A (unverified estimate)",
+            competition="Low",
+            marketSize="N/A",
+            trend="Stable",
+            insights=f"Major re-export hub for Indian merchandise in MENA region under CEPA agreement.",
+            dataReliability="estimate"
+        ),
+        MarketResearchCountry(
+            country="Germany",
+            countryCode="DE",
+            demandScore=68,
+            growthRate="N/A (unverified estimate)",
+            competition="High",
+            marketSize="N/A",
+            trend="Stable",
+            insights=f"Strict compliance and certification gateway for {norm.category} entering the European Single Market.",
+            dataReliability="estimate"
+        )
+    ]
+    return MarketResearchResponse(
+        product=norm.normalized_product_name,
+        category=norm.category,
+        candidateHsCodes=[c.model_dump() for c in norm.candidate_hs_codes],
+        analyzedAt=datetime.now().isoformat(),
+        summary=f"Limited qualitative analysis for {norm.normalized_product_name}. Note: Live customs data feed is unconfigured; scores are advisory estimates.",
+        dataSourceMode="limited_offline_estimate",
+        liveTradeDataProvider="none_configured",
+        recommendedCountries=countries,
+        disclaimer="Advisory export intelligence: Numerical metrics are preliminary estimates and do not represent audited customs trade statistics."
+    )
+
+
+@router.post("/agents/product-understanding", summary="Product Understanding & Candidate HS Lookup")
+async def agent_product_understanding(request: ProductUnderstandingRequest) -> dict:
+    """Normalize product description and identify candidate HS codes."""
+    res = await understand_product(request.product_name, request.description, request.materials)
+    return res.model_dump()
+
+
 @router.post("/agents/market-research", summary="Agent Market Research")
 async def agent_market_research(request: MarketResearchRequest) -> dict:
-    """Analyze export markets for a product and return recommended countries."""
+    """Analyze export markets for a product, validate output, and return recommended countries."""
     try:
-        regions_str = f" in regions: {', '.join(request.target_regions)}" if request.target_regions else ""
-        prompt = f"""You are a market research AI agent. Analyze the global export potential of the product '{request.product}'{regions_str}.
-        Identify 3-5 high-potential country destinations.
-        Provide:
-        - demandScore (0 to 100)
-        - growthRate (percentage growth expected, e.g. "18%")
-        - competition (Low, Medium, or High)
-        - marketSize (estimated market size in USD, e.g. "$2.4B")
-        - trend (e.g. Growing, Accelerating, Stable)
-        - insights (specific reasons/tailwinds for this destination)
-        - countryCode (2-letter ISO code)
+        # Step 2: Understand and normalize product
+        norm = await understand_product(
+            product_name=request.product,
+            description=request.description,
+            materials=request.materials,
+        )
 
-        Return ONLY a JSON object (no markdown formatting, no backticks, no explainers):
-        {{
-          "product": "{request.product}",
-          "analyzedAt": "{datetime.now().isoformat()}",
-          "summary": "<overall concise market summary>",
-          "recommendedCountries": [
-            {{
-              "country": "<country name>",
-              "countryCode": "<2-letter code e.g. US>",
-              "demandScore": <integer>,
-              "growthRate": "<e.g. 18%>",
-              "competition": "<Low | Medium | High>",
-              "marketSize": "<e.g. $2.4B>",
-              "trend": "<e.g. Growing>",
-              "insights": "<insights>"
-            }}
-          ]
-        }}"""
-        
-        response = await globex_agent._classifier_llm.ainvoke(prompt)
-        raw = response.content.strip()
-        raw = re.sub(r"```(?:json)?|```", "", raw).strip()
-        return json.loads(raw)
+        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
+            fallback = _build_limited_analysis_fallback(norm, request.target_regions)
+            return fallback.model_dump()
+
+        hs_hints = ", ".join([f"{c.hs_code} ({c.description[:30]}...)" for c in norm.candidate_hs_codes])
+        regions_str = f" in target regions: {', '.join(request.target_regions)}" if request.target_regions else ""
+
+        prompt = f"""You are a senior trade economist and export market intelligence agent.
+Analyze export opportunity for:
+- Product: {norm.normalized_product_name} (Category: {norm.category})
+- Candidate HS Code(s): {hs_hints or 'Under evaluation'}
+- Focus: Indian merchandise exports{regions_str}
+
+Important Guidelines:
+1. Identify 3 to 5 real high-potential country destinations for Indian exports.
+2. Separate qualitative estimates from verified statistics. Do NOT invent fake statistical sources, fake URLs, or exact customs registry trade volumes.
+3. Express growthRate and marketSize as qualitative market estimates (e.g., '12-18% est.' or 'N/A').
+4. Assign an opportunity demandScore (0 to 100), competition level ('Low', 'Medium', or 'High'), and trend ('Growing', 'Stable', 'Accelerating').
+5. Provide actionable strategic insights (FTAs, diaspora demand, tariffs, distributor channels).
+
+Return ONLY a valid JSON object matching this schema (no markdown, no backticks, no text outside JSON):
+{{
+  "product": "{norm.normalized_product_name}",
+  "category": "{norm.category}",
+  "analyzedAt": "{datetime.now().isoformat()}",
+  "summary": "<concise strategic export overview>",
+  "dataSourceMode": "ai_qualitative_estimate",
+  "liveTradeDataProvider": "none_configured",
+  "disclaimer": "Metrics are AI-generated qualitative estimates based on macroeconomic trade patterns. Live UN Comtrade/DGFT feeds are not configured.",
+  "recommendedCountries": [
+    {{
+      "country": "<country name>",
+      "countryCode": "<2-letter ISO code e.g. US, DE, AE>",
+      "demandScore": <integer between 0 and 100>,
+      "growthRate": "<e.g. 15% est.>",
+      "competition": "<Low|Medium|High>",
+      "marketSize": "<e.g. $1.5B est. or N/A>",
+      "trend": "<e.g. Growing>",
+      "insights": "<actionable export insights>",
+      "dataReliability": "estimate"
+    }}
+  ]
+}}"""
+
+        try:
+            # 8 second timeout for LLM provider - fails fast to fallback if rate limited
+            response = await asyncio.wait_for(
+                globex_agent._classifier_llm.ainvoke(prompt),
+                timeout=8.0
+            )
+            raw = response.content
+            if isinstance(raw, list):
+                raw = raw[0].get("text", "") if (raw and isinstance(raw[0], dict)) else str(raw[0] if raw else "")
+            raw = str(raw).strip()
+            raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+            parsed = json.loads(raw)
+
+            # Inject candidate HS codes from Step 2
+            parsed["candidateHsCodes"] = [c.model_dump() for c in norm.candidate_hs_codes]
+            if "category" not in parsed:
+                parsed["category"] = norm.category
+            if "dataSourceMode" not in parsed:
+                parsed["dataSourceMode"] = "ai_qualitative_estimate"
+            if "liveTradeDataProvider" not in parsed:
+                parsed["liveTradeDataProvider"] = "none_configured"
+            if "disclaimer" not in parsed:
+                parsed["disclaimer"] = "Advisory AI trade estimate. Official customs classification requires binding tariff ruling."
+
+            # Sanitize recommendedCountries
+            clean_countries = []
+            for item in parsed.get("recommendedCountries", []):
+                score = item.get("demandScore", 70)
+                try:
+                    score = int(score)
+                except (ValueError, TypeError):
+                    score = 70
+                score = max(0, min(100, score))
+
+                comp = str(item.get("competition", "Medium")).capitalize()
+                if comp not in ["Low", "Medium", "High"]:
+                    comp = "Medium"
+
+                clean_countries.append(MarketResearchCountry(
+                    country=str(item.get("country", "Unknown")),
+                    countryCode=str(item.get("countryCode", "XX"))[:2].upper(),
+                    demandScore=score,
+                    growthRate=str(item.get("growthRate", "N/A")),
+                    competition=comp,
+                    marketSize=str(item.get("marketSize", "N/A")),
+                    trend=str(item.get("trend", "Stable")),
+                    insights=str(item.get("insights", "Export market under observation.")),
+                    dataReliability="estimate"
+                ))
+
+            parsed["recommendedCountries"] = [c.model_dump() for c in clean_countries]
+            validated = MarketResearchResponse.model_validate(parsed)
+            return validated.model_dump()
+
+        except (asyncio.TimeoutError, json.JSONDecodeError, Exception) as inner_err:
+            log.warn("Market research inference fallback triggered", error=str(inner_err))
+            fallback = _build_limited_analysis_fallback(norm, request.target_regions)
+            return fallback.model_dump()
+
     except Exception as exc:
         log.error("Market research agent failed", error=str(exc))
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise HTTPException(status_code=500, detail=f"Market research analysis error: {str(exc)}")
 
 
 @router.post("/agents/lead-scoring", summary="Agent Lead Scoring")
@@ -362,6 +536,30 @@ async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
         buyer = request.buyer
         product = request.product
         
+        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
+            return {
+              "score": 85,
+              "confidence": 0.9,
+              "factors": [
+                {
+                  "factor": "Industry alignment",
+                  "impact": "positive",
+                  "weight": 40
+                },
+                {
+                  "factor": "High import volume",
+                  "impact": "positive",
+                  "weight": 35
+                },
+                {
+                  "factor": "Missing direct email",
+                  "impact": "negative",
+                  "weight": -10
+                }
+              ],
+              "reasoning": "Mocked analysis from Python AI Agent: Buyer industry matches product profile perfectly and import volume indicates high capacity, but lack of direct email requires social outreach."
+            }
+
         prompt = f"""You are an AI lead scoring agent. Evaluate the fit of this global buyer for importing our product.
         
         Buyer Details:
@@ -403,7 +601,10 @@ async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
         }}"""
         
         response = await globex_agent._classifier_llm.ainvoke(prompt)
-        raw = response.content.strip()
+        raw = response.content
+        if isinstance(raw, list):
+            raw = raw[0].get("text", "") if isinstance(raw[0], dict) else str(raw)
+        raw = str(raw).strip()
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         return json.loads(raw)
     except Exception as exc:
@@ -418,6 +619,14 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         buyer = request.buyer
         sender = request.sender
         
+        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
+            return {
+              "subject": f"Partnership Opportunity: Premium {sender.get('industry')} from India for {buyer.get('companyName')}",
+              "content": f"Dear {buyer.get('companyName')} Team,\n\nI hope this email finds you well. I'm reaching out from {sender.get('name')} at {sender.get('companyName')}. We noticed your strong presence in the {buyer.get('industry')} market in {buyer.get('country')}.\n\nAs a certified exporter from India, we would love to explore a potential supply partnership. (Mocked response from Python AI Agent).\n\nBest regards,\n{sender.get('name')}\n[Phone]\n[Email]",
+              "model": settings.gemini_model,
+              "prompt": "Mocked prompt"
+            }
+
         prompt = f"""You are an expert international trade and B2B outreach consultant.
         Write a {request.tone} B2B outreach email in {request.language} from the Indian exporter to the global buyer.
         
@@ -450,13 +659,171 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         }}"""
         
         response = await globex_agent._classifier_llm.ainvoke(prompt)
-        raw = response.content.strip()
+        raw = response.content
+        if isinstance(raw, list):
+            raw = raw[0].get("text", "") if isinstance(raw[0], dict) else str(raw)
+        raw = str(raw).strip()
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         return json.loads(raw)
     except Exception as exc:
         log.error("Outreach agent failed", error=str(exc))
         raise HTTPException(status_code=500, detail=str(exc))
 
+
+@router.post("/agents/buyer-discovery", summary="Agent Buyer Discovery")
+async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
+    """Discover real buyers for a product using Google Web Search grounding."""
+    try:
+        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
+            raise HTTPException(status_code=503, detail="LLM Provider not configured")
+
+        countries_str = f" in countries: {', '.join(request.target_countries)}" if request.target_countries else " globally"
+        prompt = f"""You are a B2B buyer discovery AI agent. Search the web for real, actual companies that import or buy the product '{request.product}'{countries_str}.
+        You MUST find 3-5 real companies. DO NOT make up company names. Use search to find real importers.
+        Provide:
+        - companyName
+        - country (e.g. United States)
+        - countryCode (2-letter ISO code e.g. US)
+        - industry
+        - website
+        - email (if found, otherwise a generic contact email or empty string)
+        - importVolume (estimated as Low, Medium, or High)
+        - isVerified (true if it's a real company you verified, else false)
+        - annualRevenue (estimated string e.g. $5M, or N/A)
+        - employeeCount (estimated integer, or 0)
+
+        Return ONLY a JSON object:
+        {{
+          "searchedAt": "{datetime.now().isoformat()}",
+          "buyers": [
+            {{
+              "companyName": "<real company name>",
+              "country": "<country>",
+              "countryCode": "<2-letter code>",
+              "industry": "<industry>",
+              "website": "<website url>",
+              "email": "<email>",
+              "estimatedLeadScore": <integer 1-100 based on fit>,
+              "source": "ai_web_search",
+              "importVolume": "<High | Medium | Low>",
+              "isVerified": true,
+              "annualRevenue": "<string>",
+              "employeeCount": <integer>
+            }}
+          ]
+        }}"""
+        
+        response = await globex_agent._classifier_llm.ainvoke(prompt)
+        raw = response.content
+        if isinstance(raw, list):
+            raw = raw[0].get("text", "") if isinstance(raw[0], dict) else str(raw)
+        raw = str(raw).strip()
+        raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+        return json.loads(raw)
+    except Exception as exc:
+        log.error("Buyer discovery agent failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/agents/compliance", summary="Agent Trade Compliance & Customs Assessment")
+async def agent_compliance(request: ComplianceAgentRequest) -> dict:
+    """Analyze regulatory, customs, labeling, and duty compliance for exporting a product from India to a destination country."""
+    try:
+        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
+            raise HTTPException(status_code=503, detail="LLM Provider not configured")
+
+        hs_clause = f" with suspected HS Code {request.hs_code}" if request.hs_code else ""
+        prompt = f"""You are GlobeX AI's expert Trade Compliance and Customs Agent for Indian Exporters.
+Analyze international export requirements for:
+- Product: {request.product}{hs_clause}
+- Origin Country: {request.origin_country}
+- Destination Country: {request.destination_country}
+
+Evaluate:
+1. Exact 6-to-8 digit Harmonized System (HS / ITC-HS) code, official description, and chapter.
+2. Customs Duty, MFN tariff rate, destination VAT/import tax, and any preferential rate under bilateral trade agreements (e.g. India-UAE CEPA, India-Australia ECTA, EU GSP, etc.).
+3. Indian export incentives applicable (e.g. RoDTEP rate, Duty Drawback).
+4. Mandatory Certifications & Lab Reports needed prior to dispatch (e.g., Phytosanitary Certificate, NABL Accredited MRL Testing, FSSAI / Spices Board RCMC, APEDA, CE, FDA).
+5. Product Labeling and Packaging standards (languages, nutritional declaration, batch codes, country of origin marks).
+6. ICEGATE and customs port clearance documentation checklist.
+
+Respond ONLY with a valid JSON object (no markdown, no backticks, no explanatory preamble):
+{{
+  "product": "{request.product}",
+  "destinationCountry": "{request.destination_country}",
+  "originCountry": "{request.origin_country}",
+  "hsCode": "<e.g. 0910.91.00>",
+  "hsDescription": "<official HS heading description>",
+  "dutyCalculation": {{
+    "basicCustomsDutyPct": <number e.g. 0.0 or 5.0>,
+    "vatOrGstPct": <number e.g. 7.0 or 19.0>,
+    "totalTariffPct": <total effective percentage>,
+    "tradeAgreementBenefit": "<description of bilateral trade agreement benefit if applicable, or MFN standard>",
+    "exportIncentives": "<e.g. RoDTEP: 2.5%, Duty Drawback: 1.5%>"
+  }},
+  "mandatoryCertifications": [
+    {{
+      "certificate": "<Name of certificate>",
+      "issuingAuthority": "<e.g. Spices Board of India / Ministry of Agriculture>",
+      "requirement": "<Mandatory | Conditional | Recommended>",
+      "leadTime": "<e.g. 5–7 days before shipping>",
+      "purpose": "<brief explanation>"
+    }}
+  ],
+  "labelingAndPackaging": [
+    "<Rule 1: e.g. Dual language labeling required (German/English)>",
+    "<Rule 2: e.g. Batch number, harvest date, and net weight in metric units>"
+  ],
+  "customsClearance": {{
+    "portProcedures": "<summary of destination port customs procedures>",
+    "avgClearanceDays": "<e.g. 2–3 days>",
+    "documentsRequired": [
+      "Commercial Invoice (signed)",
+      "Packing List with package marks",
+      "Bill of Lading / Airway Bill",
+      "Certificate of Origin (Preferential / Non-preferential)",
+      "Shipping Bill (ICEGATE)",
+      "Test Analysis Report"
+    ]
+  }},
+  "checklist": [
+    {{
+      "check": "<Short title of requirement e.g. Phytosanitary Certificate>",
+      "authority": "<Issuing body>",
+      "status": "Required",
+      "action": "<Actionable instruction for exporter>"
+    }},
+    {{
+      "check": "<Pesticide MRL Test Report>",
+      "authority": "NABL Accredited Laboratory",
+      "status": "Required",
+      "action": "<Batch sample testing mandatory before bill of lading>"
+    }},
+    {{
+      "check": "<Certificate of Origin>",
+      "authority": "Export Inspection Council (EIC)",
+      "status": "Required",
+      "action": "<Generate COO under trade agreement for preferential tariff>"
+    }},
+    {{
+      "check": "<Bilingual Compliant Labeling>",
+      "authority": "Destination Customs Standards",
+      "status": "Required",
+      "action": "<Affix compliant bilingual labels with metric declarations>"
+    }}
+  ]
+}}"""
+
+        response = await globex_agent._classifier_llm.ainvoke(prompt)
+        raw = response.content
+        if isinstance(raw, list):
+            raw = raw[0].get("text", "") if isinstance(raw[0], dict) else str(raw)
+        raw = str(raw).strip()
+        raw = re.sub(r"```(?:json)?|```", "", raw).strip()
+        return json.loads(raw)
+    except Exception as exc:
+        log.error("Compliance agent failed", error=str(exc))
+        raise HTTPException(status_code=500, detail=str(exc))
 
 # ── Health ───────────────────────────────────────────────────────────────────
 

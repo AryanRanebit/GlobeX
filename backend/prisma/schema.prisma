@@ -53,6 +53,13 @@ enum AuditAction {
   EXPORT
 }
 
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
 // ─── User ────────────────────────────────────────────────────────────────────
 
 model User {
@@ -77,6 +84,7 @@ model User {
   notifications Notification[]
   auditLogs     AuditLog[]
   opportunities Opportunity[]
+  researchJobs  ResearchJob[]
 
   @@index([email])
   @@index([industry])
@@ -103,6 +111,7 @@ model Product {
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   leads            Lead[]
   opportunities    Opportunity[]
+  researchJobs     ResearchJob[]
 
   @@index([userId])
   @@index([category])
@@ -127,6 +136,14 @@ model Buyer {
   importVolume  String? // e.g. "High"
   tags         String[] // e.g. ["organic", "bulk-importer"]
   isVerified   Boolean  @default(false)
+  
+  // Evidence & Provenance (Phase 7)
+  sourceProvider       String?  // e.g. "opencorporates", "mock_provider"
+  sourceUrl            String?  // Traceable canonical source URL
+  providerReference    String?  // Canonical provider ID/company number
+  verificationStatus   String   @default("unverified") // unverified | partially_verified | verified_against_defined_criteria | verification_failed
+  verificationEvidence Json?    // Transparent evidence payload & audit trail
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -136,6 +153,7 @@ model Buyer {
   @@index([country])
   @@index([industry])
   @@index([leadScore])
+  @@index([verificationStatus])
   @@map("buyers")
 }
 
@@ -281,4 +299,37 @@ model AuditLog {
   @@index([entity])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ─── ResearchJob ─────────────────────────────────────────────────────────────
+
+model ResearchJob {
+  id              String      @id @default(uuid())
+  userId          String
+  productId       String?
+  status          JobStatus   @default(QUEUED)
+  inputPayload    Json
+  result          Json?
+  error           String?
+  internalError   String?     @db.Text
+  attempts        Int         @default(0)
+  maxRetries      Int         @default(3)
+  nextRunAt       DateTime    @default(now())
+  lockedAt        DateTime?
+  lockedBy        String?
+  idempotencyKey  String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product         Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([idempotencyKey])
+  @@index([nextRunAt])
+  @@index([lockedAt])
+  @@map("research_jobs")
 }

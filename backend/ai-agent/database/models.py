@@ -40,6 +40,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 # ── Models ──────────────────────────────────────────────────────────────────
 class Base(DeclarativeBase):
+    __allow_unmapped__ = True
     pass
 
 
