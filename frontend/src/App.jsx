@@ -2,9 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/sections/Hero';
 import TrustBar from './components/sections/TrustBar';
-import ProblemSection from './components/sections/ProblemSection';
 import Solutions from './components/sections/Solutions';
-import FeaturesMatrix from './components/sections/FeaturesMatrix';
 import HowItWorks from './components/sections/HowItWorks';
 import DashboardPreview from './components/sections/DashboardPreview';
 import Testimonials from './components/sections/Testimonials';
@@ -147,9 +145,7 @@ export default function App() {
             onSearch={handleHeroSearch} 
           />
           <TrustBar />
-          <ProblemSection />
-          <Solutions />
-          <FeaturesMatrix />
+          <Solutions onOpenAuth={() => setAuthOpen(true)} />
           <HowItWorks />
           <DashboardPreview />
           <Testimonials />
