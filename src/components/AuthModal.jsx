@@ -78,9 +78,9 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [companyType, setCompanyType] = useState('');
   const [industry, setIndustry] = useState('');
 
-  // Signin fields
-  const [signinEmail, setSigninEmail] = useState('');
-  const [signinPass, setSigninPass] = useState('');
+  // Signin fields (default credentials pre-populated for instant access)
+  const [signinEmail, setSigninEmail] = useState('aryan@globex.ai');
+  const [signinPass, setSigninPass] = useState('GlobeX@2026');
 
   // Local validation error
   const [localError, setLocalError] = useState('');
@@ -316,6 +316,46 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           ) : (
           /* ── SIGN IN FORM ──────────────────────────────────────────── */
             <form onSubmit={handleSignin} className="flex flex-col gap-3.5">
+              {/* 1-Click Default Sign-In Selector */}
+              <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg p-2.5">
+                <p className="text-[11px] font-semibold text-[#475569] mb-1.5 flex items-center justify-between">
+                  <span>⚡ Quick 1-Click Sign-In:</span>
+                  <span className="text-[10px] text-[#2563EB] font-normal">Pre-configured</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSigninEmail('aryan@globex.ai');
+                      setSigninPass('GlobeX@2026');
+                    }}
+                    className={`flex flex-col items-start p-2 rounded border transition-all text-left cursor-pointer ${
+                      signinEmail === 'aryan@globex.ai'
+                        ? 'border-[#2563EB] bg-[#EFF6FF]'
+                        : 'border-[#CBD5E1] bg-white hover:border-[#94A3B8]'
+                    }`}
+                  >
+                    <span className="text-[11px] font-bold text-[#0F172A]">Aryan Rane</span>
+                    <span className="text-[9px] text-[#64748B]">aryan@globex.ai</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSigninEmail('demo@spicesexport.in');
+                      setSigninPass('Demo@123');
+                    }}
+                    className={`flex flex-col items-start p-2 rounded border transition-all text-left cursor-pointer ${
+                      signinEmail === 'demo@spicesexport.in'
+                        ? 'border-[#2563EB] bg-[#EFF6FF]'
+                        : 'border-[#CBD5E1] bg-white hover:border-[#94A3B8]'
+                    }`}
+                  >
+                    <span className="text-[11px] font-bold text-[#0F172A]">Demo Exporter</span>
+                    <span className="text-[9px] text-[#64748B]">demo@spicesexport.in</span>
+                  </button>
+                </div>
+              </div>
+
               <InputField id="signin-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail}
                 value={signinEmail} onChange={e => setSigninEmail(e.target.value)} autoComplete="email" disabled={loading} />
 
