@@ -41,7 +41,7 @@ export default function AICopilot() {
           <Bot size={20} />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-[#0F172A]">Trade Copilot</h2>
+          <h1 className="text-lg font-bold text-[#0F172A]">Trade Copilot</h1>
           <p className="text-sm text-[#64748B]">Powered by GlobeX Intelligence</p>
         </div>
       </div>

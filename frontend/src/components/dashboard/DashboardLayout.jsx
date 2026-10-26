@@ -106,9 +106,9 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
                 <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
-            <h1 className="text-lg font-bold text-[#0F172A] capitalize">
+            <span className="text-sm font-semibold text-[#64748B] capitalize">
               {menuItems.find(i => i.id === currentPage)?.label || 'Dashboard'}
-            </h1>
+            </span>
           </div>
           
           <div className="flex items-center gap-4">

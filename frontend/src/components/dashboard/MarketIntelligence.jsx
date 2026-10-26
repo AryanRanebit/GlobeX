@@ -72,7 +72,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange })
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A]">Market Intelligence</h2>
+          <h1 className="text-2xl font-bold text-[#0F172A]">Market Intelligence</h1>
           <p className="text-sm text-[#64748B] mt-1">Discover optimal export destinations, real-time demand, and compliance requirements.</p>
         </div>
 
