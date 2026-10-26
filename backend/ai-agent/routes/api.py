@@ -529,6 +529,56 @@ Return ONLY a valid JSON object matching this schema (no markdown, no backticks,
         raise HTTPException(status_code=500, detail=f"Market research analysis error: {str(exc)}")
 
 
+def _compute_heuristic_lead_score(buyer: dict, product: dict | None = None) -> dict:
+    score = 50
+    factors = []
+    
+    buyer_ind = str(buyer.get("industry") or "").lower()
+    prod_name = str((product or {}).get("productName") or "").lower()
+    if buyer_ind and (buyer_ind in prod_name or prod_name in buyer_ind or any(k in buyer_ind for k in ["food", "apparel", "textile", "retail", "import", "trade", "distribut"])):
+        score += 20
+        factors.append({"factor": "Target trade category alignment", "impact": "positive", "weight": 20})
+    else:
+        factors.append({"factor": "Commercial trade fit assessment", "impact": "neutral", "weight": 0})
+        
+    if buyer.get("isVerified"):
+        score += 15
+        factors.append({"factor": "Verified importer entity registry", "impact": "positive", "weight": 15})
+    else:
+        score -= 5
+        factors.append({"factor": "Pending third-party verification", "impact": "negative", "weight": -5})
+        
+    vol = str(buyer.get("importVolume") or "").lower()
+    if "high" in vol or "large" in vol:
+        score += 15
+        factors.append({"factor": "High estimated import volume", "impact": "positive", "weight": 15})
+    elif "medium" in vol:
+        score += 10
+        factors.append({"factor": "Moderate commercial import volume", "impact": "positive", "weight": 10})
+    else:
+        factors.append({"factor": "Unconfirmed or low volume profile", "impact": "neutral", "weight": 0})
+        
+    if buyer.get("email"):
+        score += 10
+        factors.append({"factor": "Direct verified contact channel available", "impact": "positive", "weight": 10})
+    else:
+        score -= 10
+        factors.append({"factor": "Direct email pending (inquiry channel needed)", "impact": "negative", "weight": -10})
+
+    if buyer.get("website"):
+        score += 5
+        factors.append({"factor": "Active commercial web presence", "impact": "positive", "weight": 5})
+
+    score = max(20, min(95, score))
+    company = buyer.get("companyName") or "Target Importer"
+    return {
+        "score": score,
+        "confidence": 0.8,
+        "factors": factors,
+        "reasoning": f"Rule-based trade heuristic analysis for {company}: Evaluated verification status, category alignment, and contact accessibility (indicative estimate)."
+    }
+
+
 @router.post("/agents/lead-scoring", summary="Agent Lead Scoring")
 async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
     """Score a lead based on buyer and product details using Gemini."""
@@ -537,28 +587,7 @@ async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
         product = request.product
         
         if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            return {
-              "score": 85,
-              "confidence": 0.9,
-              "factors": [
-                {
-                  "factor": "Industry alignment",
-                  "impact": "positive",
-                  "weight": 40
-                },
-                {
-                  "factor": "High import volume",
-                  "impact": "positive",
-                  "weight": 35
-                },
-                {
-                  "factor": "Missing direct email",
-                  "impact": "negative",
-                  "weight": -10
-                }
-              ],
-              "reasoning": "Mocked analysis from Python AI Agent: Buyer industry matches product profile perfectly and import volume indicates high capacity, but lack of direct email requires social outreach."
-            }
+            return _compute_heuristic_lead_score(buyer, product)
 
         prompt = f"""You are an AI lead scoring agent. Evaluate the fit of this global buyer for importing our product.
         
@@ -608,8 +637,8 @@ async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         return json.loads(raw)
     except Exception as exc:
-        log.error("Lead scoring agent failed", error=str(exc))
-        raise HTTPException(status_code=500, detail=str(exc))
+        log.warning("Lead scoring LLM inference unavailable, using rule-based scoring fallback", error=str(exc))
+        return _compute_heuristic_lead_score(buyer, product)
 
 
 @router.post("/agents/outreach", summary="Agent Outreach Email Generator")

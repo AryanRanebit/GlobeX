@@ -136,7 +136,7 @@ const AGENTS = {
       '> Compiling company names, industries, and contact estimates...',
     ],
     outcome: {
-      title: 'Discovered Buyers — HS 6204.62',
+      title: 'Discovered Buyers — HS 6204.62 (Interactive Sample Preview)',
       type: 'table',
       data: [
         { company: 'Atlas Imports Inc.', country: 'United States', volume: '88 Tons', reliability: '94%', contact: 'procurement@atlasimports.com' },
@@ -252,8 +252,8 @@ const AGENTS = {
     ],
     streamingLogs: [
       '> Initializing Lead Scoring Agent...',
-      '> Processing importer: "Atlas Imports Inc." (United States)...',
-      '> Auditing transaction history: 34 shipments over 12 months...',
+      '> Processing target importer and trade registry profiles...',
+      '> Auditing transaction frequency and shipment reliability...',
       '> Running supplier retention analysis...',
       '> Querying corporate registries for credit stability indicators...',
       '> Risk analysis: Checking customs violations and legal disputes...',
@@ -290,9 +290,9 @@ function buildMarketOutcome(apiData) {
   };
 }
 
-function buildScoringOutcome(apiData, buyerName = DEMO_BUYER.companyName, productName = '') {
+function buildScoringOutcome(apiData, buyerName = DEMO_BUYER.companyName, productName = '', isSample = false) {
   return {
-    title: `Lead Profile: ${buyerName}${productName ? ` (${productName})` : ''}`,
+    title: `Lead Profile: ${buyerName}${productName ? ` (${productName})` : ''}${isSample ? ' [Sample Profile]' : ''}`,
     type: 'scoring',
     score: apiData.score,
     reasoning: apiData.reasoning,
@@ -305,9 +305,9 @@ function buildScoringOutcome(apiData, buyerName = DEMO_BUYER.companyName, produc
   };
 }
 
-function buildOutreachOutcome(apiData, buyerName = DEMO_BUYER.companyName, productName = '') {
+function buildOutreachOutcome(apiData, buyerName = DEMO_BUYER.companyName, productName = '', isSample = false) {
   return {
-    title: `Generated Outreach — ${buyerName}${productName ? ` (${productName})` : ''}`,
+    title: `Generated Outreach — ${buyerName}${productName ? ` (${productName})` : ''}${isSample ? ' [Sample Profile]' : ''}`,
     type: 'email',
     subject: apiData.subject,
     body: apiData.content,
@@ -390,6 +390,8 @@ export default function AiAgentsHub({ onBackToLanding }) {
   const [hsCodeInput, setHsCodeInput] = useState('1006.30');
   const [userProducts, setUserProducts] = useState([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [discoveredBuyers, setDiscoveredBuyers] = useState([]);
+  const [selectedBuyer, setSelectedBuyer] = useState(null);
 
   const agent = AGENTS[activeAgent];
 
@@ -518,22 +520,53 @@ export default function AiAgentsHub({ onBackToLanding }) {
 
       } else if (agent.id === 'discovery') {
         result = await discoverBuyers({ product: effectiveProduct, targetCountries: [targetCountryCode, 'US', 'AE', 'GB'] });
-        setSimulatedLogs(prev => [...prev, `> Discovered ${result.buyers?.length || 0} real buyers actively importing "${effectiveProduct}".`]);
+        const buyersList = result.buyers || [];
+        setDiscoveredBuyers(buyersList);
+        if (buyersList.length > 0) {
+          setSelectedBuyer(buyersList[0]);
+        }
+        setSimulatedLogs(prev => [...prev, `> Discovered ${buyersList.length} real buyers actively importing "${effectiveProduct}".`]);
         setSimulatedLogs(prev => [...prev, '> Persisted buyer leads to workspace database.']);
         setLiveOutcome(buildDiscoveryOutcome(result, effectiveProduct));
 
       } else if (agent.id === 'scoring') {
+        const targetBuyer = selectedBuyer || (discoveredBuyers.length > 0 ? discoveredBuyers[0] : null);
+        const buyerPayload = targetBuyer
+          ? {
+              companyName: targetBuyer.companyName || targetBuyer.company,
+              country: targetBuyer.country || effectiveCountry,
+              industry: targetBuyer.industry || effectiveProduct,
+              importVolume: targetBuyer.importVolume || targetBuyer.volume || 'Medium',
+              isVerified: !!targetBuyer.isVerified,
+              email: targetBuyer.email || targetBuyer.contact,
+              website: targetBuyer.website,
+            }
+          : { ...DEMO_BUYER, country: effectiveCountry };
+        const isSample = !targetBuyer;
         result = await scoreLeadDirect({
-          buyer: { ...DEMO_BUYER, country: effectiveCountry },
+          buyer: buyerPayload,
           product: { productName: effectiveProduct, hsCode: effectiveHsCode }
         });
-        setSimulatedLogs(prev => [...prev, `> Propensity Score computed: ${result.score}/100 (confidence: ${Math.round((result.confidence || 0.9) * 100)}%)`]);
-        setSimulatedLogs(prev => [...prev, `> Buyer trust profile compiled for "${effectiveProduct}".`]);
-        setLiveOutcome(buildScoringOutcome(result, DEMO_BUYER.companyName, effectiveProduct));
+        setSimulatedLogs(prev => [...prev, `> Propensity Score computed: ${result.score}/100 (confidence: ${Math.round((result.confidence || 0.8) * 100)}%)`]);
+        setSimulatedLogs(prev => [...prev, `> Buyer trust profile compiled for "${buyerPayload.companyName}".`]);
+        setLiveOutcome(buildScoringOutcome(result, buyerPayload.companyName, effectiveProduct, isSample));
 
       } else if (agent.id === 'outreach') {
+        const targetBuyer = selectedBuyer || (discoveredBuyers.length > 0 ? discoveredBuyers[0] : null);
+        const buyerPayload = targetBuyer
+          ? {
+              companyName: targetBuyer.companyName || targetBuyer.company,
+              country: targetBuyer.country || effectiveCountry,
+              industry: targetBuyer.industry || effectiveProduct,
+              importVolume: targetBuyer.importVolume || targetBuyer.volume || 'Medium',
+              isVerified: !!targetBuyer.isVerified,
+              email: targetBuyer.email || targetBuyer.contact,
+              website: targetBuyer.website,
+            }
+          : { ...DEMO_BUYER, country: effectiveCountry };
+        const isSample = !targetBuyer;
         result = await generateOutreachDirect({
-          buyer: { ...DEMO_BUYER, country: effectiveCountry },
+          buyer: buyerPayload,
           sender: {
             name: user?.name || 'Export Manager',
             companyName: user?.companyName || 'GlobeX Exports',
@@ -541,10 +574,10 @@ export default function AiAgentsHub({ onBackToLanding }) {
           },
           tone: 'professional',
           language: 'English',
-          customContext: `Offering premium-grade ${effectiveProduct} (HS Code ${effectiveHsCode}) for import into ${effectiveCountry}.`
+          customContext: `Offering premium-grade ${effectiveProduct} (HS Code ${effectiveHsCode}) for import into ${buyerPayload.country || effectiveCountry}.`
         });
         setSimulatedLogs(prev => [...prev, `> Pitch generated for "${effectiveProduct}". Subject: "${result.subject?.slice(0, 40)}..."`]);
-        setLiveOutcome(buildOutreachOutcome(result, DEMO_BUYER.companyName, effectiveProduct));
+        setLiveOutcome(buildOutreachOutcome(result, buyerPayload.companyName, effectiveProduct, isSample));
 
       } else if (agent.id === 'compliance') {
         result = await assessComplianceDirect({

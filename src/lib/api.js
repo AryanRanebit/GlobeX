@@ -3,7 +3,7 @@
  * Wraps all backend REST calls with the stored JWT token.
  */
 
-const API_BASE = '/api/v1';
+const API_BASE = (import.meta.env?.VITE_API_BASE_URL || '') + '/api/v1';
 
 function getToken() {
   return localStorage.getItem('globex_token');
@@ -30,6 +30,9 @@ async function request(path, options = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('globex_token');
+    }
     throw new Error(data?.message || `API error ${res.status}`);
   }
 
