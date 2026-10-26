@@ -517,9 +517,8 @@ export default function AiAgentsHub({ onBackToLanding }) {
         setSimulatedLogs(prev => [...prev, `> Analysis complete for "${effectiveProduct}". ${result.recommendedCountries?.length || 0} markets evaluated.`]);
         setSimulatedLogs(prev => [...prev, '> Generating market intelligence report...']);
         setLiveOutcome(buildMarketOutcome(result));
-
       } else if (agent.id === 'discovery') {
-        result = await discoverBuyers({ product: effectiveProduct, targetCountries: [targetCountryCode, 'US', 'AE', 'GB'] });
+        result = await discoverBuyers({ product: effectiveProduct, targetCountries: [targetCountryCode || 'US'] });
         const buyersList = result.buyers || [];
         setDiscoveredBuyers(buyersList);
         if (buyersList.length > 0) {

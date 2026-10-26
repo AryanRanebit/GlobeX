@@ -167,7 +167,7 @@ export class GeminiAgentBuyerProvider implements IBuyerDataProvider {
   private readonly agentServiceUrl: string;
   private readonly timeoutMs: number;
 
-  constructor(agentServiceUrl: string, timeoutMs = 25_000) {
+  constructor(agentServiceUrl: string, timeoutMs = 45_000) {
     this.agentServiceUrl = agentServiceUrl.replace(/\/$/, '');
     this.timeoutMs = timeoutMs;
   }

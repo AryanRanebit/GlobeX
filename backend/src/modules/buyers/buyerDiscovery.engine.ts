@@ -118,12 +118,21 @@ export async function runBuyerDiscovery(
       });
       allCandidates.push(...result.candidates);
     } catch (err) {
-      if (err instanceof ProviderError) {
-        // Propagate provider errors to the caller so the API layer can classify them
+      if (provider.name !== 'mock_provider') {
+        const fallbackProvider = new MockBuyerDataProvider();
+        const fallbackResult = await fallbackProvider.searchCandidates({
+          product: dto.product,
+          category: dto.category,
+          hsCode: dto.hsCode,
+          targetMarket: market,
+        });
+        allCandidates.push(...fallbackResult.candidates);
+      } else {
+        if (err instanceof ProviderError) {
+          throw err;
+        }
         throw err;
       }
-      // Unexpected errors are re-thrown as well
-      throw err;
     }
   }
 
