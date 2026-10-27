@@ -369,7 +369,7 @@ ISO3_TO_ISO2: dict[str, str] = {
 async def _fetch_trade_market_data(hs_code: str = "62", year: str = "2025") -> dict | None:
     """Fetch live or seeded UN Comtrade market data from the Node backend."""
     backend_url = os.getenv("NODE_BACKEND_URL", "http://localhost:3000").rstrip("/")
-    url = f"{backend_url}/api/trade/markets?hs={hs_code}&year={year}&limit=10"
+    url = f"{backend_url}/api/v1/trade/markets?hs={hs_code}&year={year}&limit=10"
     try:
         async with httpx.AsyncClient(timeout=4.0) as client:
             resp = await client.get(url)

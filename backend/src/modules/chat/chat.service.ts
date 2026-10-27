@@ -10,6 +10,11 @@ import type { ChatMessageDto } from './chat.schema';
 
 const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:8000/api/v1';
 
+// Tool-calling turns (LLM + RAG + trade tools) routinely take tens of seconds,
+// so the non-streaming path allows ~30s before falling back to mock mode.
+// Override with AGENT_TIMEOUT_MS.
+const AGENT_TIMEOUT_MS = Number.parseInt(process.env.AGENT_TIMEOUT_MS || '30000', 10);
+
 export interface ChatResponse {
   session_id: string;
   response: string;
@@ -34,8 +39,8 @@ export const chatService = {
           session_id: dto.session_id ?? null,
           message: dto.message,
         }),
-        // 5-second timeout to fast-fail and use mock
-        signal: AbortSignal.timeout(5_000),
+        // Fast-fail into the honest mock fallback if the agent does not answer in time
+        signal: AbortSignal.timeout(AGENT_TIMEOUT_MS),
       });
       
       if (!res.ok) {

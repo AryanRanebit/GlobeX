@@ -143,7 +143,7 @@ export default function App() {
             }}
           />
         )}
-        {dashboardPage === 'copilot' && <AICopilot />}
+        {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
       </DashboardLayout>
     );
   }
