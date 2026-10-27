@@ -25,7 +25,7 @@ const plans = [
     description: 'For growing export businesses that need comprehensive trade intelligence and buyer databases.',
     features: [
       'Unlimited market analysis reports',
-      'Full 203 country rankings',
+      'Full 223 destination market rankings (UN Comtrade)',
       '500 importer leads per month',
       'Advanced competitor intelligence',
       'AI-generated research reports',
@@ -61,56 +61,58 @@ export default function Pricing({ onOpenAuth }) {
     <section id="pricing" className="w-full bg-[#F5F7FA] py-14 md:py-16 border-b border-[#E5E7EB]">
       <div className="section-container" ref={fade.ref}>
         <div className={fade.className}>
-          <div className="text-center mb-10">
-            <span className="type-label text-[#2563EB] mb-2 block">Pricing</span>
-            <h2 className="type-h2 mb-3">Simple, Transparent Pricing</h2>
-            <p className="text-[14px] text-[#64748B] max-w-xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="type-label text-[#2563EB] mb-2 block font-semibold">Flexible Plans</span>
+            <h2 className="type-h2 mb-3 font-heading font-bold text-[#0F172A]">Simple, Transparent Pricing</h2>
+            <p className="text-base text-[#475569] max-w-xl mx-auto leading-relaxed">
               All plans include a 14-day free trial. No credit card required.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto items-stretch">
             {plans.map((plan, idx) => (
               <div
                 key={idx}
-                className={`rounded border p-5 flex flex-col ${
+                className={`rounded-xl border p-6 flex flex-col justify-between transition-shadow hover:shadow-lg ${
                   plan.highlighted
-                    ? 'bg-white border-[#2563EB] border-2 relative'
-                    : 'bg-white border-[#E5E7EB]'
+                    ? 'bg-white border-[#2563EB] border-2 relative shadow-md'
+                    : 'bg-white border-[#E2E8F0]'
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#2563EB] text-white text-[10px] font-bold uppercase tracking-wider px-3 py-0.5 rounded">
-                    Most Popular
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D97706] text-white text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+                    ★ Most Popular
                   </div>
                 )}
 
-                <div className="mb-4">
-                  <h3 className="text-[15px] font-semibold text-[#0F172A] mb-1">{plan.name}</h3>
-                  <div className="flex items-baseline gap-0.5">
-                    <span className="text-2xl font-bold text-[#0F172A]">{plan.price}</span>
-                    <span className="text-[12px] text-[#64748B]">{plan.period}</span>
+                <div>
+                  <div className="mb-4">
+                    <h3 className="text-lg font-bold text-[#0F172A] mb-1 font-heading">{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mt-1">
+                      <span className="text-3xl font-extrabold text-[#0F172A] font-heading">{plan.price}</span>
+                      <span className="text-xs font-semibold text-[#64748B]">{plan.period}</span>
+                    </div>
+                    <p className="text-sm text-[#475569] mt-3 leading-relaxed">{plan.description}</p>
                   </div>
-                  <p className="text-[12px] text-[#64748B] mt-2 leading-relaxed">{plan.description}</p>
-                </div>
 
-                <div className="flex-1 mb-5">
-                  <ul className="space-y-2">
-                    {plan.features.map((feat, fi) => (
-                      <li key={fi} className="flex items-start gap-2 text-[12px] text-[#334155]">
-                        <Check size={13} className="text-[#059669] shrink-0 mt-0.5" />
-                        {feat}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mb-6 pt-3 border-t border-[#F1F5F9]">
+                    <ul className="space-y-2.5">
+                      {plan.features.map((feat, fi) => (
+                        <li key={fi} className="flex items-start gap-2.5 text-sm text-[#334155] leading-snug">
+                          <Check size={16} className="text-[#059669] shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 <button
                   onClick={onOpenAuth}
-                  className={`w-full py-2 text-[13px] font-semibold rounded transition-colors ${
+                  className={`w-full py-2.5 text-sm font-semibold rounded-lg transition-colors shadow-xs ${
                     plan.highlighted
                       ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
-                      : 'bg-white text-[#2563EB] border border-[#2563EB] hover:bg-[#EFF6FF]'
+                      : 'bg-white text-[#2563EB] border border-[#CBD5E1] hover:bg-[#EFF6FF]'
                   }`}
                 >
                   {plan.cta}

@@ -1,0 +1,33 @@
+{
+  "source": "UN Comtrade",
+  "organization": "United Nations Statistics Division (UNSD)",
+  "extractionDate": "2026-10-26T00:00:00Z",
+  "reporter": {
+    "code": "699",
+    "name": "India"
+  },
+  "period": "2025",
+  "classification": "H6",
+  "flow": "X",
+  "datasets": {
+    "all_goods": {
+      "cmdCode": "TOTAL",
+      "description": "All merchandise exports",
+      "worldTotalUsd": 445769600047.189,
+      "destinationsCount": 223,
+      "topMarkets": [
+        { "partner": "United States", "iso": "USA", "trade_value_usd": 92570077496.315 },
+        { "partner": "United Arab Emirates", "iso": "ARE", "trade_value_usd": 38666438796.675 },
+        { "partner": "Netherlands", "iso": "NLD", "trade_value_usd": 19056821154.774 }
+      ]
+    },
+    "apparel_hs62": {
+      "cmdCode": "62",
+      "description": "Apparel and clothing accessories, not knitted or crocheted",
+      "worldTotalUsd": 8392174046.021,
+      "destinationsCount": 196,
+      "topMarket": { "partner": "United States", "iso": "USA", "trade_value_usd": 2671153548.12 }
+    }
+  },
+  "citation": "Source: UN Comtrade, United Nations Statistics Division, India merchandise exports, calendar year 2025, HS 2022, extracted 26 October 2026. https://comtradeplus.un.org/"
+}

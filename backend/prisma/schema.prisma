@@ -294,3 +294,53 @@ enum JobStatus {
   SUCCEEDED
   FAILED
 }
+
+// ─── UN Comtrade Data Layer ──────────────────────────────────────────────────
+
+/// Raw API response cache — avoids redundant calls within the free-tier limit.
+model ComtradeCache {
+  id           String   @id @default(uuid())
+  queryHash    String   @unique /// SHA-256 of the canonical query parameters
+  queryParams  Json     /// { reporterCode, period, cmdCode, flowCode, ... }
+  responseBody Json     /// Full API JSON response
+  recordCount  Int      @default(0)
+  fetchedAt    DateTime @default(now())
+  expiresAt    DateTime /// TTL-based expiry (e.g. fetchedAt + 24h)
+
+  @@index([expiresAt])
+  @@map("comtrade_cache")
+}
+
+/// Normalized trade-flow rows derived from Comtrade responses or seed CSVs.
+model TradeFlow {
+  id              String     @id @default(uuid())
+  reporterCode    String     /// ISO-3166-1 numeric (e.g. "699" = India)
+  reporterName    String
+  partnerCode     String     /// ISO-3166-1 numeric
+  partnerName     String
+  partnerIso3     String?    /// ISO-3166-1 alpha-3 (e.g. "USA")
+  period          String     /// Calendar year (e.g. "2025")
+  flowCode        String     /// "X" = exports, "M" = imports
+  cmdCode         String     /// HS code or "TOTAL"
+  cmdDescription  String?
+  tradeValueUsd   Float
+  netWeightKg     Float?
+  qty             Float?
+  qtyUnitCode     String?
+  source          DataSource @default(COMTRADE)
+  sourceDetail    String?    /// e.g. "UN Comtrade, extracted 2026-10-26"
+  fetchedAt       DateTime   @default(now())
+
+  @@unique([reporterCode, partnerCode, period, flowCode, cmdCode])
+  @@index([cmdCode])
+  @@index([period])
+  @@index([partnerIso3])
+  @@index([tradeValueUsd])
+  @@map("trade_flows")
+}
+
+enum DataSource {
+  COMTRADE
+  SEED_CSV
+  MANUAL
+}

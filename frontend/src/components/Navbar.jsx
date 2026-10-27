@@ -41,16 +41,17 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   return (
     <>
       {/* Top info bar */}
-      <div className="hidden md:block w-full bg-[#0F172A] text-white text-xs py-1.5">
-        <div className="section-container flex items-center justify-end gap-5">
-          <a href="mailto:sales@globexai.com" className="flex items-center gap-1.5 text-[#CBD5E1] hover:text-white transition-colors">
-            <Mail size={12} />
-            sales@globexai.com
-          </a>
-          <a href="tel:+919876543210" className="flex items-center gap-1.5 text-[#CBD5E1] hover:text-white transition-colors">
-            <Phone size={12} />
-            +91 98765 43210
-          </a>
+      <div className="hidden md:block w-full bg-[#0F172A] text-white text-[11px] py-1.5 border-b border-[#1E293B]">
+        <div className="section-container flex items-center justify-between">
+          <div className="flex items-center gap-2 text-[#CBD5E1]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block" />
+            <span>Official Source: UN Comtrade 2025 Merchandise Export Statistics</span>
+          </div>
+          <div className="flex items-center gap-4 text-[#94A3B8]">
+            <span>Reporter: India (699)</span>
+            <span>223 Global Destination Markets</span>
+            <span className="text-[#38BDF8]">Live Customs Desk</span>
+          </div>
         </div>
       </div>
 
@@ -66,7 +67,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
             <div className="w-7 h-7 rounded bg-[#2563EB] flex items-center justify-center">
               <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
             </div>
-            <span className="text-base font-bold text-[#0F172A] tracking-tight">GlobeX</span>
+            <span className="text-lg font-bold text-[#0F172A] tracking-tight font-heading">GlobeX</span>
           </a>
 
           {/* Desktop Nav */}
@@ -76,7 +77,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleLinkClick(e, link)}
-                className={`text-[13px] font-medium transition-colors ${
+                className={`text-sm font-semibold transition-colors ${
                   link.isActive 
                     ? 'text-[#2563EB]' 
                     : 'text-[#64748B] hover:text-[#0F172A]'
@@ -88,16 +89,16 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden md:flex items-center gap-3">
             <button
               onClick={onOpenAuth}
-              className="text-[13px] font-medium text-[#334155] hover:text-[#0F172A] py-1.5 px-3 transition-colors"
+              className="text-sm font-semibold text-[#334155] hover:text-[#0F172A] py-1.5 px-3 transition-colors"
             >
               Sign In
             </button>
             <button
               onClick={onOpenAuth}
-              className="btn-primary text-[13px] py-2 px-4"
+              className="btn-primary text-sm font-semibold py-2 px-4.5 rounded-lg shadow-xs"
             >
               Book a Free Demo
             </button>

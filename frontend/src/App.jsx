@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/sections/Hero';
 import TrustBar from './components/sections/TrustBar';
-import ProblemSection from './components/sections/ProblemSection';
 import Solutions from './components/sections/Solutions';
-import FeaturesMatrix from './components/sections/FeaturesMatrix';
 import HowItWorks from './components/sections/HowItWorks';
 import DashboardPreview from './components/sections/DashboardPreview';
 import Testimonials from './components/sections/Testimonials';
@@ -24,34 +22,109 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [dashboardPage, setDashboardPage] = useState('dashboard');
   const [authOpen, setAuthOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
-  // Simple auth state mock for hackathon
-  const isAuthenticated = !!localStorage.getItem('token');
+  // Auth state
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!localStorage.getItem('token'));
+
+  // Parse URL query params on mount or popstate
+  useEffect(() => {
+    const handleUrlParams = () => {
+      const params = new URLSearchParams(window.location.search);
+      const queryParam = params.get('search') || params.get('q');
+      const tabParam = params.get('tab');
+
+      if (queryParam) {
+        setSearchQuery(queryParam);
+        // Ensure user can access dashboard with demo credentials if not yet authenticated
+        if (!localStorage.getItem('token')) {
+          localStorage.setItem('token', 'demo-session-token');
+          localStorage.setItem('user', JSON.stringify({ name: 'Aryan Rane', email: 'aryan@globex.ai' }));
+          setIsAuthenticated(true);
+        }
+        if (tabParam === 'buyers' || tabParam === 'markets') {
+          setDashboardPage(tabParam);
+        } else {
+          setDashboardPage('markets');
+        }
+      }
+    };
+
+    handleUrlParams();
+    window.addEventListener('popstate', handleUrlParams);
+    return () => window.removeEventListener('popstate', handleUrlParams);
+  }, []);
 
   // Scroll to top on page navigation
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentPage, dashboardPage]);
 
+  // Handle Hero Search submission with query param routing
+  const handleHeroSearch = useCallback((query, targetTab = 'markets') => {
+    if (!query || !query.trim()) return;
+    const cleanQuery = query.trim();
+    setSearchQuery(cleanQuery);
+
+    // Auto-authenticate as demo user if not logged in
+    if (!localStorage.getItem('token')) {
+      localStorage.setItem('token', 'demo-session-token');
+      localStorage.setItem('user', JSON.stringify({ name: 'Aryan Rane', email: 'aryan@globex.ai' }));
+      setIsAuthenticated(true);
+    }
+
+    setDashboardPage(targetTab);
+
+    // Update browser URL query param
+    const url = new URL(window.location.href);
+    url.searchParams.set('search', cleanQuery);
+    url.searchParams.set('tab', targetTab);
+    window.history.pushState({ search: cleanQuery, tab: targetTab }, '', url.toString());
+  }, []);
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setIsAuthenticated(false);
     setCurrentPage('landing');
-    // Force a re-render by reloading or just state change (state change handles it since isAuthenticated checks token which is now gone, wait, isAuthenticated is derived from localStorage, so we need a state variable for it)
-    window.location.reload();
+    setDashboardPage('dashboard');
+    setSearchQuery('');
+    
+    // Clear query parameters
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    url.searchParams.delete('tab');
+    window.history.pushState({}, '', url.pathname);
   };
 
   if (isAuthenticated) {
     return (
       <DashboardLayout 
         currentPage={dashboardPage} 
-        onNavigate={setDashboardPage}
+        onNavigate={(tab) => {
+          setDashboardPage(tab);
+          const url = new URL(window.location.href);
+          url.searchParams.set('tab', tab);
+          window.history.pushState({}, '', url.toString());
+        }}
         onLogout={handleLogout}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       >
         {dashboardPage === 'dashboard' && <DashboardHome />}
-        {dashboardPage === 'buyers' && <BuyerDiscovery />}
-        {dashboardPage === 'markets' && <MarketIntelligence />}
+        {dashboardPage === 'buyers' && (
+          <BuyerDiscovery 
+            searchQuery={searchQuery} 
+            onSearchChange={setSearchQuery} 
+          />
+        )}
+        {dashboardPage === 'markets' && (
+          <MarketIntelligence 
+            searchQuery={searchQuery} 
+            onSearchChange={setSearchQuery} 
+          />
+        )}
         {dashboardPage === 'copilot' && <AICopilot />}
       </DashboardLayout>
     );
@@ -67,11 +140,12 @@ export default function App() {
       
       {currentPage === 'landing' ? (
         <>
-          <Hero onOpenAuth={() => setAuthOpen(true)} />
+          <Hero 
+            onOpenAuth={() => setAuthOpen(true)} 
+            onSearch={handleHeroSearch} 
+          />
           <TrustBar />
-          <ProblemSection />
-          <Solutions />
-          <FeaturesMatrix />
+          <Solutions onOpenAuth={() => setAuthOpen(true)} />
           <HowItWorks />
           <DashboardPreview />
           <Testimonials />
@@ -88,4 +162,3 @@ export default function App() {
     </div>
   );
 }
-

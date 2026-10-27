@@ -22,6 +22,7 @@ import { complianceRoutes } from './modules/compliance/compliance.routes';
 import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { chatRoutes } from './modules/chat/chat.routes';
 import { agentsRoutes } from './modules/agents/agents.routes';
+import { tradeRoutes } from './modules/trade/trade.routes';
 
 export const createApp = () => {
   const app = express();
@@ -94,6 +95,9 @@ export const createApp = () => {
   app.use(`${BASE}/dashboard`, dashboardRoutes);
   app.use(`${BASE}/chat`, chatRoutes);
   app.use(`${BASE}/agents`, agentsRoutes);
+  app.use(`${BASE}/trade`, tradeRoutes);
+  // Convenience alias for unversioned /api/trade
+  app.use('/api/trade', tradeRoutes);
 
   // ─── Error Handling ─────────────────────────────────────────────
   app.use(notFound);

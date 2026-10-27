@@ -36,6 +36,9 @@ const envSchema = z.object({
   // ChromaDB vector store
   CHROMA_HOST: z.string().url().default('http://localhost:8001'),
   CHROMA_COLLECTION: z.string().default('globex_docs'),
+
+  // UN Comtrade trade data
+  COMTRADE_API_KEY: z.string().optional(),
 });
 
 // Pre-process: convert empty strings to undefined so optional URL/string
