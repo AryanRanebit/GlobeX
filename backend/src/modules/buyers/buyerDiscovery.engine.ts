@@ -118,7 +118,7 @@ export async function runBuyerDiscovery(
       });
       allCandidates.push(...result.candidates);
     } catch (err) {
-      if (provider.name !== 'mock_provider') {
+      if (!providerOverride && provider.name !== 'mock_provider') {
         const fallbackProvider = new MockBuyerDataProvider();
         const fallbackResult = await fallbackProvider.searchCandidates({
           product: dto.product,
@@ -128,9 +128,6 @@ export async function runBuyerDiscovery(
         });
         allCandidates.push(...fallbackResult.candidates);
       } else {
-        if (err instanceof ProviderError) {
-          throw err;
-        }
         throw err;
       }
     }
