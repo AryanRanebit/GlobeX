@@ -30,7 +30,7 @@ import ErrorBanner from '../ui/ErrorBanner';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
+export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
   const [buyers, setBuyers] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -82,26 +82,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
       }
 
       if (res.status === 401) {
-        // If unauthenticated or token expired, auto login as demo user to ensure live data loads
-        const loginRes = await fetch('http://localhost:3000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.success && loginData.data?.tokens?.accessToken) {
-          localStorage.setItem('token', loginData.data.tokens.accessToken);
-          localStorage.setItem('user', JSON.stringify(loginData.data.user));
-          // Retry with new token
-          const retryRes = await fetch('http://localhost:3000/api/v1/buyers?limit=100', {
-            headers: { 'Authorization': `Bearer ${loginData.data.tokens.accessToken}` }
-          });
-          const retryJson = await retryRes.json();
-          if (retryJson.success) {
-            setBuyers(retryJson.data || []);
-            return;
-          }
-        }
+        onRequireAuth?.();
+        return;
       }
 
       const json = await res.json();
@@ -128,18 +110,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
     setIsDiscovering(true);
     setDiscoverError(null);
     try {
-      let token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
       if (!token) {
-        const loginRes = await fetch('http://localhost:3000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.data?.tokens?.accessToken) {
-          token = loginData.data.tokens.accessToken;
-          localStorage.setItem('token', token);
-        }
+        setIsDiscoverModalOpen(false);
+        onRequireAuth?.();
+        return;
       }
 
       let res;
@@ -166,6 +141,12 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
           },
           body: JSON.stringify(payload)
         });
+      }
+
+      if (res.status === 401) {
+        setIsDiscoverModalOpen(false);
+        onRequireAuth?.();
+        return;
       }
 
       const json = await res.json();
