@@ -33,11 +33,11 @@ export default function HowItWorks() {
   const fade = useFadeIn();
 
   return (
-    <section id="how-it-works" className="w-full bg-white py-14 md:py-16 border-b border-[#E5E7EB]">
+    <section id="how-it-works" className="w-full bg-white py-14 md:py-16 border-b border-line">
       <div className="section-container" ref={fade.ref}>
         <div className={fade.className}>
           <div className="text-center mb-10">
-            <span className="type-label text-[#2563EB] mb-2 block">How It Works</span>
+            <span className="type-label text-blue mb-2 block">How It Works</span>
             <h2 className="type-h2 mb-3">From Product to Actionable Intelligence in 4 Steps</h2>
           </div>
 
@@ -46,15 +46,15 @@ export default function HowItWorks() {
               <div key={idx} className="relative flex flex-col items-center text-center px-5 py-6">
                 {/* Connector line */}
                 {idx < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 right-0 w-full h-px bg-[#E5E7EB]" style={{ left: '50%', width: '100%' }} />
+                  <div className="hidden lg:block absolute top-8 right-0 w-full h-px bg-line" style={{ left: '50%', width: '100%' }} />
                 )}
 
-                <div className="relative z-10 w-12 h-12 rounded-full bg-[#2563EB] flex items-center justify-center mb-4">
+                <div className="relative z-10 w-12 h-12 rounded-full bg-blue flex items-center justify-center mb-4">
                   <span className="text-white text-sm font-bold">{step.number}</span>
                 </div>
 
-                <h3 className="text-[14px] font-semibold text-[#0F172A] mb-1.5">{step.title}</h3>
-                <p className="text-[12px] text-[#64748B] leading-relaxed max-w-[200px]">{step.desc}</p>
+                <h3 className="text-[14px] font-semibold text-navy mb-1.5">{step.title}</h3>
+                <p className="text-[12px] text-muted leading-relaxed max-w-[200px]">{step.desc}</p>
               </div>
             ))}
           </div>

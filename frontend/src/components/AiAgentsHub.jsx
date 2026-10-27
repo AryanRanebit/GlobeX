@@ -259,9 +259,9 @@ Sourcing-Team`
   const SelectedIcon = agents[activeAgent].icon;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="min-h-screen bg-page">
       {/* Premium Header utilizing reference port image professionally */}
-      <div className="relative bg-[#0F172A] py-16 text-white overflow-hidden border-b border-[#1E293B]">
+      <div className="relative bg-navy py-16 text-white overflow-hidden border-b border-navy-light">
         <div className="absolute inset-0 z-0 opacity-15">
           <img 
             src="/port.jpg" 
@@ -271,25 +271,25 @@ Sourcing-Team`
         </div>
         
         {/* Subtle linear overlay for legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0F172A]/95 via-[#0F172A]/80 to-[#0F172A]/95 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/95 via-navy/80 to-navy/95 z-10" />
 
         <div className="relative z-20 section-container">
           <button 
             onClick={onBackToLanding}
-            className="inline-flex items-center gap-2 text-sm text-[#CBD5E1] hover:text-white transition-colors mb-6 group"
+            className="inline-flex items-center gap-2 text-sm text-line-dark hover:text-white transition-colors mb-6 group"
           >
             <ArrowLeft size={16} className="transform group-hover:-translate-x-1 transition-transform" />
             Back to Platform Home
           </button>
           
           <div className="max-w-3xl">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-[#D97706]/20 text-[#F59E0B] border border-[#D97706]/40 mb-4 uppercase tracking-wider">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-accent/20 text-orange border border-accent/40 mb-4 uppercase tracking-wider">
               Autonomous Operations Command
             </span>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4 font-heading">
               AI Trade Agents Hub
             </h1>
-            <p className="text-base text-[#94A3B8] leading-relaxed">
+            <p className="text-base text-faint leading-relaxed">
               Power your international export pipeline with 5 specialized, autonomous AI agents. Run interactive demos below to see how each agent processes global shipping databases, compliance laws, and email copy templates in seconds.
             </p>
           </div>
@@ -302,8 +302,8 @@ Sourcing-Team`
           
           {/* Left: Agent Selection Sidebar */}
           <div className="lg:col-span-4 flex flex-col gap-3">
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-4">
-              <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block mb-3 pl-2">
+            <div className="bg-white rounded-lg border border-line p-4">
+              <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-3 pl-2">
                 Available Agents
               </span>
               
@@ -317,20 +317,20 @@ Sourcing-Team`
                       onClick={() => setActiveAgent(agent.id)}
                       className={`flex items-start gap-3 p-3.5 rounded-md text-left transition-all duration-150 group ${
                         isActive 
-                          ? 'bg-[#EFF6FF] text-[#2563EB] border-l-4 border-[#2563EB] shadow-xs' 
-                          : 'bg-transparent text-[#475569] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                          ? 'bg-blue-pale text-blue border-l-4 border-blue shadow-xs' 
+                          : 'bg-transparent text-soft hover:bg-surface hover:text-navy'
                       }`}
                     >
                       <div className={`p-1.5 rounded-md mt-0.5 ${
-                        isActive ? 'bg-[#2563EB]/10 text-[#2563EB]' : 'bg-[#F1F5F9] text-[#64748B] group-hover:bg-white'
+                        isActive ? 'bg-blue/10 text-blue' : 'bg-surface text-muted group-hover:bg-white'
                       }`}>
                         <Icon size={18} />
                       </div>
                       <div>
-                        <h3 className={`text-[14px] font-semibold ${isActive ? 'text-[#0F172A]' : 'text-[#334155]'}`}>
+                        <h3 className={`text-[14px] font-semibold ${isActive ? 'text-navy' : 'text-ink'}`}>
                           {agent.name}
                         </h3>
-                        <p className="text-[12px] text-[#64748B] line-clamp-1 mt-0.5 font-normal">
+                        <p className="text-[12px] text-muted line-clamp-1 mt-0.5 font-normal">
                           {agent.role}
                         </p>
                       </div>
@@ -341,27 +341,27 @@ Sourcing-Team`
             </div>
 
             {/* Trust and status card */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-5">
-              <h4 className="text-[13px] font-bold text-[#0F172A] mb-3 flex items-center gap-2">
-                <Globe size={15} className="text-[#2563EB]" />
+            <div className="bg-white rounded-lg border border-line p-5">
+              <h4 className="text-[13px] font-bold text-navy mb-3 flex items-center gap-2">
+                <Globe size={15} className="text-blue" />
                 System Integration Status
               </h4>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#F1F5F9] text-xs">
-                <span className="text-[#64748B]">Custom Manifests</span>
-                <span className="font-semibold text-[#059669] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> Operational
+              <div className="flex items-center justify-between py-1.5 border-b border-surface text-xs">
+                <span className="text-muted">Custom Manifests</span>
+                <span className="font-semibold text-emerald flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald"></span> Operational
                 </span>
               </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-[#F1F5F9] text-xs">
-                <span className="text-[#64748B]">Tariff Databases</span>
-                <span className="font-semibold text-[#059669] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> Online
+              <div className="flex items-center justify-between py-1.5 border-b border-surface text-xs">
+                <span className="text-muted">Tariff Databases</span>
+                <span className="font-semibold text-emerald flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald"></span> Online
                 </span>
               </div>
               <div className="flex items-center justify-between py-1.5 text-xs">
-                <span className="text-[#64748B]">Language Translators</span>
-                <span className="font-semibold text-[#059669] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]"></span> 12 Native APIs
+                <span className="text-muted">Language Translators</span>
+                <span className="font-semibold text-emerald flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald"></span> 12 Native APIs
                 </span>
               </div>
             </div>
@@ -371,15 +371,15 @@ Sourcing-Team`
           <div className="lg:col-span-8 flex flex-col gap-6">
             
             {/* Overview Card */}
-            <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#F1F5F9] pb-5 mb-5">
+            <div className="bg-white rounded-lg border border-line p-6 shadow-xs">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface pb-5 mb-5">
                 <div className="flex items-center gap-3">
-                  <div className="p-3 bg-[#EFF6FF] text-[#2563EB] rounded-lg">
+                  <div className="p-3 bg-blue-pale text-blue rounded-lg">
                     <SelectedIcon size={24} />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-[#0F172A]">{agents[activeAgent].name}</h2>
-                    <span className="text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full border border-[#A7F3D0] inline-block mt-1">
+                    <h2 className="text-xl font-bold text-navy">{agents[activeAgent].name}</h2>
+                    <span className="text-xs font-semibold text-emerald bg-emerald-pale px-2.5 py-0.5 rounded-full border border-emerald-border inline-block mt-1">
                       Active AI Role: {agents[activeAgent].role}
                     </span>
                   </div>
@@ -406,22 +406,22 @@ Sourcing-Team`
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-[13px] font-bold text-[#0F172A] uppercase tracking-wider mb-2">
+                  <h4 className="text-[13px] font-bold text-navy uppercase tracking-wider mb-2">
                     Description
                   </h4>
-                  <p className="text-sm text-[#475569] leading-relaxed">
+                  <p className="text-sm text-soft leading-relaxed">
                     {agents[activeAgent].description}
                   </p>
                 </div>
                 
                 <div>
-                  <h4 className="text-[13px] font-bold text-[#0F172A] uppercase tracking-wider mb-2">
+                  <h4 className="text-[13px] font-bold text-navy uppercase tracking-wider mb-2">
                     Key Agent Capabilities
                   </h4>
                   <ul className="flex flex-col gap-2">
                     {agents[activeAgent].capabilities.map((cap, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-[#475569]">
-                        <Check size={16} className="text-[#059669] mt-0.5 shrink-0" />
+                      <li key={index} className="flex items-start gap-2 text-sm text-soft">
+                        <Check size={16} className="text-emerald mt-0.5 shrink-0" />
                         <span>{cap}</span>
                       </li>
                     ))}
@@ -431,20 +431,20 @@ Sourcing-Team`
             </div>
 
             {/* Interactive Terminal Console */}
-            <div className="bg-[#0F172A] rounded-lg border border-[#1E293B] overflow-hidden flex flex-col shadow-xs">
-              <div className="flex items-center justify-between bg-[#1E293B] px-4 py-2.5 border-b border-[#0F172A]">
+            <div className="bg-navy rounded-lg border border-navy-light overflow-hidden flex flex-col shadow-xs">
+              <div className="flex items-center justify-between bg-navy-light px-4 py-2.5 border-b border-navy">
                 <div className="flex items-center gap-2">
-                  <Terminal size={14} className="text-[#CBD5E1]" />
-                  <span className="text-xs font-mono font-semibold text-[#CBD5E1]">agent_simulation_terminal.log</span>
+                  <Terminal size={14} className="text-line-dark" />
+                  <span className="text-xs font-mono font-semibold text-line-dark">agent_simulation_terminal.log</span>
                 </div>
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-red" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-orange" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-light" />
                 </div>
               </div>
 
-              <div className="p-5 font-mono text-[13px] min-h-[180px] max-h-[260px] overflow-y-auto flex flex-col gap-1.5 bg-[#0F172A] text-slate-300">
+              <div className="p-5 font-mono text-[13px] min-h-[180px] max-h-[260px] overflow-y-auto flex flex-col gap-1.5 bg-navy text-slate-300">
                 {simulatedLogs.length === 0 ? (
                   <div className="text-slate-500 italic flex items-center justify-center h-[140px]">
                     Click "Run Demo" above to watch the agent think and perform operations.
@@ -454,9 +454,9 @@ Sourcing-Team`
                     <div 
                       key={index}
                       className={`leading-relaxed border-l-2 pl-3 py-0.5 ${
-                        log && log.startsWith('🚀') ? 'text-[#3B82F6] border-[#3B82F6]' :
-                        log && log.startsWith('✅') ? 'text-[#10B981] border-[#10B981]' :
-                        log && log.startsWith('⚠️') ? 'text-[#F59E0B] border-[#F59E0B]' :
+                        log && log.startsWith('🚀') ? 'text-blue-light border-blue-light' :
+                        log && log.startsWith('✅') ? 'text-emerald-light border-emerald-light' :
+                        log && log.startsWith('⚠️') ? 'text-orange border-orange' :
                         'text-slate-300 border-slate-700'
                       }`}
                     >
@@ -476,9 +476,9 @@ Sourcing-Team`
 
             {/* Outcome Display (Triggered after simulation finishes) */}
             {showOutcome && (
-              <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 shadow-xs animate-fade-in">
-                <h3 className="text-base font-bold text-[#0F172A] border-b border-[#F1F5F9] pb-3 mb-4 flex items-center gap-2">
-                  <CheckCircle2 size={18} className="text-[#059669]" />
+              <div className="bg-white rounded-lg border border-line p-6 shadow-xs animate-fade-in">
+                <h3 className="text-base font-bold text-navy border-b border-surface pb-3 mb-4 flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-emerald" />
                   Simulation Result: {agents[activeAgent].outcome.title}
                 </h3>
 
@@ -486,7 +486,7 @@ Sourcing-Team`
                 
                 {/* 1. TABLE Outcome */}
                 {agents[activeAgent].outcome.type === 'table' && (
-                  <div className="overflow-x-auto rounded-md border border-[#E2E8F0]">
+                  <div className="overflow-x-auto rounded-md border border-line">
                     <table className="data-table">
                       <thead>
                         <tr>
@@ -500,11 +500,11 @@ Sourcing-Team`
                       <tbody>
                         {agents[activeAgent].outcome.data.map((row, idx) => (
                           <tr key={idx}>
-                            <td className="font-semibold text-[#0F172A]">{row.company}</td>
+                            <td className="font-semibold text-navy">{row.company}</td>
                             <td>{row.country}</td>
                             <td>{row.volume}</td>
                             <td>
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0]">
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-pale text-emerald-dark border border-emerald-border">
                                 {row.reliability}
                               </span>
                             </td>
@@ -520,23 +520,23 @@ Sourcing-Team`
                 {agents[activeAgent].outcome.type === 'list' && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {agents[activeAgent].outcome.data.map((row, idx) => (
-                      <div key={idx} className="border border-[#E2E8F0] rounded-md p-4 bg-[#F8FAFC]">
+                      <div key={idx} className="border border-line rounded-md p-4 bg-page">
                         <div className="flex justify-between items-start mb-2">
-                          <span className="font-bold text-[#0F172A]">{row.country}</span>
-                          <span className="text-xs font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded">
+                          <span className="font-bold text-navy">{row.country}</span>
+                          <span className="text-xs font-bold text-blue bg-blue-pale px-2 py-0.5 rounded">
                             Score: {row.score}
                           </span>
                         </div>
-                        <div className="text-xs text-[#64748B] flex flex-col gap-1 mt-3">
+                        <div className="text-xs text-muted flex flex-col gap-1 mt-3">
                           <div className="flex justify-between">
                             <span>Import Tariff:</span>
-                            <span className="font-medium text-[#334155]">{row.tariff}</span>
+                            <span className="font-medium text-ink">{row.tariff}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>5-Yr CAGR:</span>
-                            <span className="font-medium text-[#334155]">{row.growth}</span>
+                            <span className="font-medium text-ink">{row.growth}</span>
                           </div>
-                          <div className="mt-2 text-center text-[10px] font-bold text-[#047857] bg-[#ECFDF5] py-1 rounded border border-[#A7F3D0]">
+                          <div className="mt-2 text-center text-[10px] font-bold text-emerald-dark bg-emerald-pale py-1 rounded border border-emerald-border">
                             {row.status}
                           </div>
                         </div>
@@ -547,14 +547,14 @@ Sourcing-Team`
 
                 {/* 3. EMAIL Outcome */}
                 {agents[activeAgent].outcome.type === 'email' && (
-                  <div className="border border-[#E2E8F0] rounded-md overflow-hidden bg-[#F8FAFC]">
-                    <div className="bg-[#E2E8F0]/40 px-4 py-2.5 border-b border-[#E2E8F0] text-xs font-mono">
+                  <div className="border border-line rounded-md overflow-hidden bg-page">
+                    <div className="bg-line/40 px-4 py-2.5 border-b border-line text-xs font-mono">
                       <div className="mb-1 text-slate-500">
                         <span className="font-bold text-slate-700">Subject: </span>
                         {agents[activeAgent].outcome.subject}
                       </div>
                     </div>
-                    <div className="p-4 text-xs font-mono whitespace-pre-wrap leading-relaxed text-[#334155] bg-white max-h-[220px] overflow-y-auto">
+                    <div className="p-4 text-xs font-mono whitespace-pre-wrap leading-relaxed text-ink bg-white max-h-[220px] overflow-y-auto">
                       {agents[activeAgent].outcome.body}
                     </div>
                   </div>
@@ -564,19 +564,19 @@ Sourcing-Team`
                 {agents[activeAgent].outcome.type === 'checklist' && (
                   <div className="flex flex-col gap-3">
                     {agents[activeAgent].outcome.data.map((row, idx) => (
-                      <div key={idx} className="flex items-start gap-3 border border-[#E2E8F0] rounded-md p-3.5 bg-white">
-                        <div className="p-1 rounded-full bg-[#ECFDF5] text-[#059669] mt-0.5">
+                      <div key={idx} className="flex items-start gap-3 border border-line rounded-md p-3.5 bg-white">
+                        <div className="p-1 rounded-full bg-emerald-pale text-emerald mt-0.5">
                           <Check size={14} />
                         </div>
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
-                            <h4 className="text-[13px] font-bold text-[#0F172A]">{row.check}</h4>
+                            <h4 className="text-[13px] font-bold text-navy">{row.check}</h4>
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200">
                               {row.status}
                             </span>
                           </div>
-                          <p className="text-[11px] text-[#64748B] mt-0.5">Authority: {row.authority}</p>
-                          <div className="mt-2 text-xs font-medium text-[#2563EB] bg-[#EFF6FF] px-2 py-1 rounded inline-block">
+                          <p className="text-[11px] text-muted mt-0.5">Authority: {row.authority}</p>
+                          <div className="mt-2 text-xs font-medium text-blue bg-blue-pale px-2 py-1 rounded inline-block">
                             Required Action: {row.action}
                           </div>
                         </div>
@@ -588,26 +588,26 @@ Sourcing-Team`
                 {/* 5. SCORING Outcome */}
                 {agents[activeAgent].outcome.type === 'scoring' && (
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div className="md:col-span-4 flex flex-col items-center justify-center border border-[#E2E8F0] rounded-md p-5 bg-[#F8FAFC] text-center">
-                      <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider block mb-1">Overall Fit Score</span>
-                      <div className="text-5xl font-black text-[#2563EB] my-2">{agents[activeAgent].outcome.score}</div>
-                      <span className="text-xs font-bold text-[#059669] bg-[#ECFDF5] px-3 py-1 rounded-full border border-[#A7F3D0]">
+                    <div className="md:col-span-4 flex flex-col items-center justify-center border border-line rounded-md p-5 bg-page text-center">
+                      <span className="text-xs font-bold text-muted uppercase tracking-wider block mb-1">Overall Fit Score</span>
+                      <div className="text-5xl font-black text-blue my-2">{agents[activeAgent].outcome.score}</div>
+                      <span className="text-xs font-bold text-emerald bg-emerald-pale px-3 py-1 rounded-full border border-emerald-border">
                         Tier-1 Match
                       </span>
                     </div>
 
                     <div className="md:col-span-8 flex flex-col gap-3">
-                      <h4 className="text-[12px] font-bold text-[#0F172A] uppercase tracking-wider pl-1">Capability Breakdown</h4>
+                      <h4 className="text-[12px] font-bold text-navy uppercase tracking-wider pl-1">Capability Breakdown</h4>
                       <div className="flex flex-col gap-2">
                         {agents[activeAgent].outcome.metrics.map((row, idx) => (
                           <div key={idx}>
-                            <div className="flex justify-between text-xs text-[#334155] mb-1">
+                            <div className="flex justify-between text-xs text-ink mb-1">
                               <span className="font-semibold">{row.name}</span>
                               <span className="font-medium text-slate-500">{row.rating} ({row.score}/100)</span>
                             </div>
-                            <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                            <div className="w-full bg-line h-2 rounded-full overflow-hidden">
                               <div 
-                                className="bg-[#2563EB] h-full rounded-full transition-all duration-500" 
+                                className="bg-blue h-full rounded-full transition-all duration-500" 
                                 style={{ width: `${row.score}%` }} 
                               />
                             </div>
