@@ -127,7 +127,7 @@ NODE_BACKEND_URL=http://localhost:3000
 
 The agent reads **`GOOGLE_API_KEY`**, not `GEMINI_API_KEY`. Retain its SQLite `DATABASE_URL`; do not copy the backend PostgreSQL URL into this file. `NODE_BACKEND_URL` is read directly by the market-research route and can be added even though it is absent from the example file.
 
-The example pins `GEMINI_MODEL=gemini-2.5-flash-preview-05-20`. That is a code default, not a guarantee that the model remains available to your key. If the provider rejects it, set `GEMINI_MODEL` to an available compatible Gemini model. RAG also requests `models/text-embedding-004`; access to that embedding model is needed when seeding the knowledge base.
+The default is `GEMINI_MODEL=gemini-3.6-flash`, a stable model ID listed in Google's Gemini API documentation: https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash. RAG also requests `models/text-embedding-004`; access to that embedding model is needed when seeding the knowledge base.
 
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8000 --reload

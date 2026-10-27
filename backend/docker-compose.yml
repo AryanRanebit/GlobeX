@@ -94,7 +94,7 @@ services:
       - "8000:8000"
     environment:
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
-      GEMINI_MODEL: gemini-2.5-flash-preview-05-20
+      GEMINI_MODEL: gemini-3.6-flash
       # Point to the shared ChromaDB service (container-internal address)
       CHROMA_HOST: http://chromadb:8000
       CHROMA_PERSIST_DIR: ./database/chroma_db
