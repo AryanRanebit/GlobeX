@@ -34,7 +34,7 @@ export default function Solutions({ onOpenAuth }) {
             Stop Guessing Where to Export. Scale with Verified Intelligence.
           </h2>
           <p className="text-base md:text-[17px] text-[#475569] leading-relaxed">
-            Indian exporters lose months chasing unverified directories and high-friction trade leads. GlobeX consolidates direct customs records, automated buyer verification, and tariff intelligence into one actionable workspace.
+            Indian exporters lose months chasing unverified directories and stale lead lists. GlobeX consolidates official UN Comtrade trade data, automated buyer discovery, and tariff compliance into one actionable workspace.
           </p>
         </div>
 

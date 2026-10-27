@@ -123,6 +123,14 @@ export default function App() {
           <MarketIntelligence 
             searchQuery={searchQuery} 
             onSearchChange={setSearchQuery} 
+            onNavigateToBuyers={(country) => {
+              setSearchQuery(country);
+              setDashboardPage('buyers');
+              const url = new URL(window.location.href);
+              url.searchParams.set('search', country);
+              url.searchParams.set('tab', 'buyers');
+              window.history.pushState({ search: country, tab: 'buyers' }, '', url.toString());
+            }}
           />
         )}
         {dashboardPage === 'copilot' && <AICopilot />}

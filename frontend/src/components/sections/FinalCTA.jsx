@@ -13,7 +13,7 @@ export default function FinalCTA({ onOpenAuth }) {
           Start Making Data-Driven Export Decisions
         </h2>
         <p className="text-base text-[#CBD5E1] mb-8 max-w-xl mx-auto leading-relaxed">
-          Join 500+ Indian exporters using GlobeX to identify markets, discover buyers, and grow international revenue.
+          Access official UN Comtrade export intelligence, commodity trade flows, and evidence-based buyer discovery for Indian businesses.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
           <button

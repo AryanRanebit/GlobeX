@@ -42,13 +42,13 @@ const TRADE_VOLUME_DATA = [
 ];
 
 const TOP_MARKETS_DATA = [
-  { country: 'US', fullName: 'United States', volume: 840, share: '24%' },
-  { country: 'UAE', fullName: 'United Arab Emirates', volume: 620, share: '18%' },
-  { country: 'NL', fullName: 'Netherlands', volume: 490, share: '14%' },
-  { country: 'DE', fullName: 'Germany', volume: 420, share: '12%' },
-  { country: 'UK', fullName: 'United Kingdom', volume: 360, share: '10%' },
-  { country: 'SA', fullName: 'Saudi Arabia', volume: 290, share: '8%' },
-  { country: 'JP', fullName: 'Japan', volume: 210, share: '6%' },
+  { country: 'USA', fullName: 'United States', volume: 2671, share: '31.8%' },
+  { country: 'UK', fullName: 'United Kingdom', volume: 794, share: '9.5%' },
+  { country: 'UAE', fullName: 'United Arab Emirates', volume: 629, share: '7.5%' },
+  { country: 'ES', fullName: 'Spain', volume: 470, share: '5.6%' },
+  { country: 'DE', fullName: 'Germany', volume: 376, share: '4.5%' },
+  { country: 'NL', fullName: 'Netherlands', volume: 311, share: '3.7%' },
+  { country: 'FR', fullName: 'France', volume: 298, share: '3.6%' },
 ];
 
 function CustomLineTooltip({ active, payload, label }) {
@@ -77,10 +77,13 @@ function CustomBarTooltip({ active, payload }) {
       <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] shadow-md text-xs">
         <p className="font-bold text-[#0F172A]">{data.fullName}</p>
         <p className="text-[#2563EB] font-semibold mt-0.5">
-          Volume: <span className="font-bold">{data.volume} Tons</span>
+          India FOB Exports: <span className="font-bold">${data.volume >= 1000 ? `${(data.volume / 1000).toFixed(2)}B` : `${data.volume}M`} USD</span>
         </p>
         <p className="text-[#059669] font-medium">
-          Global Share: {data.share}
+          Share of India Exports: {data.share}
+        </p>
+        <p className="text-[#94A3B8] text-[10px] mt-1 italic">
+          Market Size: Not available from free data
         </p>
       </div>
     );
@@ -91,6 +94,20 @@ function CustomBarTooltip({ active, payload }) {
 export default function DashboardHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{"name":"Aryan Rane"}');
   const [viewState, setViewState] = useState('normal'); // 'normal' | 'loading' | 'empty'
+  const [buyerCount, setBuyerCount] = useState(null);
+
+  React.useEffect(() => {
+    fetch('/api/v1/buyers')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && typeof data.total === 'number') {
+          setBuyerCount(data.total);
+        } else if (Array.isArray(data?.buyers)) {
+          setBuyerCount(data.buyers.length);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col gap-6 animate-fade-in">
@@ -205,11 +222,11 @@ export default function DashboardHome() {
                   <Package size={20} />
                 </div>
                 <span className="flex items-center gap-1 text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-1 rounded-md">
-                  <TrendingUp size={12} /> +12.5%
+                  <TrendingUp size={12} /> UN Comtrade 2025
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">Active Export Volume</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">420 Tons</p>
+              <h3 className="text-[#64748B] text-sm font-medium">India HS 62 Exports</h3>
+              <p className="text-2xl font-bold text-[#0F172A] mt-1">$8.39B USD</p>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
@@ -218,11 +235,11 @@ export default function DashboardHome() {
                   <Users size={20} />
                 </div>
                 <span className="flex items-center gap-1 text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-1 rounded-md">
-                  <TrendingUp size={12} /> +4 New
+                  <TrendingUp size={12} /> Live Importers
                 </span>
               </div>
               <h3 className="text-[#64748B] text-sm font-medium">Discovered Buyers</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">1,284</p>
+              <p className="text-2xl font-bold text-[#0F172A] mt-1">{buyerCount !== null ? buyerCount : '—'}</p>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
@@ -230,12 +247,12 @@ export default function DashboardHome() {
                 <div className="w-10 h-10 rounded-lg bg-[#FFFBEB] flex items-center justify-center text-[#D97706]">
                   <FileText size={20} />
                 </div>
-                <span className="flex items-center gap-1 text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-1 rounded-md">
-                  <TrendingUp size={12} /> 2 Pending
+                <span className="flex items-center gap-1 text-xs font-semibold text-[#2563EB] bg-[#EFF6FF] px-2 py-1 rounded-md">
+                  223 Destinations
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">Active RFPs / Quotes</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">12</p>
+              <h3 className="text-[#64748B] text-sm font-medium">India Total Merchandise</h3>
+              <p className="text-2xl font-bold text-[#0F172A] mt-1">$445.8B USD</p>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
@@ -244,11 +261,11 @@ export default function DashboardHome() {
                   <Globe2 size={20} />
                 </div>
                 <span className="text-xs font-semibold text-[#2563EB] bg-[#EFF6FF] px-2 py-1 rounded-md">
-                  96% Match
+                  #1 Partner
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">Top Destination Market</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">Germany</p>
+              <h3 className="text-[#64748B] text-sm font-medium">Top Destination (HS 62)</h3>
+              <p className="text-2xl font-bold text-[#0F172A] mt-1">USA ($2.67B)</p>
             </div>
 
           </div>
@@ -302,11 +319,11 @@ export default function DashboardHome() {
             <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-[#0F172A]">Top Destination Markets</h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">Annual export volume breakdown by country (Tons)</p>
+                  <h2 className="text-base font-bold text-[#0F172A]">Top Destination Markets (HS 62)</h2>
+                  <p className="text-xs text-[#64748B] mt-0.5">India-reported exports (FOB) in $M USD — Source: UN Comtrade 2025</p>
                 </div>
                 <span className="px-2.5 py-1 bg-[#ECFDF5] text-[#059669] text-xs font-semibold rounded-md border border-[#A7F3D0]">
-                  7 Active Corridors
+                  196 Destinations
                 </span>
               </div>
 

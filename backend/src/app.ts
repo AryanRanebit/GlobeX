@@ -47,7 +47,7 @@ export const createApp = () => {
   // Stricter limiter for auth routes
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: env.NODE_ENV === 'development' ? 200 : 10,
     message: { success: false, message: 'Too many auth attempts. Please try again in 15 minutes.' },
   });
 

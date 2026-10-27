@@ -12,12 +12,19 @@ export interface TradeMarketRow {
   rank?: number;
   partnerName: string;
   partnerIso3: string | null;
-  tradeValueUsd: number;
+  tradeValueUsd: number; // Kept for backwards compatibility: India-reported exports
+  indiaExportValueUsd: number;
+  indiaExportLabel: string;
+  destinationMarketSizeUsd: number | null;
+  destinationMarketSizeStatus: 'Not available from free data' | 'Available (Destination-reported imports CIF)';
+  indiaShareOfDestinationImportPct: number | null;
+  indiaShareStatus: 'Not available from free data' | 'Available';
+  shareOfIndiaExportsPct?: number;
+  shareOfTotal?: number; // Kept for backwards compatibility
   netWeightKg: number | null;
   period: string;
   cmdCode: string;
   cmdDescription: string | null;
-  shareOfTotal?: number;
 }
 
 export interface TradeMarketsResponse {
@@ -34,6 +41,11 @@ export interface TradeMarketsResponse {
     worldTotalUsd: number | null;
     fetchedAt: string;
     origin: 'seed' | 'api-cache' | 'live';
+    dataSemantics: {
+      indiaReportedExports: string;
+      destinationMarketSize: string;
+      indiaShareOfDestination: string;
+    };
   };
 }
 
@@ -44,6 +56,12 @@ export const tradeService = {
    * By default, filters out "World" row from destination markets
    * so that destination rankings accurately show top partner countries (#1 USA, #2 UK, #3 UAE, etc.)
    * while preserving the global aggregate in meta.worldTotalUsd.
+   *
+   * CRITICAL DATA SEMANTICS CONTRACT:
+   * - India-reported exports (FOB) represent what India exported to partner.
+   * - Destination market size MUST be sourced from destination-reported imports from World (flow='M', partner='0').
+   * - If destination-reported import data is missing, destinationMarketSizeStatus = "Not available from free data"
+   *   and destinationMarketSizeUsd = null. The India export figure is NEVER substituted as market size.
    */
   async getMarkets(options: {
     hs?: string;
@@ -85,13 +103,14 @@ export const tradeService = {
       };
     }
 
-    const [rows, totalMarkets, worldRow, latestRow] = await Promise.all([
+    const [rows, totalMarkets, worldRow, latestRow, destinationImports, destinationFromIndia] = await Promise.all([
       prisma.tradeFlow.findMany({
         where,
         orderBy: { [sortBy]: sortDir },
         skip: offset,
         take: limit,
         select: {
+          partnerCode: true,
           partnerName: true,
           partnerIso3: true,
           tradeValueUsd: true,
@@ -113,22 +132,64 @@ export const tradeService = {
         orderBy: { fetchedAt: 'desc' },
         select: { fetchedAt: true, source: true, cmdDescription: true },
       }),
+      // Look up destination-reported imports from World (flow='M', partner='0')
+      prisma.tradeFlow.findMany({
+        where: { partnerCode: '0', period: year, flowCode: 'M', cmdCode: hs },
+        select: { reporterCode: true, tradeValueUsd: true },
+      }),
+      // Look up destination-reported imports from India (flow='M', partner='699')
+      prisma.tradeFlow.findMany({
+        where: { partnerCode: '699', period: year, flowCode: 'M', cmdCode: hs },
+        select: { reporterCode: true, tradeValueUsd: true },
+      }),
     ]);
 
     const worldTotal = worldRow?.tradeValueUsd ?? null;
 
-    // Attach rank and share of total
-    const rankedMarkets: TradeMarketRow[] = rows.map((r, idx) => ({
-      rank: offset + idx + 1,
-      partnerName: r.partnerName,
-      partnerIso3: r.partnerIso3,
-      tradeValueUsd: r.tradeValueUsd,
-      netWeightKg: r.netWeightKg,
-      period: r.period,
-      cmdCode: r.cmdCode,
-      cmdDescription: r.cmdDescription,
-      shareOfTotal: worldTotal && worldTotal > 0 ? (r.tradeValueUsd / worldTotal) * 100 : undefined,
-    }));
+    // Build lookup maps for destination-reported figures if present
+    const destMarketSizeMap = new Map<string, number>();
+    for (const d of destinationImports) {
+      destMarketSizeMap.set(d.reporterCode, d.tradeValueUsd);
+    }
+
+    const destFromIndiaMap = new Map<string, number>();
+    for (const d of destinationFromIndia) {
+      destFromIndiaMap.set(d.reporterCode, d.tradeValueUsd);
+    }
+
+    // Attach rankings and enforce strict separation between India exports and destination market size
+    const rankedMarkets: TradeMarketRow[] = rows.map((r, idx) => {
+      const destImportTotal = destMarketSizeMap.get(r.partnerCode) ?? null;
+      const destImportFromIndia = destFromIndiaMap.get(r.partnerCode) ?? null;
+
+      const hasDestData = destImportTotal !== null && destImportTotal > 0;
+      const indiaSharePct = hasDestData && destImportFromIndia !== null
+        ? (destImportFromIndia / destImportTotal!) * 100
+        : null;
+
+      const shareOfIndiaExports = worldTotal && worldTotal > 0
+        ? (r.tradeValueUsd / worldTotal) * 100
+        : undefined;
+
+      return {
+        rank: offset + idx + 1,
+        partnerName: r.partnerName,
+        partnerIso3: r.partnerIso3,
+        tradeValueUsd: r.tradeValueUsd,
+        indiaExportValueUsd: r.tradeValueUsd,
+        indiaExportLabel: 'India-Reported Exports (FOB)',
+        destinationMarketSizeUsd: destImportTotal,
+        destinationMarketSizeStatus: hasDestData ? 'Available (Destination-reported imports CIF)' : 'Not available from free data',
+        indiaShareOfDestinationImportPct: indiaSharePct,
+        indiaShareStatus: indiaSharePct !== null ? 'Available' : 'Not available from free data',
+        shareOfIndiaExportsPct: shareOfIndiaExports,
+        shareOfTotal: shareOfIndiaExports, // Compatibility
+        netWeightKg: r.netWeightKg,
+        period: r.period,
+        cmdCode: r.cmdCode,
+        cmdDescription: r.cmdDescription,
+      };
+    });
 
     // Determine provenance origin flag
     let origin: 'seed' | 'api-cache' | 'live' = 'seed';
@@ -150,6 +211,11 @@ export const tradeService = {
         worldTotalUsd: worldTotal,
         fetchedAt: latestRow?.fetchedAt?.toISOString() ?? new Date().toISOString(),
         origin,
+        dataSemantics: {
+          indiaReportedExports: 'Merchandise exports reported by India (FOB). Does NOT represent destination total market size.',
+          destinationMarketSize: 'Total imports declared by destination from World (flow=M, partner=0). Shows "Not available from free data" if destination import series is unseeded.',
+          indiaShareOfDestination: 'Destination imports from India / Destination imports from World. Shows "Not available from free data" when destination import series is unseeded.',
+        },
       },
     };
   },
