@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Menu, X, Phone, Mail } from 'lucide-react';
+import { BarChart3, Menu, X } from 'lucide-react';
 
 export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -41,33 +41,33 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   return (
     <>
       {/* Top info bar */}
-      <div className="hidden md:block w-full bg-[#0F172A] text-white text-[11px] py-1.5 border-b border-[#1E293B]">
+      <div className="hidden md:block w-full bg-navy text-white text-[11px] py-1.5 border-b border-navy-light">
         <div className="section-container flex items-center justify-between">
-          <div className="flex items-center gap-2 text-[#CBD5E1]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] inline-block" />
+          <div className="flex items-center gap-2 text-line-dark">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-light inline-block" />
             <span>Official Source: UN Comtrade 2025 Merchandise Export Statistics</span>
           </div>
-          <div className="flex items-center gap-4 text-[#94A3B8]">
+          <div className="flex items-center gap-4 text-faint">
             <span>Reporter: India (699)</span>
             <span>223 Global Destination Markets</span>
-            <span className="text-[#38BDF8]">Live Customs Desk</span>
+            <span className="text-sky">Live Customs Desk</span>
           </div>
         </div>
       </div>
 
       {/* Main navbar */}
-      <nav className={`sticky top-0 w-full z-50 transition-shadow duration-200 bg-white border-b border-[#E5E7EB] ${isScrolled ? 'shadow-sm' : ''}`}>
+      <nav className={`sticky top-0 w-full z-50 transition-shadow duration-200 bg-white border-b border-line ${isScrolled ? 'shadow-sm' : ''}`}>
         <div className="section-container flex items-center justify-between h-14">
           {/* Logo */}
           <a 
-            href="#" 
+            href="/" 
             onClick={(e) => { e.preventDefault(); onNavigate('landing'); }}
             className="flex items-center gap-2"
           >
-            <div className="w-7 h-7 rounded bg-[#2563EB] flex items-center justify-center">
+            <div className="w-7 h-7 rounded bg-blue flex items-center justify-center">
               <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
             </div>
-            <span className="text-lg font-bold text-[#0F172A] tracking-tight font-heading">GlobeX</span>
+            <span className="text-lg font-bold text-navy tracking-tight font-heading">GlobeX</span>
           </a>
 
           {/* Desktop Nav */}
@@ -79,8 +79,8 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
                 onClick={(e) => handleLinkClick(e, link)}
                 className={`text-sm font-semibold transition-colors ${
                   link.isActive 
-                    ? 'text-[#2563EB]' 
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'text-blue' 
+                    : 'text-muted hover:text-navy'
                 }`}
               >
                 {link.name}
@@ -92,7 +92,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
           <div className="hidden md:flex items-center gap-3">
             <button
               onClick={onOpenAuth}
-              className="text-sm font-semibold text-[#334155] hover:text-[#0F172A] py-1.5 px-3 transition-colors"
+              className="text-sm font-semibold text-ink hover:text-navy py-1.5 px-3 transition-colors"
             >
               Sign In
             </button>
@@ -105,7 +105,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
           </div>
 
           {/* Mobile Hamburger */}
-          <button className="md:hidden text-[#334155]" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
+          <button className="md:hidden text-ink" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
             <Menu size={22} />
           </button>
         </div>
@@ -114,14 +114,14 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[60] bg-white flex flex-col">
-          <div className="flex justify-between items-center p-4 border-b border-[#E5E7EB]">
-            <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('landing'); setMobileMenuOpen(false); }} className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-[#2563EB] flex items-center justify-center">
+          <div className="flex justify-between items-center p-4 border-b border-line">
+            <a href="/" onClick={(e) => { e.preventDefault(); onNavigate('landing'); setMobileMenuOpen(false); }} className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded bg-blue flex items-center justify-center">
                 <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
               </div>
-              <span className="text-base font-bold text-[#0F172A]">GlobeX</span>
+              <span className="text-base font-bold text-navy">GlobeX</span>
             </a>
-            <button className="text-[#64748B] p-2" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+            <button className="text-muted p-2" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
               <X size={20} />
             </button>
           </div>
@@ -131,15 +131,15 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
                 key={link.name} 
                 href={link.href} 
                 onClick={(e) => handleLinkClick(e, link)}
-                className={`text-[15px] font-medium py-3 border-b border-[#F1F5F9] ${
-                  link.isActive ? 'text-[#2563EB]' : 'text-[#0F172A]'
+                className={`text-[15px] font-medium py-3 border-b border-surface ${
+                  link.isActive ? 'text-blue' : 'text-navy'
                 }`}
               >
                 {link.name}
               </a>
             ))}
           </div>
-          <div className="p-5 flex flex-col gap-2.5 border-t border-[#E5E7EB]">
+          <div className="p-5 flex flex-col gap-2.5 border-t border-line">
             <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-secondary w-full py-2.5 text-[13px]">Sign In</button>
             <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-primary w-full py-2.5 text-[13px]">Book a Free Demo</button>
           </div>
