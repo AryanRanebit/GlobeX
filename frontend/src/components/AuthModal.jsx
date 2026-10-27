@@ -44,8 +44,8 @@ function InputField({ id, label, type = 'text', placeholder, icon: Icon, value, 
   );
 }
 
-export default function AuthModal({ isOpen, onClose }) {
-  const [tab, setTab] = useState('signup');
+export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
+  const [tab, setTab] = useState(initialTab);
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPass, setSignupPass] = useState('');
@@ -57,6 +57,10 @@ export default function AuthModal({ isOpen, onClose }) {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) switchTab(initialTab);
+  }, [isOpen, initialTab]);
 
   // Lock body scroll while open
   useEffect(() => {
@@ -125,6 +129,43 @@ export default function AuthModal({ isOpen, onClose }) {
   const blurValidate = (field) => {
     const errs = validate([field]);
     setFieldErrors(prev => ({ ...prev, [field]: errs[field] }));
+  };
+
+  const handleDemoLogin = async () => {
+    setError('');
+    setSuccess('');
+    setLoading(true);
+    try {
+      let res;
+      const options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
+      };
+      try {
+        res = await fetch('/api/v1/auth/login', options);
+      } catch {
+        res = await fetch('http://localhost:3000/api/v1/auth/login', options);
+      }
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.errors?.[0]?.message || data.message || 'Demo sign-in failed. Please try again.');
+        return;
+      }
+      localStorage.setItem('token', data.data?.tokens?.accessToken || data.tokens?.accessToken || '');
+      localStorage.setItem('refreshToken', data.data?.tokens?.refreshToken || data.tokens?.refreshToken || '');
+      localStorage.setItem('user', JSON.stringify(data.data?.user || data.user));
+      setSuccess('Demo account ready. Welcome to GlobeX!');
+      setTimeout(() => {
+        onClose();
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setError('Cannot connect to server. Make sure the backend is running.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async e => {
@@ -316,6 +357,13 @@ export default function AuthModal({ isOpen, onClose }) {
             }
           </button>
         </form>
+
+        {tab === 'signin' && (
+          <button type="button" onClick={handleDemoLogin} disabled={loading}
+            className="w-full mt-3 py-2 text-[13px] font-semibold text-blue border border-blue-soft rounded hover:bg-blue-pale disabled:opacity-60 disabled:cursor-not-allowed">
+            {loading ? 'Signing in...' : 'Try demo account'}
+          </button>
+        )}
 
         <p className="text-[11px] text-muted text-center mt-4">
           {tab === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
