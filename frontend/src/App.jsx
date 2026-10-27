@@ -5,7 +5,6 @@ import TrustBar from './components/sections/TrustBar';
 import Solutions from './components/sections/Solutions';
 import HowItWorks from './components/sections/HowItWorks';
 import DashboardPreview from './components/sections/DashboardPreview';
-import Testimonials from './components/sections/Testimonials';
 import Pricing from './components/sections/Pricing';
 import FAQ from './components/sections/FAQ';
 import FinalCTA from './components/sections/FinalCTA';
@@ -157,7 +156,6 @@ export default function App() {
           <Solutions onOpenAuth={() => setAuthOpen(true)} />
           <HowItWorks />
           <DashboardPreview />
-          <Testimonials />
           <Pricing onOpenAuth={() => setAuthOpen(true)} />
           <FAQ />
           <FinalCTA onOpenAuth={() => setAuthOpen(true)} />
