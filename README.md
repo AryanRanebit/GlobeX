@@ -25,7 +25,7 @@ Source: [UN Comtrade, United Nations Statistics Division](https://comtradeplus.u
 - **Leads CRM API:** stores leads, pipeline stages, notes, and follow-up information. A full dashboard Kanban board is not implemented.
 - **Outreach drafts:** generates and stores email subject/body drafts through the agent, with a template fallback. It does **not** deliver email. Review company claims, certifications, and contact details before using a draft.
 - **Authentication:** email/password registration and sign-in, JWT access/refresh tokens, and an explicit demo-account button. A Google-token backend route exists, but Google sign-in is not wired into the frontend.
-- **AI service and Copilot:** the FastAPI service implements Gemini/LangChain chat, trade-assistance tools, Chroma RAG, and SQLite session memory. **The dashboard Copilot on this branch still returns labelled simulated replies.** The Express chat API proxies to the agent but returns a labelled mock response if it cannot reach it. End-to-end Copilot wiring and tool-grounded trade-number answers are not yet part of this branch.
+- **AI service and Copilot:** the dashboard Copilot sends authenticated chat requests to the Express chat API, which proxies them to the Gemini/LangChain agent. The agent has trade-data tools and a grounded-numbers rule: figures must come from tool results and cite UN Comtrade 2025, India-reported FOB; without tool data, it must say the figure is not available. If the agent cannot be reached, the Express API retains a labelled mock fallback; the Copilot shows an unavailable error instead of treating that fallback as an answer. Duty and rules outputs are indicative; verify them with a customs broker.
 
 Other API modules cover products, compliance lookups, and dashboard summaries. Some dashboard content and seeded business records are demo data. The project does not promise live tariffs, verified company revenue/import volumes, or production-ready export advice.
 
@@ -186,11 +186,10 @@ Backend tests include database/integration workflows. Configure an isolated test
 - A destination's share of **India's exports** is a different metric and can be calculated from the seeded World export total.
 - **UN Comtrade does not supply company-level buyer records.** Buyer prospects, websites, contact details, heuristic scores, and any AI commentary must not be presented as customs-verified company data. Legacy sample-buyer flags are test fixtures, not verification evidence.
 - One annual snapshot cannot establish multi-year growth, predictive model accuracy, or tariff/compliance validity. HS suggestions, duties, regulations, and generated documents need independent checks before commercial use.
-- Chroma's trade knowledge documents provide retrieval context, not a live official rules feed. The current Copilot demo and backend mock fallback are not sources for trade figures.
+- Chroma's trade knowledge documents provide retrieval context, not a live official rules feed. The backend mock fallback is not a source for trade figures.
 
 ## Roadmap
 
-- Complete end-to-end Copilot wiring and enforce tool-grounded numbers in agent answers.
 - Deploy and configure the backend and Python service with reliable health checks and production migration handling.
 - Add reviewed outreach email delivery, rather than draft generation only.
 - Extend official data coverage across years and HS codes, including destination-reported imports.
