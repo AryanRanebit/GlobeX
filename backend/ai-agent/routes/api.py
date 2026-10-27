@@ -462,8 +462,24 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
         cmd_code = meta.get("cmdCode", target_hs)
         cmd_desc = meta.get("cmdDescription", "Commodity")
 
+        # Prior-year lookup so growth is only reported when real data exists for both years
+        prior_year = str(int(meta.get("period", "2025")) - 1)
+        prior_info = await _fetch_trade_market_data(cmd_code, prior_year)
+        prior_by_partner: dict[str, float] = {}
+        if prior_info:
+            for pm in prior_info["markets"]:
+                prior_by_partner[pm.get("partnerName", "")] = float(pm.get("indiaExportValueUsd") or pm.get("tradeValueUsd") or 0.0)
+
+        top_markets = markets[:5]
+        max_fob = max((float(m.get("indiaExportValueUsd") or m.get("tradeValueUsd") or 0.0) for m in top_markets), default=0.0)
+        period_label = meta.get("period", "2025")
+        scope_note = (
+            f"HS {cmd_code} ({cmd_desc})" if cmd_code != "TOTAL"
+            else "all goods (no product-specific HS data is seeded for this product, so this is India's overall export picture, not this product's)"
+        )
+
         recommended_countries: list[MarketResearchCountry] = []
-        for idx, m in enumerate(markets[:5]):
+        for idx, m in enumerate(top_markets):
             partner = m.get("partnerName", "Unknown")
             iso3 = m.get("partnerIso3", "XX") or "XX"
             iso2 = ISO3_TO_ISO2.get(iso3, iso3[:2].upper())
@@ -471,23 +487,30 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
             fob_str = f"${fob_val / 1e9:.2f}B" if fob_val >= 1e9 else f"${fob_val / 1e6:.1f}M"
             share_pct = float(m.get("shareOfIndiaExportsPct") or m.get("shareOfTotal") or 0.0)
 
-            score = max(50, 95 - idx * 6)
-            comp = "High" if idx < 2 else "Medium"
+            # Computed score: this market's India-reported export value as a % of the largest
+            # market in the list. It measures existing trade-lane size only, not future demand.
+            score = round(100 * fob_val / max_fob) if max_fob > 0 else 0
+
+            prior_val = prior_by_partner.get(partner)
+            if prior_val and prior_val > 0:
+                growth = f"{(fob_val / prior_val - 1) * 100:+.1f}% vs {prior_year}"
+            else:
+                growth = f"Not available (no {prior_year} data seeded)"
 
             recommended_countries.append(MarketResearchCountry(
                 country=partner,
                 countryCode=iso2,
                 demandScore=score,
-                growthRate=f"{share_pct:.1f}% share of India exports",
-                competition=comp,
+                growthRate=growth,
+                competition="N/A",
                 marketSize="Not available from free data",
-                trend="Active Trade Lane",
+                trend=f"#{idx + 1} destination by {period_label} export value",
                 insights=(
-                    f"India-reported exports (FOB): {fob_str} ({share_pct:.1f}% of total). "
-                    f"Official UN Comtrade 2025 Rank #{idx + 1}. "
-                    f"Destination domestic market size: Not available from free data."
+                    f"India-reported exports (FOB): {fob_str} ({share_pct:.1f}% of India's exports in scope). "
+                    f"UN Comtrade {period_label} rank #{idx + 1}. "
+                    f"Competition and destination market size: not available from this data."
                 ),
-                dataReliability="official_un_comtrade_2025",
+                dataReliability=f"official_un_comtrade_{period_label}",
             ))
 
         # Step 5: Optionally enrich with qualitative LLM strategic context (without modifying trade numbers)
@@ -536,7 +559,7 @@ Strict constraints:
             dataSourceMode="official_un_comtrade_2025",
             liveTradeDataProvider="UN_Comtrade_API_v1_seeded",
             recommendedCountries=recommended_countries,
-            disclaimer="Official UN Comtrade 2025 India-reported export figures (FOB). Destination market size and total import shares are not available from free single-reporter trade data.",
+            disclaimer=f"Scope: {scope_note}. Score = market's India-reported export value (FOB, UN Comtrade {period_label}) as a % of the largest listed market; it reflects existing trade volume only, not forecast demand. Growth is shown only when two years of data are seeded. Competition and destination market size are not available from free single-reporter data.",
         )
         return response_obj.model_dump()
 

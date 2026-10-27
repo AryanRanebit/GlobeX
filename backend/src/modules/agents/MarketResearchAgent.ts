@@ -62,9 +62,9 @@ class MarketResearchAgentImpl implements IMarketResearchAgent {
         recommendedCountries: data.recommendedCountries.map((c: any) => ({
           country: c.country,
           countryCode: (c.countryCode || 'XX').slice(0, 2).toUpperCase(),
-          demandScore: typeof c.demandScore === 'number' ? Math.max(0, Math.min(100, c.demandScore)) : 70,
+          demandScore: typeof c.demandScore === 'number' ? Math.max(0, Math.min(100, c.demandScore)) : 0,
           growthRate: c.growthRate || 'N/A',
-          competition: ['Low', 'Medium', 'High'].includes(c.competition) ? c.competition : 'Medium',
+          competition: ['Low', 'Medium', 'High'].includes(c.competition) ? c.competition : 'N/A',
           marketSize: c.marketSize || 'N/A',
           trend: c.trend || 'Stable',
           insights: c.insights || '',

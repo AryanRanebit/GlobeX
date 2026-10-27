@@ -8,7 +8,7 @@ export interface CountryOpportunity {
   countryCode: string;
   demandScore: number;
   growthRate: string;
-  competition: 'Low' | 'Medium' | 'High';
+  competition: 'Low' | 'Medium' | 'High' | 'N/A';
   marketSize?: string;
   trend?: string;
   insights?: string;
@@ -119,7 +119,7 @@ export const marketService = {
           growthRate: c.growthRate,
           competition: c.competition,
           marketSize: c.marketSize || 'N/A',
-          trend: c.trend || 'Stable',
+          trend: c.trend || 'N/A',
           insights: c.insights || '',
           source: 'ai_analysis',
         })),

@@ -13,13 +13,13 @@ const steps = [
     icon: BarChart3,
     number: '2',
     title: 'AI Analyzes Trade Data',
-    desc: 'Our engine queries official UN Comtrade trade flows and global demand signals to identify high-potential export destinations.',
+    desc: 'Our engine queries official UN Comtrade trade flows to rank export destinations by real trade values.',
   },
   {
     icon: ListChecks,
     number: '3',
     title: 'Review Opportunities',
-    desc: 'Explore ranked country opportunities with import volumes, growth trends, and verified buyer leads.',
+    desc: 'Explore ranked country opportunities with official export values, shares, and buyer leads.',
   },
   {
     icon: FileOutput,
