@@ -54,13 +54,13 @@ const TOP_MARKETS_DATA = [
 function CustomLineTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] shadow-md text-xs">
-        <p className="font-bold text-[#0F172A] mb-1">{label} Export Volume</p>
-        <p className="text-[#2563EB] font-semibold">
+      <div className="bg-white p-3 rounded-lg border border-line shadow-md text-xs">
+        <p className="font-bold text-navy mb-1">{label} Export Volume</p>
+        <p className="text-blue font-semibold">
           Actual: <span className="font-bold">{payload[0].value} Tons</span>
         </p>
         {payload[1] && (
-          <p className="text-[#94A3B8] font-medium">
+          <p className="text-faint font-medium">
             Benchmark: {payload[1].value} Tons
           </p>
         )}
@@ -74,15 +74,15 @@ function CustomBarTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] shadow-md text-xs">
-        <p className="font-bold text-[#0F172A]">{data.fullName}</p>
-        <p className="text-[#2563EB] font-semibold mt-0.5">
+      <div className="bg-white p-3 rounded-lg border border-line shadow-md text-xs">
+        <p className="font-bold text-navy">{data.fullName}</p>
+        <p className="text-blue font-semibold mt-0.5">
           India FOB Exports: <span className="font-bold">${data.volume >= 1000 ? `${(data.volume / 1000).toFixed(2)}B` : `${data.volume}M`} USD</span>
         </p>
-        <p className="text-[#059669] font-medium">
+        <p className="text-emerald font-medium">
           Share of India Exports: {data.share}
         </p>
-        <p className="text-[#94A3B8] text-[10px] mt-1 italic">
+        <p className="text-faint text-[10px] mt-1 italic">
           Market Size: Not available from free data
         </p>
       </div>
@@ -115,19 +115,19 @@ export default function DashboardHome() {
       {/* Welcome Section - Exactly One H1 */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F172A] font-heading">Welcome back, {user.name ? user.name.split(' ')[0] : 'Exporter'} 👋</h1>
-          <p className="text-[15px] text-[#475569] mt-1">Here is what is happening with your export pipeline today.</p>
+          <h1 className="text-2xl font-bold text-navy font-heading">Welcome back, {user.name ? user.name.split(' ')[0] : 'Exporter'} 👋</h1>
+          <p className="text-[15px] text-soft mt-1">Here is what is happening with your export pipeline today.</p>
         </div>
 
         {/* State Simulation Controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex bg-[#F1F5F9] rounded-lg p-0.5 text-xs font-semibold">
+          <div className="flex bg-surface rounded-lg p-0.5 text-xs font-semibold">
             <button
               onClick={() => setViewState('normal')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 viewState === 'normal' 
-                  ? 'bg-white text-[#0F172A] shadow-xs' 
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-white text-navy shadow-xs' 
+                  : 'text-muted hover:text-navy'
               }`}
             >
               Live Data
@@ -136,8 +136,8 @@ export default function DashboardHome() {
               onClick={() => setViewState('loading')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 viewState === 'loading' 
-                  ? 'bg-white text-[#2563EB] shadow-xs' 
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-white text-blue shadow-xs' 
+                  : 'text-muted hover:text-navy'
               }`}
             >
               Simulate Loading
@@ -146,15 +146,15 @@ export default function DashboardHome() {
               onClick={() => setViewState('empty')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 viewState === 'empty' 
-                  ? 'bg-white text-[#EF4444] shadow-xs' 
-                  : 'text-[#64748B] hover:text-[#0F172A]'
+                  ? 'bg-white text-red shadow-xs' 
+                  : 'text-muted hover:text-navy'
               }`}
             >
               Simulate Empty
             </button>
           </div>
 
-          <button className="px-3.5 py-1.5 bg-white border border-[#E2E8F0] rounded-lg text-xs font-semibold text-[#334155] hover:bg-[#F8FAFC] shadow-2xs">
+          <button className="px-3.5 py-1.5 bg-white border border-line rounded-lg text-xs font-semibold text-ink hover:bg-page shadow-2xs">
             Download Report
           </button>
         </div>
@@ -165,24 +165,24 @@ export default function DashboardHome() {
         <div className="flex flex-col gap-6 animate-pulse">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map(n => (
-              <div key={n} className="bg-white p-5 rounded-xl border border-[#E2E8F0] h-28 flex flex-col justify-between">
+              <div key={n} className="bg-white p-5 rounded-xl border border-line h-28 flex flex-col justify-between">
                 <div className="flex justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-[#F1F5F9]" />
-                  <div className="w-16 h-5 rounded bg-[#F1F5F9]" />
+                  <div className="w-10 h-10 rounded-lg bg-surface" />
+                  <div className="w-16 h-5 rounded bg-surface" />
                 </div>
-                <div className="w-24 h-4 rounded bg-[#F1F5F9]" />
+                <div className="w-24 h-4 rounded bg-surface" />
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] h-80 flex flex-col justify-between">
-              <div className="w-48 h-5 rounded bg-[#F1F5F9]" />
-              <div className="w-full h-56 rounded bg-[#F8FAFC]" />
+            <div className="bg-white p-5 rounded-xl border border-line h-80 flex flex-col justify-between">
+              <div className="w-48 h-5 rounded bg-surface" />
+              <div className="w-full h-56 rounded bg-page" />
             </div>
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] h-80 flex flex-col justify-between">
-              <div className="w-48 h-5 rounded bg-[#F1F5F9]" />
-              <div className="w-full h-56 rounded bg-[#F8FAFC]" />
+            <div className="bg-white p-5 rounded-xl border border-line h-80 flex flex-col justify-between">
+              <div className="w-48 h-5 rounded bg-surface" />
+              <div className="w-full h-56 rounded bg-page" />
             </div>
           </div>
         </div>
@@ -190,12 +190,12 @@ export default function DashboardHome() {
 
       {/* Empty State Simulator */}
       {viewState === 'empty' && (
-        <div className="bg-white rounded-xl border border-[#E2E8F0] p-12 text-center shadow-sm flex flex-col items-center justify-center my-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB] mb-4">
+        <div className="bg-white rounded-xl border border-line p-12 text-center shadow-sm flex flex-col items-center justify-center my-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-pale border border-blue-border flex items-center justify-center text-blue mb-4">
             <Inbox size={32} />
           </div>
-          <h2 className="text-lg font-bold text-[#0F172A] mb-1">No Trade Records Recorded Yet</h2>
-          <p className="text-sm text-[#64748B] max-w-md mx-auto mb-6">
+          <h2 className="text-lg font-bold text-navy mb-1">No Trade Records Recorded Yet</h2>
+          <p className="text-sm text-muted max-w-md mx-auto mb-6">
             Start by running an AI market analysis or discovering verified buyers to populate your active export dashboard.
           </p>
           <div className="flex gap-3">
@@ -216,56 +216,56 @@ export default function DashboardHome() {
           {/* Top Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[#EFF6FF] flex items-center justify-center text-[#2563EB]">
+                <div className="w-10 h-10 rounded-lg bg-blue-pale flex items-center justify-center text-blue">
                   <Package size={20} />
                 </div>
-                <span className="flex items-center gap-1 text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-1 rounded-md">
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald bg-emerald-pale px-2 py-1 rounded-md">
                   <TrendingUp size={12} /> UN Comtrade 2025
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">India HS 62 Exports</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">$8.39B USD</p>
+              <h3 className="text-muted text-sm font-medium">India HS 62 Exports</h3>
+              <p className="text-2xl font-bold text-navy mt-1">$8.39B USD</p>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[#FDF4FF] flex items-center justify-center text-[#C026D3]">
+                <div className="w-10 h-10 rounded-lg bg-fuchsia-pale flex items-center justify-center text-fuchsia">
                   <Users size={20} />
                 </div>
-                <span className="flex items-center gap-1 text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2 py-1 rounded-md">
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald bg-emerald-pale px-2 py-1 rounded-md">
                   <TrendingUp size={12} /> Live Importers
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">Discovered Buyers</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">{buyerCount !== null ? buyerCount : '—'}</p>
+              <h3 className="text-muted text-sm font-medium">Discovered Buyers</h3>
+              <p className="text-2xl font-bold text-navy mt-1">{buyerCount !== null ? buyerCount : '—'}</p>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[#FFFBEB] flex items-center justify-center text-[#D97706]">
+                <div className="w-10 h-10 rounded-lg bg-accent-subtle flex items-center justify-center text-accent">
                   <FileText size={20} />
                 </div>
-                <span className="flex items-center gap-1 text-xs font-semibold text-[#2563EB] bg-[#EFF6FF] px-2 py-1 rounded-md">
+                <span className="flex items-center gap-1 text-xs font-semibold text-blue bg-blue-pale px-2 py-1 rounded-md">
                   223 Destinations
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">India Total Merchandise</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">$445.8B USD</p>
+              <h3 className="text-muted text-sm font-medium">India Total Merchandise</h3>
+              <p className="text-2xl font-bold text-navy mt-1">$445.8B USD</p>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-lg bg-[#ECFDF5] flex items-center justify-center text-[#059669]">
+                <div className="w-10 h-10 rounded-lg bg-emerald-pale flex items-center justify-center text-emerald">
                   <Globe2 size={20} />
                 </div>
-                <span className="text-xs font-semibold text-[#2563EB] bg-[#EFF6FF] px-2 py-1 rounded-md">
+                <span className="text-xs font-semibold text-blue bg-blue-pale px-2 py-1 rounded-md">
                   #1 Partner
                 </span>
               </div>
-              <h3 className="text-[#64748B] text-sm font-medium">Top Destination (HS 62)</h3>
-              <p className="text-2xl font-bold text-[#0F172A] mt-1">USA ($2.67B)</p>
+              <h3 className="text-muted text-sm font-medium">Top Destination (HS 62)</h3>
+              <p className="text-2xl font-bold text-navy mt-1">USA ($2.67B)</p>
             </div>
 
           </div>
@@ -274,13 +274,13 @@ export default function DashboardHome() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Trade-Volume Line Chart */}
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-[#0F172A]">Monthly Trade Volume</h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">Export trajectory in Metric Tons (2025–2026)</p>
+                  <h2 className="text-base font-bold text-navy">Monthly Trade Volume</h2>
+                  <p className="text-xs text-muted mt-0.5">Export trajectory in Metric Tons (2025–2026)</p>
                 </div>
-                <span className="px-2.5 py-1 bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold rounded-md border border-[#DBEAFE]">
+                <span className="px-2.5 py-1 bg-blue-pale text-blue text-xs font-semibold rounded-md border border-blue-border">
                   +18.4% YoY
                 </span>
               </div>
@@ -316,13 +316,13 @@ export default function DashboardHome() {
             </div>
 
             {/* Top-Markets Bar Chart */}
-            <div className="bg-white p-5 rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
+            <div className="bg-white p-5 rounded-xl border border-line shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-base font-bold text-[#0F172A]">Top Destination Markets (HS 62)</h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">India-reported exports (FOB) in $M USD — Source: UN Comtrade 2025</p>
+                  <h2 className="text-base font-bold text-navy">Top Destination Markets (HS 62)</h2>
+                  <p className="text-xs text-muted mt-0.5">India-reported exports (FOB) in $M USD — Source: UN Comtrade 2025</p>
                 </div>
-                <span className="px-2.5 py-1 bg-[#ECFDF5] text-[#059669] text-xs font-semibold rounded-md border border-[#A7F3D0]">
+                <span className="px-2.5 py-1 bg-emerald-pale text-emerald text-xs font-semibold rounded-md border border-emerald-border">
                   196 Destinations
                 </span>
               </div>
@@ -351,43 +351,43 @@ export default function DashboardHome() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             {/* Recent AI Activity */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
-              <div className="p-5 border-b border-[#E2E8F0] flex justify-between items-center">
-                <h2 className="text-base font-bold text-[#0F172A] flex items-center gap-2">
-                  <Activity size={18} className="text-[#2563EB]" />
+            <div className="lg:col-span-2 bg-white rounded-xl border border-line shadow-sm flex flex-col">
+              <div className="p-5 border-b border-line flex justify-between items-center">
+                <h2 className="text-base font-bold text-navy flex items-center gap-2">
+                  <Activity size={18} className="text-blue" />
                   AI Agent Live Activity
                 </h2>
-                <button className="text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8]">View All</button>
+                <button className="text-xs font-semibold text-blue hover:text-blue-dark">View All</button>
               </div>
               <div className="p-5 flex-1 flex flex-col gap-4">
                 
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-[#EFF6FF] flex items-center justify-center shrink-0 mt-0.5">
-                    <Users size={14} className="text-[#2563EB]" />
+                  <div className="w-8 h-8 rounded-full bg-blue-pale flex items-center justify-center shrink-0 mt-0.5">
+                    <Users size={14} className="text-blue" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#334155]"><strong>Buyer Discovery Agent</strong> found 3 new high-probability importers in the EU for HS Code 6204.62.</p>
-                    <p className="text-xs text-[#94A3B8] mt-1">10 minutes ago</p>
+                    <p className="text-sm text-ink"><strong>Buyer Discovery Agent</strong> found 3 new high-probability importers in the EU for HS Code 6204.62.</p>
+                    <p className="text-xs text-faint mt-1">10 minutes ago</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-[#FDF4FF] flex items-center justify-center shrink-0 mt-0.5">
-                    <FileText size={14} className="text-[#C026D3]" />
+                  <div className="w-8 h-8 rounded-full bg-fuchsia-pale flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText size={14} className="text-fuchsia" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#334155]"><strong>Compliance Agent</strong> flagged a new mandatory phytosanitary certificate requirement for Germany.</p>
-                    <p className="text-xs text-[#94A3B8] mt-1">2 hours ago</p>
+                    <p className="text-sm text-ink"><strong>Compliance Agent</strong> flagged a new mandatory phytosanitary certificate requirement for Germany.</p>
+                    <p className="text-xs text-faint mt-1">2 hours ago</p>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-[#ECFDF5] flex items-center justify-center shrink-0 mt-0.5">
-                    <TrendingUp size={14} className="text-[#059669]" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-pale flex items-center justify-center shrink-0 mt-0.5">
+                    <TrendingUp size={14} className="text-emerald" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#334155]"><strong>Market Intelligence Agent</strong> detected a 4.2% drop in ocean freight rates on the Mumbai-Rotterdam route.</p>
-                    <p className="text-xs text-[#94A3B8] mt-1">5 hours ago</p>
+                    <p className="text-sm text-ink"><strong>Market Intelligence Agent</strong> detected a 4.2% drop in ocean freight rates on the Mumbai-Rotterdam route.</p>
+                    <p className="text-xs text-faint mt-1">5 hours ago</p>
                   </div>
                 </div>
 
@@ -395,31 +395,31 @@ export default function DashboardHome() {
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-[#E2E8F0] shadow-sm flex flex-col">
-              <div className="p-5 border-b border-[#E2E8F0]">
-                <h2 className="text-base font-bold text-[#0F172A]">Quick Actions</h2>
+            <div className="bg-white rounded-xl border border-line shadow-sm flex flex-col">
+              <div className="p-5 border-b border-line">
+                <h2 className="text-base font-bold text-navy">Quick Actions</h2>
               </div>
               <div className="p-2 flex flex-col">
-                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-[#F8FAFC] transition-colors text-left group">
+                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-page transition-colors text-left group">
                   <div>
-                    <p className="font-semibold text-sm text-[#0F172A]">Generate Email Draft</p>
-                    <p className="text-xs text-[#64748B]">Pitch directly to a verified buyer</p>
+                    <p className="font-semibold text-sm text-navy">Generate Email Draft</p>
+                    <p className="text-xs text-muted">Pitch directly to a verified buyer</p>
                   </div>
-                  <ArrowUpRight size={16} className="text-[#94A3B8] group-hover:text-[#2563EB] transition-colors" />
+                  <ArrowUpRight size={16} className="text-faint group-hover:text-blue transition-colors" />
                 </button>
-                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-[#F8FAFC] transition-colors text-left group border-t border-[#F1F5F9]">
+                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-page transition-colors text-left group border-t border-surface">
                   <div>
-                    <p className="font-semibold text-sm text-[#0F172A]">Check EU Compliance</p>
-                    <p className="text-xs text-[#64748B]">Verify origin certifications</p>
+                    <p className="font-semibold text-sm text-navy">Check EU Compliance</p>
+                    <p className="text-xs text-muted">Verify origin certifications</p>
                   </div>
-                  <ArrowUpRight size={16} className="text-[#94A3B8] group-hover:text-[#2563EB] transition-colors" />
+                  <ArrowUpRight size={16} className="text-faint group-hover:text-blue transition-colors" />
                 </button>
-                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-[#F8FAFC] transition-colors text-left group border-t border-[#F1F5F9]">
+                <button className="flex items-center justify-between p-3 rounded-lg hover:bg-page transition-colors text-left group border-t border-surface">
                   <div>
-                    <p className="font-semibold text-sm text-[#0F172A]">Search New Markets</p>
-                    <p className="text-xs text-[#64748B]">Find seasonal demand spikes</p>
+                    <p className="font-semibold text-sm text-navy">Search New Markets</p>
+                    <p className="text-xs text-muted">Find seasonal demand spikes</p>
                   </div>
-                  <ArrowUpRight size={16} className="text-[#94A3B8] group-hover:text-[#2563EB] transition-colors" />
+                  <ArrowUpRight size={16} className="text-faint group-hover:text-blue transition-colors" />
                 </button>
               </div>
             </div>

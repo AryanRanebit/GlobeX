@@ -22,7 +22,7 @@
   --color-accent-text: #92400E;
 
   --color-bg-white: #FFFFFF;
-  --color-bg-light: #F5F7FA;
+  --color-bg-light: #F8FAFC;
   --color-bg-gray: #F1F5F9;
 
   --color-text-primary: #0F172A;
@@ -32,6 +32,40 @@
 
   --color-border: #E2E8F0;
   --color-border-dark: #CBD5E1;
+
+  /* ── Consolidated tokens (single source for repeated raw hexes) ─────── */
+  --color-page: #F8FAFC;
+  --color-surface: #F1F5F9;
+  --color-mist: #F9FAFB;
+  --color-line: #E2E8F0;        /* one border grey: was #E5E7EB / #E2E8F0 / #D1D5DB */
+  --color-line-dark: #CBD5E1;
+  --color-ink: #334155;
+  --color-soft: #475569;
+  --color-muted: #64748B;
+  --color-faint: #94A3B8;
+  --color-sky: #38BDF8;
+  --color-blue-border: #DBEAFE;
+  --color-blue-soft: #BFDBFE;
+  --color-blue-bright: #60A5FA;
+  --color-emerald-pale: #ECFDF5;
+  --color-emerald-border: #A7F3D0;
+  --color-emerald-dark: #047857;
+  --color-emerald-ink: #065F46;
+  --color-emerald-deep: #064E3B;
+  --color-green-light: #34D399;
+  --color-red-pale: #FEF2F2;
+  --color-red-border: #FECACA;
+  --color-red-dark: #DC2626;
+  --color-red-ink: #991B1B;
+  --color-red-deep: #7F1D1D;
+  --color-amber: #FBBF24;
+  --color-amber-pale: #FEF9C3;
+  --color-amber-ink: #78350F;
+  --color-fuchsia: #C026D3;
+  --color-fuchsia-pale: #FDF4FF;
+  --color-indigo-light: #818CF8;
+  --color-violet-light: #A78BFA;
+  --color-pink: #F472B6;
 
   /* ── Typography ─────────────────────────────────────────────────────── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -57,9 +91,9 @@
   --color-btn-primary-bg: #2563EB;
   --color-btn-primary-hover: #1D4ED8;
   --color-card-bg: #FFFFFF;
-  --color-card-border: #E5E7EB;
+  --color-card-border: #E2E8F0;
   --color-input-bg: #FFFFFF;
-  --color-input-border: #D1D5DB;
+  --color-input-border: #E2E8F0;
   --color-modal-bg: #FFFFFF;
 }
 
@@ -291,7 +325,7 @@
 /* ── Volza-style Feature Card ─────────────────────────────────────────── */
 .feature-card {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--color-line);
   border-radius: 6px;
   padding: 20px 24px;
   display: flex;
@@ -337,7 +371,7 @@
 /* ── Enterprise Card ──────────────────────────────────────────────────── */
 .card {
   background: #FFFFFF;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--color-line);
   border-radius: 6px;
   transition: box-shadow 0.15s ease;
 }
@@ -354,7 +388,7 @@
 }
 
 .data-table thead th {
-  background: #F5F7FA;
+  background: var(--color-page);
   color: #64748B;
   font-weight: 600;
   font-size: 0.6875rem;
@@ -378,7 +412,7 @@
 /* ── Input Fields ─────────────────────────────────────────────────────── */
 .input-field {
   background: #FFFFFF;
-  border: 1px solid #D1D5DB;
+  border: 1px solid var(--color-line);
   border-radius: 4px;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
@@ -420,7 +454,7 @@
 /* ── Section Divider ──────────────────────────────────────────────────── */
 .section-divider {
   border: none;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--color-line);
   margin: 0;
 }
 

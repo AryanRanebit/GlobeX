@@ -58,13 +58,13 @@ export default function Pricing({ onOpenAuth }) {
   const fade = useFadeIn();
 
   return (
-    <section id="pricing" className="w-full bg-[#F5F7FA] py-14 md:py-16 border-b border-[#E5E7EB]">
+    <section id="pricing" className="w-full bg-page py-14 md:py-16 border-b border-line">
       <div className="section-container" ref={fade.ref}>
         <div className={fade.className}>
           <div className="text-center mb-12">
-            <span className="type-label text-[#2563EB] mb-2 block font-semibold">Flexible Plans</span>
-            <h2 className="type-h2 mb-3 font-heading font-bold text-[#0F172A]">Simple, Transparent Pricing</h2>
-            <p className="text-base text-[#475569] max-w-xl mx-auto leading-relaxed">
+            <span className="type-label text-blue mb-2 block font-semibold">Flexible Plans</span>
+            <h2 className="type-h2 mb-3 font-heading font-bold text-navy">Simple, Transparent Pricing</h2>
+            <p className="text-base text-soft max-w-xl mx-auto leading-relaxed">
               All plans include a 14-day free trial. No credit card required.
             </p>
           </div>
@@ -75,31 +75,31 @@ export default function Pricing({ onOpenAuth }) {
                 key={idx}
                 className={`rounded-xl border p-6 flex flex-col justify-between transition-shadow hover:shadow-lg ${
                   plan.highlighted
-                    ? 'bg-white border-[#2563EB] border-2 relative shadow-md'
-                    : 'bg-white border-[#E2E8F0]'
+                    ? 'bg-white border-blue border-2 relative shadow-md'
+                    : 'bg-white border-line'
                 }`}
               >
                 {plan.highlighted && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#D97706] text-white text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent text-white text-[11px] font-bold uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
                     ★ Most Popular
                   </div>
                 )}
 
                 <div>
                   <div className="mb-4">
-                    <h3 className="text-lg font-bold text-[#0F172A] mb-1 font-heading">{plan.name}</h3>
+                    <h3 className="text-lg font-bold text-navy mb-1 font-heading">{plan.name}</h3>
                     <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-3xl font-extrabold text-[#0F172A] font-heading">{plan.price}</span>
-                      <span className="text-xs font-semibold text-[#64748B]">{plan.period}</span>
+                      <span className="text-3xl font-extrabold text-navy font-heading">{plan.price}</span>
+                      <span className="text-xs font-semibold text-muted">{plan.period}</span>
                     </div>
-                    <p className="text-sm text-[#475569] mt-3 leading-relaxed">{plan.description}</p>
+                    <p className="text-sm text-soft mt-3 leading-relaxed">{plan.description}</p>
                   </div>
 
-                  <div className="mb-6 pt-3 border-t border-[#F1F5F9]">
+                  <div className="mb-6 pt-3 border-t border-surface">
                     <ul className="space-y-2.5">
                       {plan.features.map((feat, fi) => (
-                        <li key={fi} className="flex items-start gap-2.5 text-sm text-[#334155] leading-snug">
-                          <Check size={16} className="text-[#059669] shrink-0 mt-0.5" />
+                        <li key={fi} className="flex items-start gap-2.5 text-sm text-ink leading-snug">
+                          <Check size={16} className="text-emerald shrink-0 mt-0.5" />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -111,8 +111,8 @@ export default function Pricing({ onOpenAuth }) {
                   onClick={onOpenAuth}
                   className={`w-full py-2.5 text-sm font-semibold rounded-lg transition-colors shadow-xs ${
                     plan.highlighted
-                      ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
-                      : 'bg-white text-[#2563EB] border border-[#CBD5E1] hover:bg-[#EFF6FF]'
+                      ? 'bg-blue text-white hover:bg-blue-dark'
+                      : 'bg-white text-blue border border-line-dark hover:bg-blue-pale'
                   }`}
                 >
                   {plan.cta}

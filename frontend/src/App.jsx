@@ -5,7 +5,6 @@ import TrustBar from './components/sections/TrustBar';
 import Solutions from './components/sections/Solutions';
 import HowItWorks from './components/sections/HowItWorks';
 import DashboardPreview from './components/sections/DashboardPreview';
-import Testimonials from './components/sections/Testimonials';
 import Pricing from './components/sections/Pricing';
 import FAQ from './components/sections/FAQ';
 import FinalCTA from './components/sections/FinalCTA';
@@ -36,11 +35,12 @@ export default function App() {
 
       if (queryParam) {
         setSearchQuery(queryParam);
-        // Ensure user can access dashboard with demo credentials if not yet authenticated
         if (!localStorage.getItem('token')) {
-          localStorage.setItem('token', 'demo-session-token');
-          localStorage.setItem('user', JSON.stringify({ name: 'Aryan Rane', email: 'aryan@globex.ai' }));
-          setIsAuthenticated(true);
+          // No silent auto-login: prompt the visitor to sign in first.
+          // After a successful sign-in the page reloads and the query
+          // params are picked up again by this handler.
+          setAuthOpen(true);
+          return;
         }
         if (tabParam === 'buyers' || tabParam === 'markets') {
           setDashboardPage(tabParam);
@@ -66,20 +66,20 @@ export default function App() {
     const cleanQuery = query.trim();
     setSearchQuery(cleanQuery);
 
-    // Auto-authenticate as demo user if not logged in
-    if (!localStorage.getItem('token')) {
-      localStorage.setItem('token', 'demo-session-token');
-      localStorage.setItem('user', JSON.stringify({ name: 'Aryan Rane', email: 'aryan@globex.ai' }));
-      setIsAuthenticated(true);
-    }
-
-    setDashboardPage(targetTab);
-
     // Update browser URL query param
     const url = new URL(window.location.href);
     url.searchParams.set('search', cleanQuery);
     url.searchParams.set('tab', targetTab);
     window.history.pushState({ search: cleanQuery, tab: targetTab }, '', url.toString());
+
+    if (!localStorage.getItem('token')) {
+      // Require a real sign-in instead of minting a fake demo session.
+      // The query stays in the URL and is applied after sign-in reloads the app.
+      setAuthOpen(true);
+      return;
+    }
+
+    setDashboardPage(targetTab);
   }, []);
 
   // Handle logout
@@ -156,7 +156,6 @@ export default function App() {
           <Solutions onOpenAuth={() => setAuthOpen(true)} />
           <HowItWorks />
           <DashboardPreview />
-          <Testimonials />
           <Pricing onOpenAuth={() => setAuthOpen(true)} />
           <FAQ />
           <FinalCTA onOpenAuth={() => setAuthOpen(true)} />
