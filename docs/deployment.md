@@ -95,7 +95,7 @@ Deploy from the `backend` directory:
 
 ### Step 4: Deploy Frontend (Vercel)
 1. Connect the Git repository to [Vercel](https://vercel.com).
-2. Root Directory: `./` (project root).
+2. Root Directory: `frontend` (or project root).
 3. Framework Preset: **Vite**.
 4. Configure Environment Variable:
    - `VITE_API_BASE_URL` = `https://your-express-backend.railway.app`
