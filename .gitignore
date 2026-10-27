@@ -64,3 +64,7 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+# Agent Tooling
+.agents/
+skills-lock.json
