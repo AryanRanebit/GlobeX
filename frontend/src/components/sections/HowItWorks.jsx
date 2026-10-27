@@ -13,7 +13,7 @@ const steps = [
     icon: BarChart3,
     number: '2',
     title: 'AI Analyzes Trade Data',
-    desc: 'Our engine processes millions of customs records and demand signals to identify the most promising markets.',
+    desc: 'Our engine queries official UN Comtrade trade flows and global demand signals to identify high-potential export destinations.',
   },
   {
     icon: ListChecks,

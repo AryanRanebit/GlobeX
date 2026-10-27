@@ -43,9 +43,9 @@ export default function Hero({ onOpenAuth, onSearch }) {
   };
 
   const checks = [
-    `Trade data from ${TRADE_STATS.countriesCovered} countries & territories`,
-    `${TRADE_STATS.customsRecordsAnalyzed} customs records analyzed`,
-    'Verified importer databases',
+    `UN Comtrade official export statistics across ${TRADE_STATS.countriesCovered} destination markets`,
+    `Detailed commodity trade flows (${TRADE_STATS.apparelExportValueFormatted} apparel across ${TRADE_STATS.apparelDestinationsCount} destinations)`,
+    'Evidence-based buyer discovery pipeline',
   ];
 
   return (

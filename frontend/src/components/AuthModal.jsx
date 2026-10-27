@@ -86,22 +86,39 @@ export default function AuthModal({ isOpen, onClose }) {
           return;
         }
 
-        const res = await fetch('http://localhost:3001/api/v1/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: signupName,
-            email: signupEmail,
-            password: signupPass,
-            companyName: 'My Company',
-            companyType: 'Other',
-            industry: 'General'
-          })
-        });
+        let res;
+        try {
+          res = await fetch('/api/v1/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: signupName,
+              email: signupEmail,
+              password: signupPass,
+              companyName: 'My Company',
+              companyType: 'Other',
+              industry: 'General'
+            })
+          });
+        } catch {
+          res = await fetch('http://localhost:3000/api/v1/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: signupName,
+              email: signupEmail,
+              password: signupPass,
+              companyName: 'My Company',
+              companyType: 'Other',
+              industry: 'General'
+            })
+          });
+        }
         const data = await res.json();
         if (res.ok) {
-          localStorage.setItem('token', data.tokens?.accessToken || data.tokens?.access?.token || '');
-          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('token', data.data?.tokens?.accessToken || data.tokens?.accessToken || '');
+          localStorage.setItem('refreshToken', data.data?.tokens?.refreshToken || data.tokens?.refreshToken || '');
+          localStorage.setItem('user', JSON.stringify(data.data?.user || data.user));
           setSuccess('Account created! Welcome to GlobeX 🎉');
           setTimeout(() => {
             onClose();
@@ -113,18 +130,31 @@ export default function AuthModal({ isOpen, onClose }) {
           setError(msg);
         }
       } else {
-        const res = await fetch('http://localhost:3001/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: signinEmail,
-            password: signinPass
-          })
-        });
+        let res;
+        try {
+          res = await fetch('/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: signinEmail,
+              password: signinPass
+            })
+          });
+        } catch {
+          res = await fetch('http://localhost:3000/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: signinEmail,
+              password: signinPass
+            })
+          });
+        }
         const data = await res.json();
         if (res.ok) {
-          localStorage.setItem('token', data.tokens?.accessToken || data.tokens?.access?.token || '');
-          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('token', data.data?.tokens?.accessToken || data.tokens?.accessToken || '');
+          localStorage.setItem('refreshToken', data.data?.tokens?.refreshToken || data.tokens?.refreshToken || '');
+          localStorage.setItem('user', JSON.stringify(data.data?.user || data.user));
           setSuccess('Welcome back! 👋');
           setTimeout(() => {
             onClose();

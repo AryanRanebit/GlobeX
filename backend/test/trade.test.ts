@@ -79,4 +79,28 @@ describe('UN Comtrade Data Layer & Markets Endpoint', () => {
     const usageAfter = comtradeClient.getDailyUsage();
     expect(usageAfter.used).toBe(usageBefore.used);
   });
+
+  it('Strictly enforces Data-Semantics Contract: destination market size and share cannot be faked', async () => {
+    const res = await request(app)
+      .get('/api/v1/trade/markets?hs=62&year=2025&limit=3')
+      .expect(200);
+
+    const topPartner = res.body.data[0];
+    // USA India-reported export value ~$2.67B
+    expect(topPartner.indiaExportValueUsd).toBeGreaterThan(2_500_000_000);
+    expect(topPartner.indiaExportLabel).toBe('India-Reported Exports (FOB)');
+
+    // In the free India-reported seed, destination-reported imports from World are unseeded
+    // Therefore destinationMarketSizeUsd must be null, never substituting India's export figure
+    expect(topPartner.destinationMarketSizeUsd).toBeNull();
+    expect(topPartner.destinationMarketSizeStatus).toBe('Not available from free data');
+    expect(topPartner.indiaShareOfDestinationImportPct).toBeNull();
+    expect(topPartner.indiaShareStatus).toBe('Not available from free data');
+
+    // Semantics metadata is present
+    expect(res.body.meta.dataSemantics).toBeDefined();
+    expect(res.body.meta.dataSemantics.indiaReportedExports).toContain('FOB');
+    expect(res.body.meta.dataSemantics.destinationMarketSize).toContain('Not available from free data');
+  });
 });
+

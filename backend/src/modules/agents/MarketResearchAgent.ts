@@ -17,20 +17,6 @@
 
 import type { IMarketResearchAgent, MarketResearchInput, MarketResearchOutput } from './AgentService';
 
-const MOCK_COUNTRY_DATA: Record<string, {
-  demandScore: number; growthRate: string; competition: 'Low' | 'Medium' | 'High';
-  marketSize: string; trend: string; insights: string;
-}> = {
-  Germany: { demandScore: 91, growthRate: '18%', competition: 'Medium', marketSize: '$2.4B', trend: 'Growing', insights: 'Largest organic food market in Europe. Strong B2B demand from distributors.' },
-  'United States': { demandScore: 88, growthRate: '22%', competition: 'High', marketSize: '$8.1B', trend: 'Accelerating', insights: 'Health-conscious consumers driving spice demand. Large Indian diaspora = cultural tailwind.' },
-  'United Arab Emirates': { demandScore: 76, growthRate: '12%', competition: 'Low', marketSize: '$890M', trend: 'Stable', insights: 'Gateway to Gulf. Halal certification opens 50+ country access via UAE distributors.' },
-  'United Kingdom': { demandScore: 82, growthRate: '15%', competition: 'Medium', marketSize: '$1.6B', trend: 'Growing', insights: 'Post-Brexit trade opportunities. Indian food culture deeply embedded.' },
-  Australia: { demandScore: 74, growthRate: '11%', competition: 'Low', marketSize: '$640M', trend: 'Stable', insights: 'Growing multicultural population. India-Australia trade deal reducing tariffs.' },
-  Japan: { demandScore: 68, growthRate: '8%', competition: 'Medium', marketSize: '$1.1B', trend: 'Emerging', insights: 'Premium quality focus. Health/wellness trend creating new spice demand segments.' },
-  Canada: { demandScore: 72, growthRate: '13%', competition: 'Medium', marketSize: '$720M', trend: 'Growing', insights: 'CETA framework advantageous. Large South Asian diaspora market.' },
-  Netherlands: { demandScore: 80, growthRate: '14%', competition: 'Low', marketSize: '$950M', trend: 'Growing', insights: 'Rotterdam hub for EU distribution. Strong B2B wholesale market.' },
-};
-
 const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:8000/api/v1';
 
 class MarketResearchAgentImpl implements IMarketResearchAgent {

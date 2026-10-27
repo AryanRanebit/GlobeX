@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react';
 const faqs = [
   {
     q: 'What data sources does GlobeX use?',
-    a: 'GlobeX aggregates data directly from UN Comtrade (calendar year 2025 dataset), DGCI&S (Directorate General of Commercial Intelligence and Statistics), national customs registries, and verified commercial databases. Our coverage includes 223 destination countries and territories with over 10 million customs records.',
+    a: 'GlobeX grounds market statistics directly on official UN Comtrade data (calendar year 2025 dataset) covering 223 destination countries and territories and $445.8B in total Indian merchandise exports. We separate verified government statistics from qualitative market estimates.',
   },
   {
     q: 'Is GlobeX suitable for small exporters and MSMEs?',
@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: 'How accurate are the importer leads?',
-    a: 'Our importer database is built from verified customs records and trade registries. Each lead includes trade history, shipment volumes, and product categories. We update our database regularly to ensure accuracy and relevance.',
+    a: 'GlobeX enforces strict evidence thresholds: buyer leads are discovered via AI web intelligence and marked as verified only when backed by public corporate registry citations and confirmed contact channels. We never manufacture artificial import volumes or verified badges.',
   },
   {
     q: 'Can I search by HS code?',

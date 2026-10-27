@@ -6,11 +6,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import re
 import uuid
 from datetime import datetime
 from typing import Any, AsyncGenerator
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -353,54 +355,35 @@ async def rag_status() -> dict:
 
 # ── Agent Specific Endpoints ──────────────────────────────────────────────────
 
-def _build_limited_analysis_fallback(norm: ProductNormalizationResult, target_regions: list[str] | None = None) -> MarketResearchResponse:
-    """Return a clearly labeled limited analysis when live LLM is unavailable or fails."""
-    countries = [
-        MarketResearchCountry(
-            country="United States",
-            countryCode="US",
-            demandScore=75,
-            growthRate="N/A (unverified estimate)",
-            competition="Medium",
-            marketSize="N/A",
-            trend="Stable",
-            insights=f"Primary global importer for {norm.category}. Quantitative trade records require live customs API integration.",
-            dataReliability="estimate"
-        ),
-        MarketResearchCountry(
-            country="United Arab Emirates",
-            countryCode="AE",
-            demandScore=70,
-            growthRate="N/A (unverified estimate)",
-            competition="Low",
-            marketSize="N/A",
-            trend="Stable",
-            insights=f"Major re-export hub for Indian merchandise in MENA region under CEPA agreement.",
-            dataReliability="estimate"
-        ),
-        MarketResearchCountry(
-            country="Germany",
-            countryCode="DE",
-            demandScore=68,
-            growthRate="N/A (unverified estimate)",
-            competition="High",
-            marketSize="N/A",
-            trend="Stable",
-            insights=f"Strict compliance and certification gateway for {norm.category} entering the European Single Market.",
-            dataReliability="estimate"
-        )
-    ]
-    return MarketResearchResponse(
-        product=norm.normalized_product_name,
-        category=norm.category,
-        candidateHsCodes=[c.model_dump() for c in norm.candidate_hs_codes],
-        analyzedAt=datetime.now().isoformat(),
-        summary=f"Limited qualitative analysis for {norm.normalized_product_name}. Note: Live customs data feed is unconfigured; scores are advisory estimates.",
-        dataSourceMode="limited_offline_estimate",
-        liveTradeDataProvider="none_configured",
-        recommendedCountries=countries,
-        disclaimer="Advisory export intelligence: Numerical metrics are preliminary estimates and do not represent audited customs trade statistics."
-    )
+ISO3_TO_ISO2: dict[str, str] = {
+    "USA": "US", "GBR": "GB", "ARE": "AE", "ESP": "ES", "DEU": "DE",
+    "NLD": "NL", "FRA": "FR", "ITA": "IT", "CAN": "CA", "AUS": "AU",
+    "JPN": "JP", "CHN": "CN", "SAU": "SA", "BGD": "BD", "NPL": "NP",
+    "SGP": "SG", "TUR": "TR", "IDN": "ID", "MYS": "MY", "ZAF": "ZA",
+    "BRA": "BR", "MEX": "MX", "KOR": "KR", "VNM": "VN", "BEL": "BE",
+    "POL": "PL", "SWE": "SE", "CHE": "CH", "RUS": "RU", "ISR": "IL",
+    "EGY": "EG", "NGA": "NG", "KEN": "KE", "THA": "TH", "LKA": "LK",
+}
+
+
+async def _fetch_trade_market_data(hs_code: str = "62", year: str = "2025") -> dict | None:
+    """Fetch live or seeded UN Comtrade market data from the Node backend."""
+    backend_url = os.getenv("NODE_BACKEND_URL", "http://localhost:3000").rstrip("/")
+    url = f"{backend_url}/api/trade/markets?hs={hs_code}&year={year}&limit=10"
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(url)
+            if resp.status_code == 200:
+                payload = resp.json()
+                rows = payload.get("data") or payload.get("markets") or []
+                if rows and len(rows) > 0:
+                    return {
+                        "markets": rows,
+                        "meta": payload.get("meta", {}),
+                    }
+    except Exception as exc:
+        log.warning("Could not fetch trade market data from Node backend", error=str(exc), url=url)
+    return None
 
 
 @router.post("/agents/product-understanding", summary="Product Understanding & Candidate HS Lookup")
@@ -412,117 +395,150 @@ async def agent_product_understanding(request: ProductUnderstandingRequest) -> d
 
 @router.post("/agents/market-research", summary="Agent Market Research")
 async def agent_market_research(request: MarketResearchRequest) -> dict:
-    """Analyze export markets for a product, validate output, and return recommended countries."""
+    """Analyze export markets for a product, grounded on verified UN Comtrade trade data."""
     try:
-        # Step 2: Understand and normalize product
+        # Step 1: Understand and normalize product
         norm = await understand_product(
             product_name=request.product,
             description=request.description,
             materials=request.materials,
         )
 
-        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            fallback = _build_limited_analysis_fallback(norm, request.target_regions)
-            return fallback.model_dump()
+        # Step 2: Determine appropriate HS code from candidate codes or product description
+        target_hs = "TOTAL"
+        matched_candidate = None
+        for cand in norm.candidate_hs_codes:
+            clean_code = cand.hs_code.replace(".", "").strip()
+            if clean_code.startswith("62") or "apparel" in norm.category.lower() or "garment" in request.product.lower():
+                target_hs = "62"
+                matched_candidate = cand
+                break
 
-        hs_hints = ", ".join([f"{c.hs_code} ({c.description[:30]}...)" for c in norm.candidate_hs_codes])
-        regions_str = f" in target regions: {', '.join(request.target_regions)}" if request.target_regions else ""
+        lower_query = (request.product + " " + (request.description or "")).lower()
+        if any(w in lower_query for w in ["apparel", "garment", "shirt", "clothing", "trouser", "dress", "jacket", "cotton"]):
+            target_hs = "62"
 
-        prompt = f"""You are a senior trade economist and export market intelligence agent.
-Analyze export opportunity for:
-- Product: {norm.normalized_product_name} (Category: {norm.category})
-- Candidate HS Code(s): {hs_hints or 'Under evaluation'}
-- Focus: Indian merchandise exports{regions_str}
+        trade_info = await _fetch_trade_market_data(target_hs)
+        if not trade_info and target_hs != "TOTAL":
+            trade_info = await _fetch_trade_market_data("TOTAL")
 
-Important Guidelines:
-1. Identify 3 to 5 real high-potential country destinations for Indian exports.
-2. Separate qualitative estimates from verified statistics. Do NOT invent fake statistical sources, fake URLs, or exact customs registry trade volumes.
-3. Express growthRate and marketSize as qualitative market estimates (e.g., '12-18% est.' or 'N/A').
-4. Assign an opportunity demandScore (0 to 100), competition level ('Low', 'Medium', or 'High'), and trend ('Growing', 'Stable', 'Accelerating').
-5. Provide actionable strategic insights (FTAs, diaspora demand, tariffs, distributor channels).
+        # Step 3: Handle trade data unavailable (strict fallback without inventing figures)
+        if not trade_info:
+            return MarketResearchResponse(
+                product=norm.normalized_product_name,
+                category=norm.category,
+                candidateHsCodes=[c.model_dump() for c in norm.candidate_hs_codes],
+                analyzedAt=datetime.now().isoformat(),
+                summary=f"Trade market flow data for {norm.normalized_product_name} is currently unavailable. The official UN Comtrade trade data feed is offline or unseeded for this commodity.",
+                dataSourceMode="unavailable",
+                liveTradeDataProvider="unavailable",
+                recommendedCountries=[
+                    MarketResearchCountry(
+                        country="Destination Data Unavailable",
+                        countryCode="XX",
+                        demandScore=0,
+                        growthRate="N/A",
+                        competition="Medium",
+                        marketSize="Not available from free data",
+                        trend="N/A",
+                        insights="Official customs trade data could not be retrieved from the database or Comtrade API. Artificial trade statistics are strictly disabled.",
+                        dataReliability="unavailable",
+                    )
+                ],
+                disclaimer="Trade statistics unavailable. GlobeX does not generate or simulate artificial trade numbers."
+            ).model_dump()
 
-Return ONLY a valid JSON object matching this schema (no markdown, no backticks, no text outside JSON):
-{{
-  "product": "{norm.normalized_product_name}",
-  "category": "{norm.category}",
-  "analyzedAt": "{datetime.now().isoformat()}",
-  "summary": "<concise strategic export overview>",
-  "dataSourceMode": "ai_qualitative_estimate",
-  "liveTradeDataProvider": "none_configured",
-  "disclaimer": "Metrics are AI-generated qualitative estimates based on macroeconomic trade patterns. Live UN Comtrade/DGFT feeds are not configured.",
-  "recommendedCountries": [
-    {{
-      "country": "<country name>",
-      "countryCode": "<2-letter ISO code e.g. US, DE, AE>",
-      "demandScore": <integer between 0 and 100>,
-      "growthRate": "<e.g. 15% est.>",
-      "competition": "<Low|Medium|High>",
-      "marketSize": "<e.g. $1.5B est. or N/A>",
-      "trend": "<e.g. Growing>",
-      "insights": "<actionable export insights>",
-      "dataReliability": "estimate"
-    }}
-  ]
-}}"""
+        # Step 4: Ground recommendations on verified UN Comtrade data
+        markets = trade_info["markets"]
+        meta = trade_info.get("meta", {})
+        world_total_usd = meta.get("worldTotalUsd")
+        if world_total_usd and world_total_usd >= 1e9:
+            world_total_str = f"${world_total_usd / 1e9:.2f}B USD"
+        elif world_total_usd:
+            world_total_str = f"${world_total_usd / 1e6:.1f}M USD"
+        else:
+            world_total_str = "N/A"
 
-        try:
-            # 8 second timeout for LLM provider - fails fast to fallback if rate limited
-            response = await asyncio.wait_for(
-                globex_agent._classifier_llm.ainvoke(prompt),
-                timeout=8.0
-            )
-            raw = response.content
-            if isinstance(raw, list):
-                raw = raw[0].get("text", "") if (raw and isinstance(raw[0], dict)) else str(raw[0] if raw else "")
-            raw = str(raw).strip()
-            raw = re.sub(r"```(?:json)?|```", "", raw).strip()
-            parsed = json.loads(raw)
+        cmd_code = meta.get("cmdCode", target_hs)
+        cmd_desc = meta.get("cmdDescription", "Commodity")
 
-            # Inject candidate HS codes from Step 2
-            parsed["candidateHsCodes"] = [c.model_dump() for c in norm.candidate_hs_codes]
-            if "category" not in parsed:
-                parsed["category"] = norm.category
-            if "dataSourceMode" not in parsed:
-                parsed["dataSourceMode"] = "ai_qualitative_estimate"
-            if "liveTradeDataProvider" not in parsed:
-                parsed["liveTradeDataProvider"] = "none_configured"
-            if "disclaimer" not in parsed:
-                parsed["disclaimer"] = "Advisory AI trade estimate. Official customs classification requires binding tariff ruling."
+        recommended_countries: list[MarketResearchCountry] = []
+        for idx, m in enumerate(markets[:5]):
+            partner = m.get("partnerName", "Unknown")
+            iso3 = m.get("partnerIso3", "XX") or "XX"
+            iso2 = ISO3_TO_ISO2.get(iso3, iso3[:2].upper())
+            fob_val = float(m.get("indiaExportValueUsd") or m.get("tradeValueUsd") or 0.0)
+            fob_str = f"${fob_val / 1e9:.2f}B" if fob_val >= 1e9 else f"${fob_val / 1e6:.1f}M"
+            share_pct = float(m.get("shareOfIndiaExportsPct") or m.get("shareOfTotal") or 0.0)
 
-            # Sanitize recommendedCountries
-            clean_countries = []
-            for item in parsed.get("recommendedCountries", []):
-                score = item.get("demandScore", 70)
-                try:
-                    score = int(score)
-                except (ValueError, TypeError):
-                    score = 70
-                score = max(0, min(100, score))
+            score = max(50, 95 - idx * 6)
+            comp = "High" if idx < 2 else "Medium"
 
-                comp = str(item.get("competition", "Medium")).capitalize()
-                if comp not in ["Low", "Medium", "High"]:
-                    comp = "Medium"
+            recommended_countries.append(MarketResearchCountry(
+                country=partner,
+                countryCode=iso2,
+                demandScore=score,
+                growthRate=f"{share_pct:.1f}% share of India exports",
+                competition=comp,
+                marketSize="Not available from free data",
+                trend="Active Trade Lane",
+                insights=(
+                    f"India-reported exports (FOB): {fob_str} ({share_pct:.1f}% of total). "
+                    f"Official UN Comtrade 2025 Rank #{idx + 1}. "
+                    f"Destination domestic market size: Not available from free data."
+                ),
+                dataReliability="official_un_comtrade_2025",
+            ))
 
-                clean_countries.append(MarketResearchCountry(
-                    country=str(item.get("country", "Unknown")),
-                    countryCode=str(item.get("countryCode", "XX"))[:2].upper(),
-                    demandScore=score,
-                    growthRate=str(item.get("growthRate", "N/A")),
-                    competition=comp,
-                    marketSize=str(item.get("marketSize", "N/A")),
-                    trend=str(item.get("trend", "Stable")),
-                    insights=str(item.get("insights", "Export market under observation.")),
-                    dataReliability="estimate"
-                ))
+        # Step 5: Optionally enrich with qualitative LLM strategic context (without modifying trade numbers)
+        if settings.google_api_key and settings.google_api_key != "your_google_api_key_here":
+            try:
+                summary_countries_str = "\n".join([
+                    f"- {c.country} ({c.countryCode}): India FOB Exports = {c.insights.split('.')[0]}, Rank #{i+1}"
+                    for i, c in enumerate(recommended_countries)
+                ])
+                enrich_prompt = f"""You are a senior trade economist. Provide brief qualitative export intelligence for an Indian exporter selling:
+Product: {norm.normalized_product_name} (HS {cmd_code}: {cmd_desc})
 
-            parsed["recommendedCountries"] = [c.model_dump() for c in clean_countries]
-            validated = MarketResearchResponse.model_validate(parsed)
-            return validated.model_dump()
+Official UN Comtrade 2025 Export Destinations for India:
+{summary_countries_str}
 
-        except (asyncio.TimeoutError, json.JSONDecodeError, Exception) as inner_err:
-            log.warn("Market research inference fallback triggered", error=str(inner_err))
-            fallback = _build_limited_analysis_fallback(norm, request.target_regions)
-            return fallback.model_dump()
+Task:
+For each of these exact countries, provide 1 concise sentence of qualitative market intelligence (e.g. key trade agreements like CEPA/ECTA, major retail/distributor channels, or buyer quality requirements).
+Strict constraints:
+1. Do NOT invent, change, or estimate trade volume numbers.
+2. Return ONLY a valid JSON object mapping country name to qualitative insight string:
+{{"<Country Name>": "<1 sentence qualitative insight>"}}"""
+                resp = await asyncio.wait_for(globex_agent._classifier_llm.ainvoke(enrich_prompt), timeout=6.0)
+                raw_text = resp.content
+                if isinstance(raw_text, list):
+                    raw_text = raw_text[0].get("text", "") if (raw_text and isinstance(raw_text[0], dict)) else str(raw_text[0] if raw_text else "")
+                raw_text = re.sub(r"```(?:json)?|```", "", str(raw_text)).strip()
+                ai_insights = json.loads(raw_text)
+                for c in recommended_countries:
+                    if c.country in ai_insights:
+                        c.insights += f" Strategic context: {ai_insights[c.country]}"
+            except Exception as e:
+                log.info("Qualitative LLM enrichment skipped or timed out, keeping verified Comtrade insights", error=str(e))
+
+        summary = (
+            f"Official UN Comtrade 2025 trade intelligence for {norm.normalized_product_name} under HS {cmd_code} "
+            f"({cmd_desc}). Total India-reported exports (FOB) reached {world_total_str} across {meta.get('totalMarkets', len(markets))} "
+            f"destinations worldwide."
+        )
+
+        response_obj = MarketResearchResponse(
+            product=norm.normalized_product_name,
+            category=norm.category,
+            candidateHsCodes=[c.model_dump() for c in norm.candidate_hs_codes],
+            analyzedAt=datetime.now().isoformat(),
+            summary=summary,
+            dataSourceMode="official_un_comtrade_2025",
+            liveTradeDataProvider="UN_Comtrade_API_v1_seeded",
+            recommendedCountries=recommended_countries,
+            disclaimer="Official UN Comtrade 2025 India-reported export figures (FOB). Destination market size and total import shares are not available from free single-reporter trade data.",
+        )
+        return response_obj.model_dump()
 
     except Exception as exc:
         log.error("Market research agent failed", error=str(exc))
@@ -713,10 +729,10 @@ def _fallback_buyer_candidates(product: str, target_countries: list[str] | None 
                 "industry": f"{product} Import & Distribution",
                 "website": "https://www.globalcommodity-imports.com",
                 "email": "procurement@globalcommodity-imports.com",
-                "estimatedLeadScore": 88,
-                "source": "verified_trade_registry",
-                "importVolume": "High",
-                "isVerified": True,
+                "estimatedLeadScore": 72,
+                "source": "ai_prospect",
+                "importVolume": "Medium",
+                "isVerified": False,
                 "annualRevenue": "$24M+",
                 "employeeCount": 120
             },
@@ -727,10 +743,10 @@ def _fallback_buyer_candidates(product: str, target_countries: list[str] | None 
                 "industry": "Commercial Wholesale & Retail",
                 "website": "https://www.continentalsourcing-trade.com",
                 "email": "purchasing@continentalsourcing-trade.com",
-                "estimatedLeadScore": 82,
-                "source": "verified_trade_registry",
+                "estimatedLeadScore": 68,
+                "source": "ai_prospect",
                 "importVolume": "Medium",
-                "isVerified": True,
+                "isVerified": False,
                 "annualRevenue": "$15M",
                 "employeeCount": 75
             }
@@ -756,7 +772,7 @@ async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
         - website
         - email (if found, otherwise a generic contact email or empty string)
         - importVolume (estimated as Low, Medium, or High)
-        - isVerified (true if it's a real company you verified, else false)
+        - isVerified (MUST BE false unless verified against official government corporate registry or bill of lading)
         - annualRevenue (estimated string e.g. $5M, or N/A)
         - employeeCount (estimated integer, or 0)
 
@@ -774,7 +790,7 @@ async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
               "estimatedLeadScore": <integer 1-100 based on fit>,
               "source": "ai_web_search",
               "importVolume": "<High | Medium | Low>",
-              "isVerified": true,
+              "isVerified": false,
               "annualRevenue": "<string>",
               "employeeCount": <integer>
             }}
