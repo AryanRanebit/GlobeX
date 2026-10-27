@@ -1,4 +1,6 @@
+/// <reference types="node" />
 import 'dotenv/config';
+import process from 'node:process';
 import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
