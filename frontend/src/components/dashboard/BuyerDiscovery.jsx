@@ -151,6 +151,15 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
       const json = await res.json();
       if (res.ok && json.success) {
+        const found = json.data?.totalUniqueBuyers ?? 0;
+        if (found === 0) {
+          // Honest empty state: the grounded search found nothing citable.
+          setDiscoverError(
+            json.data?.note ||
+            'The live web search found no companies it could back with a source for this query. Nothing was added rather than showing invented buyers.'
+          );
+          return;
+        }
         setIsDiscoverModalOpen(false);
         // Refresh buyers list
         await fetchBuyers();
@@ -232,7 +241,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface text-muted border border-line" title="AI suggestion from macroeconomic search. Unverified against customs registry.">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface text-muted border border-line" title="Prospect from grounded web search. Unverified against customs registry.">
         <Sparkles size={11} className="text-faint" />
         AI Prospect
       </span>
@@ -553,7 +562,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
               </div>
 
               <div className="p-3 rounded-lg bg-blue-pale border border-blue-soft text-xs text-blue-dark leading-relaxed">
-                <strong>Honest Evidence Notice:</strong> The discovery pipeline will search web registries for prospective importers, evaluate domain and corporate signals, and assign an honest reliability score.
+                <strong>Honest Evidence Notice:</strong> The pipeline runs a live Google Search-grounded lookup. Every company it returns carries its source link; suggestions without a citation are dropped. Import volumes and contact details are not verified.
               </div>
 
               {discoverError && (

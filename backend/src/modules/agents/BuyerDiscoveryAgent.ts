@@ -1,7 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // BuyerDiscoveryAgent
 //
-// Plug in: LinkedIn scraper, Apollo.io API, Clearbit, or custom web-search LLM agent
+// Delegates to the ai-agent's grounded buyer discovery (Gemini + Google Search
+// grounding). Returns only citation-backed companies; an empty list is an
+// honest "nothing credible found", not an error.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { IBuyerDiscoveryAgent, BuyerDiscoveryInput, BuyerDiscoveryOutput } from './AgentService';
@@ -31,16 +33,19 @@ class BuyerDiscoveryAgentImpl implements IBuyerDiscoveryAgent {
         throw new Error('BuyerDiscoveryAgent failed to parse response');
       }
 
+      // The grounded agent returns only citation-backed companies and may
+      // legitimately return an empty list when nothing credible is found.
       return {
-        buyers: data.buyers.map((b: any) => ({
+        buyers: (Array.isArray(data.buyers) ? data.buyers : []).map((b: any) => ({
           companyName: b.companyName,
           country: b.country,
           countryCode: b.countryCode,
           industry: b.industry,
-          website: b.website,
-          email: b.email,
-          estimatedLeadScore: b.estimatedLeadScore,
-          source: b.source,
+          website: b.website ?? null,
+          email: b.email ?? null,
+          estimatedLeadScore: typeof b.estimatedLeadScore === 'number' ? b.estimatedLeadScore : null,
+          source: b.source ?? data.provider ?? 'gemini_google_search_grounding',
+          sourceUrl: b.sourceUrl ?? null,
         })),
         searchedAt: data.searchedAt,
       };

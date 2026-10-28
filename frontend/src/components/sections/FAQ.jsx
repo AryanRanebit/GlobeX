@@ -12,7 +12,7 @@ const faqs = [
   },
   {
     q: 'How accurate are the importer leads?',
-    a: 'GlobeX enforces strict evidence thresholds: buyer leads are discovered via AI web intelligence and marked as verified only when backed by public corporate registry citations and confirmed contact channels. We never manufacture artificial import volumes or verified badges.',
+    a: 'Buyer leads come from a grounded live web search, and every company is shown with the source link it was found on. Leads are web-evidence prospects: GlobeX does not claim customs records, purchase history, or verified contact data, and never manufactures import volumes or verified badges.',
   },
   {
     q: 'Can I search by HS code?',

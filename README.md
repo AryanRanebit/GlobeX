@@ -20,7 +20,7 @@ Source: [UN Comtrade, United Nations Statistics Division](https://comtradeplus.u
 ## What works, and what is still a demo
 
 - **Market rankings:** the Market Intelligence view reads the trade API, ranks destination countries by India-reported export value, and displays source, year, and provenance. The seeded scope is 2025 `TOTAL` and HS62, not all products or years.
-- **Buyer discovery:** a provider pipeline queries the Python agent, normalizes and deduplicates candidates, evaluates evidence, applies heuristic scores, and persists results. AI-generated or search-suggested companies are **prospects**, not verified importers. Mock-provider results are labelled separately. A score is not proof of purchasing activity.
+- **Buyer discovery:** the Python agent runs Gemini with Google Search grounding and keeps only companies attributable to a real search-result citation; each returned buyer carries its source URL. The Express pipeline then deduplicates, evaluates evidence, applies heuristic scores, and persists results. Grounded companies are **prospects**, not verified importers: customs volumes, purchase history, and contacts are not claimed without evidence. If grounded search finds nothing credible, the pipeline returns an honest empty result or error — never fabricated companies (the mock provider exists in tests only). A score is not proof of purchasing activity.
 - **Market research jobs:** authenticated requests create database-backed jobs. A worker starts with the Express server, processes research through the Python service, and supports status polling, retries, and saved opportunities. Research uses the available Comtrade scope; product/HS suggestions and qualitative commentary are not official classifications or forecasts.
 - **Leads CRM API:** stores leads, pipeline stages, notes, and follow-up information. A full dashboard Kanban board is not implemented.
 - **Outreach drafts:** generates and stores email subject/body drafts through the agent, with a template fallback. It does **not** deliver email. Review company claims, certifications, and contact details before using a draft.
@@ -103,7 +103,7 @@ Optional local-demo seed:
 npm run db:seed
 ```
 
-This adds sample users, products, buyers, and other business records for demonstrations, including the account used by the explicit demo-login button. Those are **test fixtures, not verified buyer evidence**. This seed creates fixed-password test accounts and must not be used unchanged in production; it is separate from the upsert-based Comtrade seed.
+This adds sample users, products, and other business records for demonstrations, including the account used by the explicit demo-login button. Those are **test fixtures, not verified business evidence**. No buyers are seeded: buyer records are created only by the grounded discovery pipeline, so the buyer registry starts empty and honest. This seed creates fixed-password test accounts and must not be used unchanged in production; it is separate from the upsert-based Comtrade seed.
 
 ### 4. Configure and run the Python agent
 
@@ -184,7 +184,7 @@ Backend tests include database/integration workflows. Configure an isolated test
 - **India-reported exports are not destination market size.** Export values are India's reported FOB flows to a destination, not that destination's total global imports.
 - Destination market size uses destination-reported imports from World (CIF) when present. India's share of that destination uses destination-reported imports from India divided by imports from World. The seed contains neither import series, so these fields show **"Not available from free data"**, not invented values.
 - A destination's share of **India's exports** is a different metric and can be calculated from the seeded World export total.
-- **UN Comtrade does not supply company-level buyer records.** Buyer prospects, websites, contact details, heuristic scores, and any AI commentary must not be presented as customs-verified company data. Legacy sample-buyer flags are test fixtures, not verification evidence.
+- **UN Comtrade does not supply company-level buyer records.** Buyer prospects come from grounded live web search with cited sources; their websites, contact details, heuristic scores, and any AI commentary must not be presented as customs-verified company data.
 - One annual snapshot cannot establish multi-year growth, predictive model accuracy, or tariff/compliance validity. HS suggestions, duties, regulations, and generated documents need independent checks before commercial use.
 - Chroma's trade knowledge documents provide retrieval context, not a live official rules feed. The backend mock fallback is not a source for trade figures.
 
@@ -193,7 +193,7 @@ Backend tests include database/integration workflows. Configure an isolated test
 - Deploy and configure the backend and Python service with reliable health checks and production migration handling.
 - Add reviewed outreach email delivery, rather than draft generation only.
 - Extend official data coverage across years and HS codes, including destination-reported imports.
-- Add grounded buyer search and independent company/contact/importer evidence.
+- Add independent company/contact/importer evidence on top of the grounded buyer search (e.g. a corporate registry provider).
 - Build a frontend CRM pipeline view and expand automated frontend and end-to-end checks.
 
 ## Repository guide

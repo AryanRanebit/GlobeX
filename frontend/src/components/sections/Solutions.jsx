@@ -163,23 +163,23 @@ export default function Solutions({ onOpenAuth }) {
                 03 · Direct Procurement
               </span>
               <h3 className="text-lg font-bold text-[#0F172A] mb-3 font-heading">
-                Verified Importers with Trade History
+                Real Importers, Found Live with Sources
               </h3>
               <p className="text-sm text-[#475569] mb-4 leading-relaxed">
-                Identify active overseas importers with customs shipment records and reliability scoring.
+                Search the live web for overseas importers and distributors. Every company comes with its source link.
               </p>
 
               {/* Lead Preview Record */}
               <div className="bg-[#FFFBEB] rounded-lg border border-[#FDE68A] p-3.5 mb-5">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Building2 size={15} className="text-[#D97706]" />
-                  <span className="text-sm font-bold text-[#0F172A]">Atlas Imports Inc.</span>
+                  <span className="text-sm font-bold text-[#0F172A]">Real companies only</span>
                   <span className="ml-auto text-xs font-bold text-[#059669] bg-white px-2 py-0.5 rounded border border-[#A7F3D0]">
-                    94 Trust
+                    Source cited
                   </span>
                 </div>
                 <p className="text-xs text-[#78350F] leading-snug">
-                  34 shipments in last 12 months · Cotton Textiles (HS 6204.62)
+                  No citation, no company. Shipment volumes and contacts are not claimed without evidence.
                 </p>
               </div>
             </div>
