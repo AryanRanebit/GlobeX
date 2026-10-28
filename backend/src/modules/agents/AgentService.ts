@@ -48,7 +48,7 @@ export interface MarketResearchOutput {
     countryCode: string;
     demandScore: number;
     growthRate: string;
-    competition: 'Low' | 'Medium' | 'High';
+    competition: 'Low' | 'Medium' | 'High' | 'N/A';
     marketSize?: string;
     trend?: string;
     insights?: string;

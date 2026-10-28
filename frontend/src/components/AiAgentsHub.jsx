@@ -95,31 +95,29 @@ export default function AiAgentsHub({ onBackToLanding }) {
       name: 'Market Intelligence Agent',
       icon: TrendingUp,
       role: 'Global Market Opportunity Evaluator',
-      description: 'Analyzes tariff rates, historical trade growth, competitor presence, and pricing dynamics to score and recommend top-performing countries for your exports.',
+      description: 'Ranks destination countries for your exports from official UN Comtrade India export data (calendar year 2025). Shows trade values and shares only; tariffs, growth and competition are not computed.',
       capabilities: [
-        'Retrieves international customs tariffs and trade agreement benefits.',
-        'Calculates 5-year CAGR demand trends for specific product lines.',
-        'Evaluates port logistics efficiency indices and transportation costs.'
+        'Ranks destinations by India-reported export value (FOB), UN Comtrade 2025.',
+        'Shows each destination\'s share of India\'s exports for the selected HS code.',
+        'Marks growth, competition and destination market size as unavailable when the data is not seeded.'
       ],
       simulationLogs: [
         '🚀 Initializing Market Intelligence Agent...',
-        '📈 Fetching 5-year historical trade data for category: Agro-products (Spices)...',
-        '📊 Fetching tariff rates for India → Worldwide exports...',
-        '🔍 Checking regional Free Trade Agreements (FTAs) and CEPA benefits...',
-        '⚡ Analyzing competitor density (major exporters: Vietnam, Madagascar)...',
-        '💡 Computing Opportunity Scores based on Tariffs, Demand, and Logistics...',
-        '📈 Germany: Tariff 0% (under FTA), 5-yr CAGR +6.8%, Opportunity Score: 91/100',
-        '📈 UAE: Tariff 0% (CEPA), 5-yr CAGR +8.2%, Opportunity Score: 89/100',
-        '📈 Japan: Tariff 4.5%, 5-yr CAGR +2.1%, Opportunity Score: 72/100',
-        '✅ Market analysis complete. Germany and UAE flagged as high-potential targets.'
+        '📊 Querying UN Comtrade 2025: India exports, HS 62 (apparel, not knitted)...',
+        '🔍 Ranking destinations by India-reported export value (FOB)...',
+        '📈 United States: $2.67B, 31.83% of India HS 62 exports',
+        '📈 United Kingdom: $793.51M, 9.46%',
+        '📈 United Arab Emirates: $628.61M, 7.49%',
+        'ℹ️ Growth, tariffs and competition: not available from the seeded data.',
+        '✅ Ranking complete. Figures are 2025 UN Comtrade values.'
       ],
       outcome: {
-        title: 'Top Target Export Markets',
+        title: 'Top Destinations (UN Comtrade 2025, HS 62)',
         type: 'list',
         data: [
-          { country: 'Germany', tariff: '0.0% (FTA)', growth: '+6.8% CAGR', score: 91, status: 'Highly Recommended' },
-          { country: 'United Arab Emirates', tariff: '0.0% (CEPA)', growth: '+8.2% CAGR', score: 89, status: 'Highly Recommended' },
-          { country: 'Japan', tariff: '4.5%', growth: '+2.1% CAGR', score: 72, status: 'Moderate Growth' }
+          { country: 'United States', tariff: 'Not available', growth: 'Not available', score: '100 (relative export value)', status: '$2.67B · 31.83% of exports' },
+          { country: 'United Kingdom', tariff: 'Not available', growth: 'Not available', score: '30 (relative export value)', status: '$793.51M · 9.46% of exports' },
+          { country: 'United Arab Emirates', tariff: 'Not available', growth: 'Not available', score: '24 (relative export value)', status: '$628.61M · 7.49% of exports' }
         ]
       }
     },
@@ -524,7 +522,7 @@ Sourcing-Team`
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-bold text-navy">{row.country}</span>
                           <span className="text-xs font-bold text-blue bg-blue-pale px-2 py-0.5 rounded">
-                            Score: {row.score}
+                            Relative size: {row.score}
                           </span>
                         </div>
                         <div className="text-xs text-muted flex flex-col gap-1 mt-3">
@@ -533,7 +531,7 @@ Sourcing-Team`
                             <span className="font-medium text-ink">{row.tariff}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>5-Yr CAGR:</span>
+                            <span>Growth:</span>
                             <span className="font-medium text-ink">{row.growth}</span>
                           </div>
                           <div className="mt-2 text-center text-[10px] font-bold text-emerald-dark bg-emerald-pale py-1 rounded border border-emerald-border">
