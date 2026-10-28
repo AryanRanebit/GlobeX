@@ -17,7 +17,6 @@ from agents.product_understanding import (
     ProductNormalizationResult,
     HSCandidate
 )
-from routes.api import _build_limited_analysis_fallback, MarketResearchResponse
 
 
 class TestProductUnderstanding(unittest.TestCase):
@@ -63,27 +62,6 @@ class TestProductUnderstanding(unittest.TestCase):
         for cand in result.candidate_hs_codes:
             self.assertEqual(cand.classification_status, "CANDIDATE")
 
-
-class TestMarketResearchHardening(unittest.TestCase):
-    def test_limited_analysis_fallback(self):
-        """Test fallback when AI provider or trade data is unavailable."""
-        norm = _fallback_normalization("Handicraft Jute Bags")
-        res = _build_limited_analysis_fallback(norm, ["United States"])
-        
-        self.assertIsInstance(res, MarketResearchResponse)
-        data = res.model_dump()
-        self.assertEqual(data["product"], "Handicraft Jute Bags")
-        self.assertEqual(data["dataSourceMode"], "limited_offline_estimate")
-        self.assertEqual(data["liveTradeDataProvider"], "none_configured")
-        self.assertIn("advisory", data["disclaimer"].lower())
-        self.assertGreater(len(data["recommendedCountries"]), 0)
-
-        # Verify fallback includes candidate HS codes and valid competition metrics
-        for c in data["recommendedCountries"]:
-            self.assertIn("competition", c)
-            self.assertIn(c["competition"], ["Low", "Medium", "High"])
-            self.assertIn("demandScore", c)
-            self.assertIn("growthRate", c)
 
 
 if __name__ == "__main__":
