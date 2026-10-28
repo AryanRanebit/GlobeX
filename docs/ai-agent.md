@@ -1,7 +1,8 @@
 # 🌍 GlobeX AI — Intelligent Export-Import Assistant (AI Agent Service)
 
 > Production-ready AI Agent microservice for Indian manufacturers, exporters, and MSMEs seeking global expansion.  
-> Powered by **Gemini 2.5 Flash · LangChain · ChromaDB · FastAPI**
+> Powered by **Gemini 3.6 Flash · LangChain · ChromaDB · FastAPI**
+> Model ID: `gemini-3.6-flash` (Google Gemini API stable model). Source: https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash
 
 ---
 
@@ -19,7 +20,7 @@
 │                        ↓               ↓                         │
 │                    Context Injection + Tool Results              │
 │                        ↓                                         │
-│                  Gemini 2.5 Flash (Final Response)               │
+│                  Gemini 3.6 Flash (Final Response)               │
 │                        ↓                                         │
 │               Memory Storage (SQLite) → Session Context          │
 └─────────────────────────────────────────────────────────────────┘

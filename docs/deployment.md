@@ -60,10 +60,12 @@ This guide details the complete deployment architecture for **GlobeX AI**, an en
 | Variable | Description | Example |
 |---|---|---|
 | `GOOGLE_API_KEY` | Google Gemini API Key | `AIzaSy...` |
-| `GEMINI_MODEL` | Gemini LLM Model | `gemini-2.5-flash-preview-05-20` |
+| `GEMINI_MODEL` | Gemini LLM Model | `gemini-3.6-flash` |
 | `APP_ENV` | Environment mode | `production` |
 | `APP_PORT` | Listening port | `8000` |
 | `CORS_ORIGINS` | JSON list of allowed callers | `["https://api.yourdomain.com", "http://localhost:3000"]` |
+
+Google lists `gemini-3.6-flash` as a stable model ID: https://ai.google.dev/gemini-api/docs/models/gemini-3.6-flash.
 
 ---
 
