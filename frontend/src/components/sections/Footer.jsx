@@ -20,7 +20,7 @@ export default function Footer({ onNavigate }) {
               <span className="text-base font-bold text-white font-heading">GlobeX</span>
             </a>
             <p className="text-sm text-faint leading-relaxed max-w-sm mb-4">
-              Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find verified buyers, and grow your export revenue with data.
+              Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find real buyers with cited sources, and grow your export revenue with data.
             </p>
             <div className="space-y-1.5 text-[13px] text-faint">
               <p className="text-line-dark font-semibold">Contact & Support:</p>
@@ -36,7 +36,7 @@ export default function Footer({ onNavigate }) {
           <div>
             <h4 className="text-xs font-bold text-line-dark uppercase tracking-wider mb-3.5 font-heading">Solutions</h4>
             <ul className="space-y-2.5">
-              {['Market Analysis', 'Lead Discovery', 'Competitor Intel', 'AI Trade Agents', 'Demand Forecasting'].map(item => (
+              {['Market Analysis', 'Lead Discovery', 'Competitor Intel', 'AI Trade Agents'].map(item => (
                 <li key={item}>
                   <a 
                     href={item === 'AI Trade Agents' ? '#' : '#solutions'} 

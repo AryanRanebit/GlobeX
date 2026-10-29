@@ -22,9 +22,11 @@ export const buyersService = {
   /**
    * Phase 7: Evidence-based buyer discovery.
    *
-   * Accepts an optional providerOverride for testing with mock providers.
-   * All candidates are verified, scored, and persisted before being returned.
-   * The response includes provenance, verification status, and score breakdown.
+   * Candidates come from the grounded Gemini provider (Google Search citations
+   * required). Accepts an optional providerOverride for testing with mock
+   * providers. All candidates are verified, scored, and persisted before being
+   * returned. Provider failures surface as honest 502/503 errors — never as
+   * silently substituted mock companies.
    */
   async discover(
     userId: string,

@@ -51,7 +51,7 @@ app = FastAPI(
     title="GlobeX AI",
     description=(
         "Intelligent Export-Import Assistant for Indian Manufacturers and MSMEs. "
-        "Powered by Gemini 2.5 Flash, LangChain, and ChromaDB."
+        "Powered by Gemini 3.6 Flash, LangChain, and ChromaDB."
     ),
     version="1.0.0",
     docs_url="/docs",

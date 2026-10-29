@@ -63,30 +63,29 @@ export default function AiAgentsHub({ onBackToLanding }) {
       name: 'Buyer Discovery Agent',
       icon: Search,
       role: 'Global Trade Importer Finder',
-      description: 'Crawls international shipping records, customs registries, and business directories to compile a list of active buyers purchasing your specific HS code products.',
+      description: 'Searches the live web with Google Search grounding to find real companies that import or distribute your product. Every result carries its source link; anything without a citation is dropped.',
       capabilities: [
-        'Real-time scanning of bills of lading and customs manifests.',
-        'Cross-border registry scraping and trade volume tracking.',
-        'Entity resolution to filter duplicate buyers and identify parent companies.'
+        'Grounded live web search for real importers and distributors by product and country.',
+        'Source link attached to every company; uncited suggestions are discarded.',
+        'Honest limits: customs volumes, purchase history and contacts are NOT verified.'
       ],
       simulationLogs: [
         '🚀 Initializing Buyer Discovery Agent...',
-        '🔍 Scanning customs registries for HS Code: 6204.62 (Women\'s Cotton Trousers)...',
-        '📊 Parsing latest bills of lading for the last 6 months...',
-        '🔄 Filtered 12,480 shipments. Isolating active importers in Europe and North America...',
-        '💡 Match found: "Textil GmbH" (Hamburg, Germany) - 18 shipments, total 45 tons.',
-        '💡 Match found: "Nordic Retailers" (Oslo, Norway) - 9 shipments, total 22 tons.',
-        '💡 Match found: "Atlas Imports Inc." (New York, USA) - 34 shipments, total 88 tons.',
-        '✨ Resolving corporate structures and public contact details...',
-        '✅ Agent run complete. 3 high-volume buyers verified and saved to pipeline.'
+        '🔍 Running grounded Google Search: importers of HS 6204.62 (women\'s cotton trousers) in the US and Germany...',
+        '📄 Reading search results: company websites, trade directories, public filings...',
+        '💡 Match: "Gap Inc." (United States) - apparel importer/retailer, source cited.',
+        '💡 Match: "H&M Group" (Sweden) - apparel importer/retailer, source cited.',
+        '💡 Match: "C&A" (Germany) - apparel importer/retailer, source cited.',
+        '🔗 Attaching source links. Dropping any suggestion without a citation...',
+        '✅ 3 source-backed prospects saved. Import volumes and contacts are NOT verified.'
       ],
       outcome: {
-        title: 'Discovered Buyers (HS 6204.62)',
+        title: 'Discovered Prospects (HS 6204.62) - sources attached',
         type: 'table',
         data: [
-          { company: 'Atlas Imports Inc.', country: 'United States', volume: '88 Tons', reliability: '94%', contact: 'procurement@atlasimports.com' },
-          { company: 'Textil GmbH', country: 'Germany', volume: '45 Tons', reliability: '89%', contact: 'buying@textilgmbh.de' },
-          { company: 'Nordic Retailers', country: 'Norway', volume: '22 Tons', reliability: '87%', contact: 'sourcing@nordicretailers.no' }
+          { company: 'Gap Inc.', country: 'United States', volume: 'Not verified', reliability: 'Web evidence', contact: 'gapinc.com' },
+          { company: 'H&M Group', country: 'Sweden', volume: 'Not verified', reliability: 'Web evidence', contact: 'hmgroup.com' },
+          { company: 'C&A', country: 'Germany', volume: 'Not verified', reliability: 'Web evidence', contact: 'c-and-a.com' }
         ]
       }
     },
@@ -95,31 +94,29 @@ export default function AiAgentsHub({ onBackToLanding }) {
       name: 'Market Intelligence Agent',
       icon: TrendingUp,
       role: 'Global Market Opportunity Evaluator',
-      description: 'Analyzes tariff rates, historical trade growth, competitor presence, and pricing dynamics to score and recommend top-performing countries for your exports.',
+      description: 'Ranks destination countries for your exports from official UN Comtrade India export data (calendar year 2025). Shows trade values and shares only; tariffs, growth and competition are not computed.',
       capabilities: [
-        'Retrieves international customs tariffs and trade agreement benefits.',
-        'Calculates 5-year CAGR demand trends for specific product lines.',
-        'Evaluates port logistics efficiency indices and transportation costs.'
+        'Ranks destinations by India-reported export value (FOB), UN Comtrade 2025.',
+        'Shows each destination\'s share of India\'s exports for the selected HS code.',
+        'Marks growth, competition and destination market size as unavailable when the data is not seeded.'
       ],
       simulationLogs: [
         '🚀 Initializing Market Intelligence Agent...',
-        '📈 Fetching 5-year historical trade data for category: Agro-products (Spices)...',
-        '📊 Fetching tariff rates for India → Worldwide exports...',
-        '🔍 Checking regional Free Trade Agreements (FTAs) and CEPA benefits...',
-        '⚡ Analyzing competitor density (major exporters: Vietnam, Madagascar)...',
-        '💡 Computing Opportunity Scores based on Tariffs, Demand, and Logistics...',
-        '📈 Germany: Tariff 0% (under FTA), 5-yr CAGR +6.8%, Opportunity Score: 91/100',
-        '📈 UAE: Tariff 0% (CEPA), 5-yr CAGR +8.2%, Opportunity Score: 89/100',
-        '📈 Japan: Tariff 4.5%, 5-yr CAGR +2.1%, Opportunity Score: 72/100',
-        '✅ Market analysis complete. Germany and UAE flagged as high-potential targets.'
+        '📊 Querying UN Comtrade 2025: India exports, HS 62 (apparel, not knitted)...',
+        '🔍 Ranking destinations by India-reported export value (FOB)...',
+        '📈 United States: $2.67B, 31.83% of India HS 62 exports',
+        '📈 United Kingdom: $793.51M, 9.46%',
+        '📈 United Arab Emirates: $628.61M, 7.49%',
+        'ℹ️ Growth, tariffs and competition: not available from the seeded data.',
+        '✅ Ranking complete. Figures are 2025 UN Comtrade values.'
       ],
       outcome: {
-        title: 'Top Target Export Markets',
+        title: 'Top Destinations (UN Comtrade 2025, HS 62)',
         type: 'list',
         data: [
-          { country: 'Germany', tariff: '0.0% (FTA)', growth: '+6.8% CAGR', score: 91, status: 'Highly Recommended' },
-          { country: 'United Arab Emirates', tariff: '0.0% (CEPA)', growth: '+8.2% CAGR', score: 89, status: 'Highly Recommended' },
-          { country: 'Japan', tariff: '4.5%', growth: '+2.1% CAGR', score: 72, status: 'Moderate Growth' }
+          { country: 'United States', tariff: 'Not available', growth: 'Not available', score: '100 (relative export value)', status: '$2.67B · 31.83% of exports' },
+          { country: 'United Kingdom', tariff: 'Not available', growth: 'Not available', score: '30 (relative export value)', status: '$793.51M · 9.46% of exports' },
+          { country: 'United Arab Emirates', tariff: 'Not available', growth: 'Not available', score: '24 (relative export value)', status: '$628.61M · 7.49% of exports' }
         ]
       }
     },
@@ -136,8 +133,8 @@ export default function AiAgentsHub({ onBackToLanding }) {
       ],
       simulationLogs: [
         '🚀 Initializing Outreach & RFP Agent...',
-        '📧 Fetching buyer profile: "Textil GmbH" (Hamburg, Germany)...',
-        '✍️ Analyzing history: Frequently imports organic cotton textiles from South Asia...',
+        '📧 Fetching buyer profile: "C&A" (Germany) - a prospect saved by Buyer Discovery...',
+        '✍️ Using public web sources about the prospect to tailor the pitch (no purchase history is claimed)...',
         '🌐 Selecting draft language: German (Deutsch) for high response rate...',
         '📝 Generating personalized value proposition based on organic certifications...',
         '⚙️ Applying tone setting: Formal corporate partner...',
@@ -151,7 +148,7 @@ export default function AiAgentsHub({ onBackToLanding }) {
         subject: 'Partnerschaftsanfrage: Bio-Baumwolltextilien direkt vom Hersteller',
         body: `Sehr geehrte Damen und Herren,
 
-wir haben festgestellt, dass Ihr Unternehmen Textil GmbH ein führender Importeur von ökologischen Textilien in Deutschland ist. 
+wir schreiben Ihnen, weil Ihr Unternehmen C&A als Importeur und Händler von Textilien in Deutschland öffentlich bekannt ist.
 
 Als zertifizierter Hersteller in Indien bieten wir hochwertige Bio-Baumwolltextilien an, die den globalen GOTS-Standards entsprechen. Durch unsere vertikal integrierte Produktion können wir Ihre Lieferkettenstabilität sichern und attraktive Einkaufskonditionen bei 0% Zoll (unter dem aktuellen Handelsabkommen) garantieren.
 
@@ -196,33 +193,30 @@ Sourcing-Team`
       id: 'scoring',
       name: 'Lead Scoring Agent',
       icon: CheckCircle2,
-      role: 'Buyer Trust & Credit Scorer',
-      description: 'Calculates propensity scores for buyers by correlating trade frequencies, order volumes, financial stability records, and historical supplier retention rates.',
+      role: 'Buyer Evidence Scorer',
+      description: 'Scores a saved buyer prospect strictly from the evidence on its record - identity, web domain, contact details, product fit. It does not check credit registries, shipment histories, or supplier retention.',
       capabilities: [
-        'Correlates trade frequency to identify stable, recurring importers.',
-        'Performs basic business credit registry checks where available.',
-        'Assigns an overall Lead Score out of 100 based on fit.'
+        'Transparent score breakdown: every point traces to a named evidence factor.',
+        'Missing evidence scores zero, never negative - and is shown as missing.',
+        'Not a credit rating: no financial or customs data is connected.'
       ],
       simulationLogs: [
         '🚀 Initializing Lead Scoring Agent...',
-        '📊 Processing importer data for: "Atlas Imports Inc."...',
-        '📈 Transaction history audit: 34 shipments over 12 months (Stable demand).',
-        '🔄 Supplier retention analysis: Supplier longevity averages 3.2 years.',
-        '💳 Querying corporate registries for credit stability indicators...',
-        '⚖️ Risk analysis: No legal disputes or customs violations found.',
-        '🎛️ Fitting parameters: Volume Match (10/10), Stability (9/10), Growth (8/10).',
-        '💡 Final score computed: 94/100.',
-        '✅ Scoring complete. Lead flagged as tier-1 priority target.'
+        '📊 Scoring prospect: "C&A" (Germany) - saved from grounded search...',
+        '🔎 Evidence found: company identity, website domain, product/industry fit...',
+        '⚠️ Evidence missing: shipment volumes, credit history, supplier retention (no customs or registry data connected)...',
+        '🎛️ Missing signals score zero, not negative, and are listed in the breakdown...',
+        '✅ Score computed from available evidence only. This is not a credit rating.'
       ],
       outcome: {
-        title: 'Lead Profile: Atlas Imports Inc.',
+        title: 'Evidence Score: C&A (Germany)',
         type: 'scoring',
-        score: 94,
+        score: 45,
         metrics: [
-          { name: 'Import Frequency', rating: 'High (Monthly)', score: 95 },
-          { name: 'Shipment Volume Fit', rating: 'Optimal Match', score: 92 },
-          { name: 'Financial Reliability', rating: 'Strong Credit', score: 94 },
-          { name: 'Supplier Loyalty', rating: 'High Retention', score: 90 }
+          { name: 'Company Identity', rating: 'Present (web source cited)', score: 20 },
+          { name: 'Website Domain', rating: 'Present', score: 10 },
+          { name: 'Contact Details', rating: 'Partial', score: 15 },
+          { name: 'Customs / Credit Evidence', rating: 'Not available', score: 0 }
         ]
       }
     }
@@ -492,9 +486,9 @@ Sourcing-Team`
                         <tr>
                           <th>Importer Company</th>
                           <th>Country</th>
-                          <th>Est. Import Volume</th>
-                          <th>Reliability Score</th>
-                          <th>Verified Contact</th>
+                          <th>Import Volume</th>
+                          <th>Evidence</th>
+                          <th>Source</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -524,7 +518,7 @@ Sourcing-Team`
                         <div className="flex justify-between items-start mb-2">
                           <span className="font-bold text-navy">{row.country}</span>
                           <span className="text-xs font-bold text-blue bg-blue-pale px-2 py-0.5 rounded">
-                            Score: {row.score}
+                            Relative size: {row.score}
                           </span>
                         </div>
                         <div className="text-xs text-muted flex flex-col gap-1 mt-3">
@@ -533,7 +527,7 @@ Sourcing-Team`
                             <span className="font-medium text-ink">{row.tariff}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>5-Yr CAGR:</span>
+                            <span>Growth:</span>
                             <span className="font-medium text-ink">{row.growth}</span>
                           </div>
                           <div className="mt-2 text-center text-[10px] font-bold text-emerald-dark bg-emerald-pale py-1 rounded border border-emerald-border">

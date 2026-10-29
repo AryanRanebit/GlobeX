@@ -48,7 +48,7 @@ export interface MarketResearchOutput {
     countryCode: string;
     demandScore: number;
     growthRate: string;
-    competition: 'Low' | 'Medium' | 'High';
+    competition: 'Low' | 'Medium' | 'High' | 'N/A';
     marketSize?: string;
     trend?: string;
     insights?: string;
@@ -73,10 +73,11 @@ export interface BuyerDiscoveryOutput {
     country: string;
     countryCode: string;
     industry: string;
-    website?: string;
-    email?: string;
-    estimatedLeadScore: number;
+    website?: string | null;
+    email?: string | null;
+    estimatedLeadScore: number | null;
     source: string;
+    sourceUrl?: string | null;
   }[];
   searchedAt: string;
 }

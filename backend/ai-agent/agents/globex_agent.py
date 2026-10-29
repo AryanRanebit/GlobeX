@@ -34,6 +34,8 @@ INTENT_CATEGORY_MAP: dict[str, str | None] = {
     "general_trade_query": "shipping",
     "country_rules": "country_rules",
     "hs_code_lookup": "hs_codes",
+    "top_export_markets": "hs_codes",
+    "market_share": "hs_codes",
     "duty_calculation": None,
     "invoice_generation": None,
     "packing_list": None,
@@ -285,6 +287,8 @@ class GlobeXAgent:
             "hs_code_lookup": '{"product_name": "<product name>"}',
             "duty_calculator": '{"product": "<product>", "destination_country": "<country>", "product_value_usd": <number>, "hs_code": "<optional>"}',
             "country_rules": '{"country": "<country name>", "product_category": "<optional product category>"}',
+            "top_export_markets": '{"hs_code": "<2-8 digit HS code, e.g. 62>", "n": <integer, default 5>}',
+            "market_share": '{"country": "<country name>", "hs_code": "<2-8 digit HS code, e.g. 62>"}',
             "invoice_generator": (
                 '{"seller_name": "<>", "seller_address": "<>", "buyer_name": "<>", '
                 '"buyer_address": "<>", "product_description": "<>", "quantity": <number>, '

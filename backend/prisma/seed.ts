@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import 'dotenv/config';
-import { PrismaClient, Role, LeadStatus } from '@prisma/client';
+import { PrismaClient, Role } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -57,88 +57,13 @@ async function main() {
     },
   });
 
-  // ─── Buyers ──────────────────────────────────────────────────
-  const buyers = await Promise.all([
-    prisma.buyer.create({
-      data: {
-        companyName: 'Naturalis GmbH',
-        country: 'Germany',
-        countryCode: 'DE',
-        industry: 'Food & Beverage',
-        website: 'https://naturalis.de',
-        email: 'procurement@naturalis.de',
-        leadScore: 91,
-        annualRevenue: '$50M–$100M',
-        employeeCount: '200–500',
-        importVolume: 'High',
-        tags: ['organic', 'bulk-importer', 'europe'],
-        isVerified: true,
-      },
-    }),
-    prisma.buyer.create({
-      data: {
-        companyName: 'Spice World Inc.',
-        country: 'United States',
-        countryCode: 'US',
-        industry: 'Food Processing',
-        website: 'https://spiceworld.com',
-        email: 'imports@spiceworld.com',
-        leadScore: 87,
-        annualRevenue: '$100M+',
-        employeeCount: '500+',
-        importVolume: 'Very High',
-        tags: ['bulk-importer', 'retail-brand', 'us-market'],
-        isVerified: true,
-      },
-    }),
-    prisma.buyer.create({
-      data: {
-        companyName: 'Al Taj Trading LLC',
-        country: 'United Arab Emirates',
-        countryCode: 'AE',
-        industry: 'General Trading',
-        website: 'https://altaj.ae',
-        email: 'trade@altaj.ae',
-        leadScore: 78,
-        annualRevenue: '$10M–$50M',
-        employeeCount: '50–200',
-        importVolume: 'Medium',
-        tags: ['middle-east', 'distributor', 'halal'],
-        isVerified: false,
-      },
-    }),
-  ]);
-
-  // ─── Leads ───────────────────────────────────────────────────
-  await prisma.lead.createMany({
-    data: [
-      {
-        buyerId: buyers[0].id,
-        userId: demoUser.id,
-        productId: product1.id,
-        leadScore: 91,
-        status: LeadStatus.NEGOTIATION,
-        notes: 'Interested in 5MT/month. Requested product samples. Follow up after Germany trade fair.',
-        nextAction: 'Send sample shipment',
-      },
-      {
-        buyerId: buyers[1].id,
-        userId: demoUser.id,
-        productId: product1.id,
-        leadScore: 87,
-        status: LeadStatus.CONTACTED,
-        notes: 'Replied to our email. Wants USDA organic certification copy.',
-      },
-      {
-        buyerId: buyers[2].id,
-        userId: demoUser.id,
-        productId: product1.id,
-        leadScore: 78,
-        status: LeadStatus.NEW,
-        notes: 'AI-discovered buyer. Not yet contacted.',
-      },
-    ],
-  });
+  // ─── Buyers & Leads ──────────────────────────────────────────
+  // No buyers are seeded. Fabricated companies with invented websites, emails,
+  // revenues and "verified" flags previously shipped here; they violated the
+  // project's evidence standard. Real buyer records are created only by the
+  // grounded discovery pipeline (POST /api/v1/buyers/discover), which persists
+  // citation-backed companies with provenance and honest verification states.
+  // Leads are created from those real buyer records.
 
   // ─── Compliance Requirements ─────────────────────────────────
   const complianceData = [

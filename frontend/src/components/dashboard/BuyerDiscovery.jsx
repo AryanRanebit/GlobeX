@@ -30,7 +30,7 @@ import ErrorBanner from '../ui/ErrorBanner';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
+export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
   const [buyers, setBuyers] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchQuery);
   const [statusFilter, setStatusFilter] = useState('ALL');
@@ -82,26 +82,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
       }
 
       if (res.status === 401) {
-        // If unauthenticated or token expired, auto login as demo user to ensure live data loads
-        const loginRes = await fetch('http://localhost:3000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.success && loginData.data?.tokens?.accessToken) {
-          localStorage.setItem('token', loginData.data.tokens.accessToken);
-          localStorage.setItem('user', JSON.stringify(loginData.data.user));
-          // Retry with new token
-          const retryRes = await fetch('http://localhost:3000/api/v1/buyers?limit=100', {
-            headers: { 'Authorization': `Bearer ${loginData.data.tokens.accessToken}` }
-          });
-          const retryJson = await retryRes.json();
-          if (retryJson.success) {
-            setBuyers(retryJson.data || []);
-            return;
-          }
-        }
+        onRequireAuth?.();
+        return;
       }
 
       const json = await res.json();
@@ -128,18 +110,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
     setIsDiscovering(true);
     setDiscoverError(null);
     try {
-      let token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
       if (!token) {
-        const loginRes = await fetch('http://localhost:3000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
-        });
-        const loginData = await loginRes.json();
-        if (loginData.data?.tokens?.accessToken) {
-          token = loginData.data.tokens.accessToken;
-          localStorage.setItem('token', token);
-        }
+        setIsDiscoverModalOpen(false);
+        onRequireAuth?.();
+        return;
       }
 
       let res;
@@ -168,8 +143,23 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
         });
       }
 
+      if (res.status === 401) {
+        setIsDiscoverModalOpen(false);
+        onRequireAuth?.();
+        return;
+      }
+
       const json = await res.json();
       if (res.ok && json.success) {
+        const found = json.data?.totalUniqueBuyers ?? 0;
+        if (found === 0) {
+          // Honest empty state: the grounded search found nothing citable.
+          setDiscoverError(
+            json.data?.note ||
+            'The live web search found no companies it could back with a source for this query. Nothing was added rather than showing invented buyers.'
+          );
+          return;
+        }
         setIsDiscoverModalOpen(false);
         // Refresh buyers list
         await fetchBuyers();
@@ -251,7 +241,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface text-muted border border-line" title="AI suggestion from macroeconomic search. Unverified against customs registry.">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface text-muted border border-line" title="Prospect from grounded web search. Unverified against customs registry.">
         <Sparkles size={11} className="text-faint" />
         AI Prospect
       </span>
@@ -572,7 +562,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange }) {
               </div>
 
               <div className="p-3 rounded-lg bg-blue-pale border border-blue-soft text-xs text-blue-dark leading-relaxed">
-                <strong>Honest Evidence Notice:</strong> The discovery pipeline will search web registries for prospective importers, evaluate domain and corporate signals, and assign an honest reliability score.
+                <strong>Honest Evidence Notice:</strong> The pipeline runs a live Google Search-grounded lookup. Every company it returns carries its source link; suggestions without a citation are dropped. Import volumes and contact details are not verified.
               </div>
 
               {discoverError && (

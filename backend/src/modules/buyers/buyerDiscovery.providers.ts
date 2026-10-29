@@ -3,27 +3,27 @@
 //
 // PROVIDER ASSESSMENT (documented here for honest accounting):
 //
-//   CONFIGURED KEY:  Google Gemini API (GEMINI_API_KEY in backend/.env)
-//   ACCESS STATUS:   Valid — confirmed via API models endpoint.
-//
-//   GEMINI_GROUNDED_PROVIDER:
+//   GEMINI_GROUNDED_PROVIDER (production):
 //     Routes requests through the Python ai-agent microservice at
-//     AGENT_SERVICE_URL/agents/buyer-discovery, which uses Gemini with optional
-//     Google Search grounding. That endpoint performs LLM inference and may
-//     include real web-sourced company names when the GOOGLE_API_KEY in
-//     ai-agent/.env is valid.
+//     AGENT_SERVICE_URL/agents/buyer-discovery, which runs Gemini with the
+//     Google Search grounding tool. The agent keeps only companies that are
+//     attributable to a real search-result citation; companies without a
+//     citation are dropped there, and each returned buyer carries its source
+//     URL. When grounded search finds nothing credible, the agent returns an
+//     honest empty result — never fabricated companies.
 //
-//     Evidence level: LLM-generated suggestion with web search citations.
-//       - Can establish: company name, country, industry, domain, general description.
+//     Evidence level: web-search citation (company existence + relevance).
+//       - Can establish: company name, country, industry, website, and a
+//         public source URL for the claim.
 //       - Cannot establish: actual customs import records, confirmed importer
 //         registration, verified contact data, or purchase history.
-//       - Verification status: "unverified" by default; "partially_verified"
-//         only when the provider returns a grounding citation URL.
+//       - Verification status: "partially_verified" at best (domain evidence);
+//         never "verified_against_defined_criteria" without customs evidence.
 //
 //   MOCK_PROVIDER:
-//     Used in tests and when AGENT_SERVICE_URL is unreachable.
-//     Returns deterministic, clearly-labelled mock candidates.
-//     Verification status: always "unverified" with explicit mock flag.
+//     Test-only (unit/integration tests inject it via providerOverride).
+//     It is never selected implicitly in production: a missing or failing
+//     live provider raises ProviderError instead of returning mock companies.
 //
 //   UNEVALUATED / NOT CONFIGURED:
 //     - OpenCorporates (401 without API key — not provisioned)
@@ -96,7 +96,7 @@ export function deduplicateCandidates(candidates: DiscoveredCandidate[]): Discov
   return Array.from(seen.values());
 }
 
-// ─── Mock Provider ───────────────────────────────────────────────────────────
+// ─── Mock Provider (tests only — never selected implicitly in production) ───
 
 export class MockBuyerDataProvider implements IBuyerDataProvider {
   readonly name = 'mock_provider';
@@ -155,9 +155,10 @@ export class MockBuyerDataProvider implements IBuyerDataProvider {
 
 // ─── Gemini / AI-Agent Provider ───────────────────────────────────────────────
 //
-// Routes to the existing Python ai-agent microservice, which already uses
-// Gemini with optional Google Search grounding.  The agent service endpoint
-// was confirmed to exist in ai-agent/routes/api.py:673-725.
+// Routes to the Python ai-agent microservice, which runs Gemini with the
+// Google Search grounding tool and returns only citation-backed companies
+// (see ai-agent/services/buyer_discovery.py). An honest empty result is
+// returned upstream when nothing credible is found.
 //
 // Rate-limit behaviour: FastAPI upstream will return 429 or 503 when overloaded;
 // we surface those as ProviderError with retryable=true so the caller can back off.
@@ -183,6 +184,8 @@ export class GeminiAgentBuyerProvider implements IBuyerDataProvider {
         body: JSON.stringify({
           product: params.product,
           target_countries: [params.targetMarket],
+          category: params.category,
+          hs_code: params.hsCode,
         }),
         signal: AbortSignal.timeout(this.timeoutMs),
       });

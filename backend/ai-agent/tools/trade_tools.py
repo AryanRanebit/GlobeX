@@ -5,10 +5,13 @@ All tools are async, typed, and return structured Pydantic models.
 from __future__ import annotations
 
 import json
+import os
 import re
 import uuid
 from datetime import date
 from typing import Any
+
+import httpx
 
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -418,6 +421,131 @@ async def packing_list_generator(
     return packing_list
 
 
+# ── Tools 6 & 7: Real Trade Data (UN Comtrade via Node backend) ─────────────
+
+TRADE_DATA_UNAVAILABLE = (
+    "Trade data not available from the UN Comtrade dataset right now. "
+    "Tell the user the figure is not available and do NOT estimate, "
+    "approximate, or improvise a number."
+)
+
+# Source citation attached to every trade-data tool result.
+TRADE_DATA_CITATION = "UN Comtrade 2025, India-reported FOB"
+
+
+def _trade_base_url() -> str:
+    return os.getenv("NODE_BACKEND_URL", "http://localhost:3000").rstrip("/")
+
+
+async def _get_trade_markets(params: dict[str, Any]) -> dict | None:
+    """GET {NODE_BACKEND_URL}/api/v1/trade/markets with a short timeout.
+
+    Returns the parsed JSON body on HTTP 200, else None (caller reports
+    "data not available" to the agent instead of improvising).
+    """
+    url = f"{_trade_base_url()}/api/v1/trade/markets"
+    try:
+        async with httpx.AsyncClient(timeout=4.0) as client:
+            resp = await client.get(url, params=params)
+            if resp.status_code != 200:
+                log.warning("Trade markets request failed", status=resp.status_code, url=str(resp.url))
+                return None
+            return resp.json()
+    except Exception as exc:
+        log.warning("Trade markets request error", error=str(exc), url=url)
+        return None
+
+
+@tool
+async def top_export_markets(hs_code: str, n: int = 5) -> dict:
+    """
+    Get India's top export destination markets for an HS code, from real
+    UN Comtrade 2025 data (India-reported exports, FOB).
+
+    Args:
+        hs_code: HS code (2-8 digits, e.g. "62" for apparel).
+        n: Number of top markets to return (default 5).
+
+    Returns:
+        Ranked list of destination markets with India-reported export values
+        and shares, or an error saying the data is not available.
+    """
+    log.info("Top export markets lookup", hs_code=hs_code, n=n)
+    payload = await _get_trade_markets({
+        "hs": hs_code,
+        "year": "2025",
+        "limit": max(1, min(int(n), 50)),
+        "sortBy": "tradeValueUsd",
+        "sortDir": "desc",
+    })
+    if not payload or not isinstance(payload.get("data"), list) or not payload["data"]:
+        return {"error": TRADE_DATA_UNAVAILABLE}
+
+    meta = payload.get("meta") or {}
+    markets = []
+    for i, row in enumerate(payload["data"], start=1):
+        markets.append({
+            "rank": i,
+            "country": row.get("partnerName"),
+            "india_export_value_usd": row.get("tradeValueUsd"),
+            "share_of_india_exports_pct": row.get("shareOfIndiaExportsPct"),
+            "net_weight_kg": row.get("netWeightKg"),
+        })
+
+    return {
+        "hs_code": hs_code,
+        "year": "2025",
+        "source": meta.get("citation") or TRADE_DATA_CITATION,
+        "markets": markets,
+    }
+
+
+@tool
+async def market_share(country: str, hs_code: str) -> dict:
+    """
+    Get India's export value and market share for a specific destination
+    country and HS code, from real UN Comtrade 2025 data (India-reported
+    exports, FOB).
+
+    Args:
+        country: Destination country name (e.g. "United States", "Germany").
+        hs_code: HS code (2-8 digits, e.g. "62" for apparel).
+
+    Returns:
+        India-reported export value, share of India's exports, and (when
+        available) destination market size, or an error saying the data is
+        not available.
+    """
+    log.info("Market share lookup", country=country, hs_code=hs_code)
+    payload = await _get_trade_markets({
+        "hs": hs_code,
+        "year": "2025",
+        "search": country,
+        "limit": 10,
+    })
+    rows = (payload or {}).get("data")
+    if not rows:
+        return {"error": TRADE_DATA_UNAVAILABLE}
+
+    # Prefer an exact (case-insensitive) country match, else take the first hit.
+    row = next(
+        (r for r in rows if (r.get("partnerName") or "").lower() == country.lower()),
+        rows[0],
+    )
+    meta = payload.get("meta") or {}
+
+    return {
+        "country": row.get("partnerName"),
+        "hs_code": hs_code,
+        "year": "2025",
+        "india_export_value_usd": row.get("tradeValueUsd"),
+        "share_of_india_exports_pct": row.get("shareOfIndiaExportsPct"),
+        "destination_market_size_usd": row.get("destinationMarketSizeUsd"),
+        "india_share_of_destination_import_pct": row.get("indiaShareOfDestinationImportPct"),
+        "source": meta.get("citation") or TRADE_DATA_CITATION,
+    }
+
+
 # ── Tool Registry ────────────────────────────────────────────────────────────
 
 ALL_TOOLS = [
@@ -426,6 +554,8 @@ ALL_TOOLS = [
     country_rules,
     invoice_generator,
     packing_list_generator,
+    top_export_markets,
+    market_share,
 ]
 
 TOOL_MAP = {t.name: t for t in ALL_TOOLS}

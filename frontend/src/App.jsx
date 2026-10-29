@@ -21,6 +21,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [dashboardPage, setDashboardPage] = useState('dashboard');
   const [authOpen, setAuthOpen] = useState(false);
+  const [authInitialTab, setAuthInitialTab] = useState('signup');
   const [searchQuery, setSearchQuery] = useState('');
   
   // Auth state
@@ -82,6 +83,14 @@ export default function App() {
     setDashboardPage(targetTab);
   }, []);
 
+  const requireSignIn = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setAuthInitialTab('signin');
+    setAuthOpen(true);
+  }, []);
+
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -116,7 +125,8 @@ export default function App() {
         {dashboardPage === 'buyers' && (
           <BuyerDiscovery 
             searchQuery={searchQuery} 
-            onSearchChange={setSearchQuery} 
+            onSearchChange={setSearchQuery}
+            onRequireAuth={requireSignIn}
           />
         )}
         {dashboardPage === 'markets' && (
@@ -133,7 +143,7 @@ export default function App() {
             }}
           />
         )}
-        {dashboardPage === 'copilot' && <AICopilot />}
+        {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
       </DashboardLayout>
     );
   }
@@ -165,7 +175,7 @@ export default function App() {
       )}
       
       <Footer onNavigate={setCurrentPage} />
-      <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
+      <AuthModal isOpen={authOpen} initialTab={authInitialTab} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
