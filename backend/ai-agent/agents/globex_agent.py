@@ -44,6 +44,28 @@ INTENT_CATEGORY_MAP: dict[str, str | None] = {
 }
 
 
+
+def _content_to_text(content: Any) -> str:
+    """Normalize LangChain message content to plain text.
+
+    Gemini sometimes returns AIMessage.content as a list of content blocks
+    (e.g. [{"type": "text", "text": "..."}]) instead of a plain string.
+    """
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict):
+                text = block.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+        return "".join(parts)
+    return "" if content is None else str(content)
+
+
 class GlobeXAgent:
     """
     Production-ready LangChain agent for international trade assistance.
@@ -169,7 +191,7 @@ class GlobeXAgent:
 
         # 6. Generate response
         response_msg = await self._llm.ainvoke(messages)
-        response_text = response_msg.content
+        response_text = _content_to_text(response_msg.content)
 
         # 7. Persist messages to memory
         await memory.add_message(session_id, "user", user_message)
@@ -238,7 +260,7 @@ class GlobeXAgent:
 
         full_response = ""
         async for chunk in self._llm.astream(messages):
-            token = chunk.content
+            token = _content_to_text(chunk.content)
             full_response += token
             yield token
 
@@ -252,7 +274,7 @@ class GlobeXAgent:
         """Use Gemini to classify user intent into structured JSON."""
         prompt = INTENT_CLASSIFIER_PROMPT.format(user_message=user_message)
         response = await self._classifier_llm.ainvoke(prompt)
-        raw = response.content.strip()
+        raw = _content_to_text(response.content).strip()
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         try:
             return json.loads(raw)
@@ -334,7 +356,7 @@ Return ONLY a JSON object matching this schema (fill in all fields as best you c
 For any fields not mentioned, use sensible defaults. Do not include markdown."""
 
         response = await self._classifier_llm.ainvoke(prompt)
-        raw = response.content.strip()
+        raw = _content_to_text(response.content).strip()
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         try:
             return json.loads(raw)
@@ -363,7 +385,7 @@ For any fields not mentioned, use sensible defaults. Do not include markdown."""
                     user_message=user_message, assistant_response=assistant_response[:500]
                 )
                 resp = await self._classifier_llm.ainvoke(prompt)
-                raw = resp.content.strip()
+                raw = _content_to_text(resp.content).strip()
                 raw = re.sub(r"```(?:json)?|```", "", raw).strip()
                 try:
                     extracted = json.loads(raw)
