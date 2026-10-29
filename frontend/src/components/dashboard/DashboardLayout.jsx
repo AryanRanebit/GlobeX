@@ -11,6 +11,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { LogoMark } from '../ui/Logo';
 
 function getStoredUser() {
   try {
@@ -77,10 +78,12 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
     <>
       <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-lg bg-cream flex items-center justify-center shrink-0">
-            <span className="text-deep font-bold text-sm font-heading">G</span>
-          </div>
-          {expanded && <span className="font-bold text-cream whitespace-nowrap font-heading tracking-tight">GlobeX AI</span>}
+          <LogoMark size={30} onDark />
+          {expanded && (
+            <span className="font-bold text-cream whitespace-nowrap font-heading tracking-tight">
+              Globe<span className="text-[#F59E0B]">X</span><span className="text-sage font-semibold"> AI</span>
+            </span>
+          )}
         </div>
         {/* Mobile close button (only rendered inside the drawer) */}
         <button
