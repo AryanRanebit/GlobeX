@@ -531,6 +531,15 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
         if any(w in lower_query for w in ["apparel", "garment", "shirt", "clothing", "trouser", "dress", "jacket", "cotton"]):
             target_hs = "62"
 
+        # Non-apparel products: use the top candidate HS code from product
+        # understanding (dots stripped, e.g. "0910.30" -> "091030") so the
+        # analysis is scoped to the product's commodity instead of HS TOTAL.
+        if target_hs == "TOTAL" and norm.candidate_hs_codes:
+            top_clean = norm.candidate_hs_codes[0].hs_code.replace(".", "").strip()
+            if top_clean:
+                target_hs = top_clean
+                matched_candidate = norm.candidate_hs_codes[0]
+
         trade_info = await _fetch_trade_market_data(target_hs)
         if not trade_info and target_hs != "TOTAL":
             trade_info = await _fetch_trade_market_data("TOTAL")
