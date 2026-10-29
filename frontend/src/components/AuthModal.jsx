@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight, BarChart3, Loader2 } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -136,17 +137,10 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     setSuccess('');
     setLoading(true);
     try {
-      let res;
-      const options = {
+      const res = await apiFetch('/api/v1/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: 'demo@spicesexport.in', password: 'Demo@123' })
-      };
-      try {
-        res = await fetch('/api/v1/auth/login', options);
-      } catch {
-        res = await fetch('http://localhost:3000/api/v1/auth/login', options);
-      }
+      });
       const data = await res.json();
       if (!res.ok) {
         setError(data.errors?.[0]?.message || data.message || 'Demo sign-in failed. Please try again.');
@@ -184,11 +178,8 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
 
     try {
       if (tab === 'signup') {
-        let res;
-        try {
-          res = await fetch('/api/v1/auth/signup', {
+        const res = await apiFetch('/api/v1/auth/signup', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: signupName,
             email: signupEmail,
@@ -198,20 +189,6 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
             industry: 'General'
           })
         });
-        } catch {
-          res = await fetch('http://localhost:3000/api/v1/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: signupName,
-            email: signupEmail,
-            password: signupPass,
-            companyName: 'My Company',
-            companyType: 'Other',
-            industry: 'General'
-          })
-        });
-        }
         const data = await res.json();
         if (res.ok) {
           localStorage.setItem('token', data.data?.tokens?.accessToken || data.tokens?.accessToken || '');
@@ -227,26 +204,13 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
           setError(msg);
         }
       } else {
-        let res;
-        try {
-          res = await fetch('/api/v1/auth/login', {
+        const res = await apiFetch('/api/v1/auth/login', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             email: signinEmail,
             password: signinPass
           })
         });
-        } catch {
-          res = await fetch('http://localhost:3000/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: signinEmail,
-            password: signinPass
-          })
-        });
-        }
         const data = await res.json();
         if (res.ok) {
           localStorage.setItem('token', data.data?.tokens?.accessToken || data.tokens?.accessToken || '');
