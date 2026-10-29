@@ -35,6 +35,7 @@ from tools.trade_tools import (
 )
 from utils.config import get_settings
 from utils.logger import get_logger
+from utils.gemini_status import gemini_readiness, is_gemini_auth_error, require_gemini
 
 log = get_logger(__name__)
 settings = get_settings()
@@ -194,6 +195,7 @@ async def chat(
     - Call tools if needed
     - Return a structured, personalised response
     """
+    require_gemini()
     session_id = request.session_id or str(uuid.uuid4())
     memory = MemoryManager(db)
 
@@ -206,9 +208,14 @@ async def chat(
         return ChatResponse(session_id=session_id, **result)
     except Exception as exc:
         log.error("Chat error", error=str(exc), session_id=session_id)
+        message = str(exc).lower()
+        if is_gemini_auth_error(exc) or any(marker in message for marker in ("api key not valid", "invalid api key", "permission_denied", "unauthenticated", "api_key_invalid")):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Agent error: {str(exc)}",
+            detail="Agent request failed. Please try again.",
         )
 
 
@@ -218,6 +225,7 @@ async def chat_stream(
     db: AsyncSession = Depends(get_db),
 ) -> StreamingResponse:
     """Stream the agent response token-by-token using SSE."""
+    require_gemini()
     session_id = request.session_id or str(uuid.uuid4())
     memory = MemoryManager(db)
 
@@ -287,28 +295,43 @@ async def delete_session(session_id: str, db: AsyncSession = Depends(get_db)) ->
 @router.post("/tools/hs-code", summary="Direct HS Code Lookup")
 async def lookup_hs_code(request: HSCodeRequest) -> dict:
     """Look up HS code for a product directly."""
+    require_gemini()
     try:
         return await hs_code_lookup.ainvoke({"product_name": request.product_name})
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 @router.post("/tools/duty-calculator", summary="Import Duty Calculator")
 async def calculate_duty(request: DutyRequest) -> dict:
     """Calculate import duty for a product and country."""
+    require_gemini()
     try:
         return await duty_calculator.ainvoke(request.model_dump())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 @router.post("/tools/country-rules", summary="Country Trade Rules")
 async def get_country_rules(request: CountryRulesRequest) -> dict:
     """Get trade rules for a specific country."""
+    require_gemini()
     try:
         return await country_rules.ainvoke(request.model_dump())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 @router.post("/tools/invoice", summary="Generate Commercial Invoice")
@@ -317,7 +340,11 @@ async def generate_invoice(request: InvoiceRequest) -> dict:
     try:
         return await invoice_generator.ainvoke(request.model_dump())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 @router.post("/tools/packing-list", summary="Generate Packing List")
@@ -326,7 +353,11 @@ async def generate_packing_list(request: PackingListRequest) -> dict:
     try:
         return await packing_list_generator.ainvoke(request.model_dump())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 # ── RAG Endpoints ────────────────────────────────────────────────────────────
@@ -334,6 +365,9 @@ async def generate_packing_list(request: PackingListRequest) -> dict:
 @router.post("/rag/query", summary="Direct RAG Knowledge Query")
 async def query_knowledge_base(request: RAGQueryRequest) -> dict:
     """Query the trade knowledge base directly."""
+    require_gemini()
+    if not rag_pipeline.available:
+        raise HTTPException(status_code=503, detail=rag_pipeline.reason or "RAG is unavailable.")
     try:
         chunks = await rag_pipeline.retrieve(request.query, k=request.k, category_filter=request.category)
         return {
@@ -343,14 +377,25 @@ async def query_knowledge_base(request: RAGQueryRequest) -> dict:
             "total_documents": rag_pipeline.document_count,
         }
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=500, detail="The request could not be completed.")
 
 
 @router.get("/rag/status", summary="RAG System Status")
 async def rag_status() -> dict:
     """Check the status of the RAG knowledge base."""
+    if rag_pipeline.available:
+        return {
+            "status": "operational",
+            "document_count": rag_pipeline.document_count,
+            "collection": "globex_trade_knowledge",
+        }
     return {
-        "status": "operational",
+        "status": "degraded",
+        "reason": rag_pipeline.reason or "RAG is unavailable",
         "document_count": rag_pipeline.document_count,
         "collection": "globex_trade_knowledge",
     }
@@ -392,13 +437,24 @@ async def _fetch_trade_market_data(hs_code: str = "62", year: str = "2025") -> d
 @router.post("/agents/product-understanding", summary="Product Understanding & Candidate HS Lookup")
 async def agent_product_understanding(request: ProductUnderstandingRequest) -> dict:
     """Normalize product description and identify candidate HS codes."""
-    res = await understand_product(request.product_name, request.description, request.materials)
-    return res.model_dump()
+    require_gemini()
+    try:
+        res = await understand_product(request.product_name, request.description, request.materials)
+        return res.model_dump()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
+        raise HTTPException(status_code=503, detail="Product understanding is temporarily unavailable.")
 
 
 @router.post("/agents/market-research", summary="Agent Market Research")
 async def agent_market_research(request: MarketResearchRequest) -> dict:
     """Analyze export markets for a product, grounded on verified UN Comtrade trade data."""
+    require_gemini()
     try:
         # Step 1: Understand and normalize product
         norm = await understand_product(
@@ -568,7 +624,7 @@ Strict constraints:
 
     except Exception as exc:
         log.error("Market research agent failed", error=str(exc))
-        raise HTTPException(status_code=500, detail=f"Market research analysis error: {str(exc)}")
+        raise HTTPException(status_code=503, detail="Gemini or trade-data service is unavailable. Please try again.")
 
 
 def _compute_heuristic_lead_score(buyer: dict, product: dict | None = None) -> dict:
@@ -624,13 +680,11 @@ def _compute_heuristic_lead_score(buyer: dict, product: dict | None = None) -> d
 @router.post("/agents/lead-scoring", summary="Agent Lead Scoring")
 async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
     """Score a lead based on buyer and product details using Gemini."""
+    require_gemini()
     try:
         buyer = request.buyer
         product = request.product
         
-        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            return _compute_heuristic_lead_score(buyer, product)
-
         prompt = f"""You are an AI lead scoring agent. Evaluate the fit of this global buyer for importing our product.
         
         Buyer Details:
@@ -679,25 +733,21 @@ async def agent_lead_scoring(request: LeadScoringAgentRequest) -> dict:
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
         return json.loads(raw)
     except Exception as exc:
-        log.warning("Lead scoring LLM inference unavailable, using rule-based scoring fallback", error=str(exc))
-        return _compute_heuristic_lead_score(buyer, product)
+        log.error("Lead scoring LLM inference failed", error=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+        raise HTTPException(status_code=503, detail="Gemini is unavailable. Check GOOGLE_API_KEY and try again.")
 
 
 @router.post("/agents/outreach", summary="Agent Outreach Email Generator")
 async def agent_outreach(request: OutreachAgentRequest) -> dict:
     """Generate a highly personalized outreach email to a global buyer using Gemini."""
+    require_gemini()
     try:
         buyer = request.buyer
         sender = request.sender
         
-        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            return {
-              "subject": f"Partnership Opportunity: Premium {sender.get('industry')} from India for {buyer.get('companyName')}",
-              "content": f"Dear {buyer.get('companyName')} Team,\n\nI hope this email finds you well. I'm reaching out from {sender.get('name')} at {sender.get('companyName')}. We noticed your strong presence in the {buyer.get('industry')} market in {buyer.get('country')}.\n\nAs a certified exporter from India, we would love to explore a potential supply partnership. (Mocked response from Python AI Agent).\n\nBest regards,\n{sender.get('name')}\n[Phone]\n[Email]",
-              "model": settings.gemini_model,
-              "prompt": "Mocked prompt"
-            }
-
         prompt = f"""You are an expert international trade and B2B outreach consultant.
         Write a {request.tone} B2B outreach email in {request.language} from the Indian exporter to the global buyer.
         
@@ -738,7 +788,10 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         return json.loads(raw)
     except Exception as exc:
         log.error("Outreach agent failed", error=str(exc))
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+        raise HTTPException(status_code=503, detail="Gemini is unavailable. Check GOOGLE_API_KEY and try again.")
 
 
 @router.post("/agents/buyer-discovery", summary="Agent Buyer Discovery")
@@ -749,6 +802,7 @@ async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
     finds nothing credible, an honest empty result is returned instead of
     fabricated companies.
     """
+    require_gemini()
     try:
         return await discover_buyers(
             product=request.product,
@@ -758,6 +812,10 @@ async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
         )
     except BuyerDiscoveryError as exc:
         log.warning("Buyer discovery unavailable", error=str(exc), retryable=exc.retryable)
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(status_code=503, detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE if exc.retryable else status.HTTP_502_BAD_GATEWAY,
             detail=str(exc),
@@ -767,10 +825,8 @@ async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
 @router.post("/agents/compliance", summary="Agent Trade Compliance & Customs Assessment")
 async def agent_compliance(request: ComplianceAgentRequest) -> dict:
     """Analyze regulatory, customs, labeling, and duty compliance for exporting a product from India to a destination country."""
+    require_gemini()
     try:
-        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            raise HTTPException(status_code=503, detail="LLM Provider not configured")
-
         hs_clause = f" with suspected HS Code {request.hs_code}" if request.hs_code else ""
         prompt = f"""You are GlobeX AI's expert Trade Compliance and Customs Agent for Indian Exporters.
 Analyze international export requirements for:
@@ -862,10 +918,31 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no explanatory
         return json.loads(raw)
     except Exception as exc:
         log.error("Compliance agent failed", error=str(exc))
-        raise HTTPException(status_code=500, detail=str(exc))
+        if is_gemini_auth_error(exc):
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+        raise HTTPException(status_code=503, detail="Gemini is unavailable. Check GOOGLE_API_KEY and try again.")
 
 # ── Health ───────────────────────────────────────────────────────────────────
 
 @router.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "service": "GlobeX AI", "version": "1.0.0"}
+    if gemini_readiness.available and rag_pipeline.available:
+        return {"status": "ok", "service": "GlobeX AI", "version": "1.0.0", "capabilities": {"gemini": "operational", "rag": "operational"}}
+    reasons = []
+    if not gemini_readiness.available:
+        reasons.append(gemini_readiness.reason or "invalid or missing GOOGLE_API_KEY")
+    if not rag_pipeline.available:
+        rag_reason = rag_pipeline.reason or "RAG is unavailable"
+        if rag_reason not in reasons:
+            reasons.append(rag_reason)
+    return {
+        "status": "degraded",
+        "service": "GlobeX AI",
+        "version": "1.0.0",
+        "reason": "; ".join(reasons),
+        "capabilities": {
+            "gemini": "operational" if gemini_readiness.available else "unavailable",
+            "rag": "operational" if rag_pipeline.available else "unavailable",
+        },
+    }

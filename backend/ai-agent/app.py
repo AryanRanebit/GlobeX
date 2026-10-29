@@ -18,6 +18,7 @@ from rag.pipeline import rag_pipeline
 from routes.api import router
 from utils.config import get_settings
 from utils.logger import get_logger, setup_logging
+from utils.gemini_status import gemini_readiness, validate_gemini_key
 
 settings = get_settings()
 setup_logging(settings.log_level)
@@ -31,13 +32,30 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown lifecycle hooks."""
     log.info("GlobeX AI starting up", env=settings.app_env)
 
+    # Gemini validation is deliberately non-fatal. Health remains available even
+    # when credentials are absent, rejected, or the provider cannot be reached.
+    await validate_gemini_key()
+
     # Ensure DB tables exist
     await init_db()
     log.info("[OK] Database initialised")
 
-    # Boot RAG pipeline (seed ChromaDB if empty)
-    await rag_pipeline.initialise()
-    log.info("[OK] RAG pipeline ready", documents=rag_pipeline.document_count)
+    # RAG seeding uses Gemini embeddings. Isolate its failures from service boot.
+    if gemini_readiness.available:
+        try:
+            await rag_pipeline.initialise()
+            if rag_pipeline.available:
+                log.info("[OK] RAG pipeline ready", documents=rag_pipeline.document_count)
+            else:
+                log.warning("RAG pipeline degraded", reason=rag_pipeline.reason)
+        except Exception as exc:
+            rag_pipeline.available = False
+            rag_pipeline.reason = "RAG initialisation failed"
+            log.warning("RAG initialisation failed; continuing with degraded service", error=str(exc))
+    else:
+        rag_pipeline.available = False
+        rag_pipeline.reason = gemini_readiness.reason
+        log.warning("RAG initialisation skipped", reason=rag_pipeline.reason)
 
     log.info("[INFO] GlobeX AI is live", host=settings.app_host, port=settings.app_port)
     yield

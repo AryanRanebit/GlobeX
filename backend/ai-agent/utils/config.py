@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     # ── Gemini ──────────────────────────────────────────────────────────────
-    google_api_key: str = Field(..., alias="GOOGLE_API_KEY")
+    google_api_key: str = Field("", alias="GOOGLE_API_KEY")
     gemini_model: str = Field("gemini-3.6-flash", alias="GEMINI_MODEL")
 
     # ── ChromaDB ────────────────────────────────────────────────────────────
