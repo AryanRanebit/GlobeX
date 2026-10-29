@@ -131,8 +131,9 @@ class GlobeXAgent:
         """
         log.info("Agent processing message", session_id=session_id, message=user_message[:80])
 
-        # 1. Classify intent
-        intent_data = await self._classify_intent(user_message)
+        # 1. Classify intent (session context is a cheap DB read, no Gemini call)
+        session_context = await memory.get_session_context_string(session_id)
+        intent_data = await self._classify_intent(user_message, session_context)
         intent = intent_data.get("intent", "general_trade_query")
         needs_rag = intent_data.get("needs_rag", True)
         needs_tool = intent_data.get("needs_tool", False)
@@ -157,11 +158,11 @@ class GlobeXAgent:
 
         if needs_tool and tool_name and tool_name in TOOL_MAP:
             tool_results, tools_used = await self._execute_tool(
-                tool_name, user_message, entities, memory, session_id
+                tool_name, user_message, entities, memory, session_id,
+                preparsed_args=intent_data.get("tool_args"),
             )
 
-        # 4. Fetch session context & conversation history
-        session_context = await memory.get_session_context_string(session_id)
+        # 4. Fetch conversation history (session context already loaded above)
         history = await memory.build_langchain_history(session_id)
 
         # 5. Build messages for Gemini
@@ -193,6 +194,17 @@ class GlobeXAgent:
         response_msg = await self._llm.ainvoke(messages)
         response_text = _content_to_text(response_msg.content)
 
+        # Guard against the model returning an empty answer (observed with
+        # gemini-3.6-flash on tool-intent questions when no tool ran): give the
+        # user a usable reply instead of a blank bubble.
+        if not response_text.strip():
+            log.warning("LLM returned empty response", intent=intent, tool=tool_name)
+            response_text = (
+                "I wasn't able to generate an answer for that just now. "
+                "Please try rephrasing your question - for example, name the product "
+                "or HS code and the destination country you are interested in."
+            )
+
         # 7. Persist messages to memory
         await memory.add_message(session_id, "user", user_message)
         await memory.add_message(
@@ -220,7 +232,8 @@ class GlobeXAgent:
         memory: MemoryManager,
     ) -> AsyncGenerator[str, None]:
         """Stream the agent response token-by-token."""
-        intent_data = await self._classify_intent(user_message)
+        session_context = await memory.get_session_context_string(session_id)
+        intent_data = await self._classify_intent(user_message, session_context)
         intent = intent_data.get("intent", "general_trade_query")
         needs_rag = intent_data.get("needs_rag", True)
         needs_tool = intent_data.get("needs_tool", False)
@@ -237,9 +250,11 @@ class GlobeXAgent:
 
         tool_results: dict[str, Any] = {}
         if needs_tool and tool_name and tool_name in TOOL_MAP:
-            tool_results, _ = await self._execute_tool(tool_name, user_message, entities, memory, session_id)
+            tool_results, _ = await self._execute_tool(
+                tool_name, user_message, entities, memory, session_id,
+                preparsed_args=intent_data.get("tool_args"),
+            )
 
-        session_context = await memory.get_session_context_string(session_id)
         history = await memory.build_langchain_history(session_id)
 
         system_content = SYSTEM_PROMPT.format(
@@ -270,9 +285,11 @@ class GlobeXAgent:
 
     # ── Private Helpers ──────────────────────────────────────────────────────
 
-    async def _classify_intent(self, user_message: str) -> dict:
-        """Use Gemini to classify user intent into structured JSON."""
-        prompt = INTENT_CLASSIFIER_PROMPT.format(user_message=user_message)
+    async def _classify_intent(self, user_message: str, session_context: str = "") -> dict:
+        """Use Gemini to classify intent AND extract tool args in one call."""
+        prompt = INTENT_CLASSIFIER_PROMPT.format(
+            user_message=user_message, session_context=session_context or "None"
+        )
         response = await self._classifier_llm.ainvoke(prompt)
         raw = _content_to_text(response.content).strip()
         raw = re.sub(r"```(?:json)?|```", "", raw).strip()
@@ -289,6 +306,7 @@ class GlobeXAgent:
         entities: dict,
         memory: MemoryManager,
         session_id: str,
+        preparsed_args: dict | None = None,
     ) -> tuple[dict, list[str]]:
         """Parse tool arguments from entities and invoke the tool."""
         tool_fn = TOOL_MAP[tool_name]
@@ -296,8 +314,12 @@ class GlobeXAgent:
         tools_used: list[str] = []
 
         try:
-            # Build tool inputs from extracted entities + LLM-parsed args
-            args = await self._parse_tool_args(tool_name, user_message, entities, memory, session_id)
+            # Prefer args the combined classifier call already extracted (saves a
+            # Gemini request); fall back to the dedicated parsing call.
+            if isinstance(preparsed_args, dict) and preparsed_args:
+                args = preparsed_args
+            else:
+                args = await self._parse_tool_args(tool_name, user_message, entities, memory, session_id)
             log.info("Invoking tool", tool=tool_name, args=args)
             result = await tool_fn.ainvoke(args)
             tool_results[tool_name] = result
@@ -379,8 +401,10 @@ For any fields not mentioned, use sensible defaults. Do not include markdown."""
             country = entities.get("country")
             product = entities.get("product")
 
-            # If still missing, run memory extraction
-            if not all([company, country, product]):
+            # Only spend a Gemini call on memory extraction when this turn
+            # actually surfaced trade entities (partial info worth completing);
+            # messages with no entities (greetings, general chat) skip it.
+            if not all([company, country, product]) and any([company, country, product]):
                 prompt = MEMORY_EXTRACTION_PROMPT.format(
                     user_message=user_message, assistant_response=assistant_response[:500]
                 )
