@@ -18,13 +18,13 @@ export default function TrustBar() {
               <div className="text-2xl md:text-3xl font-semibold text-navy type-display">
                 {stat.value}
               </div>
-              <div className="text-xs md:text-xs font-semibold text-muted mt-1 tracking-wide uppercase">
+              <div className="text-[10px] md:text-xs font-medium text-faint mt-1.5 tracking-wide uppercase">
                 {stat.label}
               </div>
             </div>
           ))}
         </div>
-        <p className="text-center text-xs text-faint mt-3">
+        <p className="text-center text-[10px] md:text-[11px] text-faint mt-6">
           {TRADE_STATS.attribution.citation}
         </p>
       </div>
