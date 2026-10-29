@@ -5,15 +5,15 @@ import GlobeGL from 'react-globe.gl';
 const ORIGIN = { lat: 19.0760, lng: 72.8777, label: 'India (Mumbai Port)' };
 
 const DESTINATIONS = [
-  { lat: 40.7128, lng: -74.0060, label: 'United States', city: 'New York', color: ['#2563EB', '#60A5FA'] },
-  { lat: 25.2048, lng: 55.2708,  label: 'UAE', city: 'Dubai', color: ['#2563EB', '#10B981'] },
-  { lat: 51.9244, lng: 4.4777,   label: 'Netherlands', city: 'Rotterdam', color: ['#2563EB', '#38BDF8'] },
-  { lat: 50.1109, lng: 8.6821,   label: 'Germany', city: 'Frankfurt', color: ['#2563EB', '#F59E0B'] },
-  { lat: 51.5074, lng: -0.1278,  label: 'United Kingdom', city: 'London', color: ['#2563EB', '#818CF8'] },
-  { lat: 1.3521,  lng: 103.8198, label: 'Singapore', city: 'Singapore', color: ['#2563EB', '#34D399'] },
-  { lat: 24.7136, lng: 46.6753,  label: 'Saudi Arabia', city: 'Riyadh', color: ['#2563EB', '#FBBF24'] },
-  { lat: 35.6762, lng: 139.6503, label: 'Japan', city: 'Tokyo', color: ['#2563EB', '#A78BFA'] },
-  { lat: -33.8688, lng: 151.2093, label: 'Australia', city: 'Sydney', color: ['#2563EB', '#F472B6'] }
+  { lat: 40.7128, lng: -74.0060, label: 'United States', city: 'New York', color: ['#0F766E', '#2DD4BF'] },
+  { lat: 25.2048, lng: 55.2708,  label: 'UAE', city: 'Dubai', color: ['#0F766E', '#14B8A6'] },
+  { lat: 51.9244, lng: 4.4777,   label: 'Netherlands', city: 'Rotterdam', color: ['#0F766E', '#5EEAD4'] },
+  { lat: 50.1109, lng: 8.6821,   label: 'Germany', city: 'Frankfurt', color: ['#0F766E', '#D97706'] },
+  { lat: 51.5074, lng: -0.1278,  label: 'United Kingdom', city: 'London', color: ['#0F766E', '#99E5DA'] },
+  { lat: 1.3521,  lng: 103.8198, label: 'Singapore', city: 'Singapore', color: ['#0F766E', '#34D399'] },
+  { lat: 24.7136, lng: 46.6753,  label: 'Saudi Arabia', city: 'Riyadh', color: ['#0F766E', '#F2C14E'] },
+  { lat: 35.6762, lng: 139.6503, label: 'Japan', city: 'Tokyo', color: ['#0F766E', '#2DD4BF'] },
+  { lat: -33.8688, lng: 151.2093, label: 'Australia', city: 'Sydney', color: ['#0F766E', '#D97706'] }
 ];
 
 /* ── Trade Arcs from India to Top Global Markets ─────────────────────── */
@@ -33,7 +33,7 @@ const HUB_POINTS = [
     lat: ORIGIN.lat,
     lng: ORIGIN.lng,
     label: ORIGIN.label,
-    color: '#10B981',
+    color: '#14B8A6',
     size: 0.6,
     isOrigin: true
   },
@@ -41,7 +41,7 @@ const HUB_POINTS = [
     lat: d.lat,
     lng: d.lng,
     label: `${d.city}, ${d.label}`,
-    color: '#2563EB',
+    color: '#0F766E',
     size: 0.38,
     isOrigin: false
   }))
@@ -49,10 +49,10 @@ const HUB_POINTS = [
 
 /* ── Ripple Rings for Live Corridor Activity ─────────────────────────── */
 const RINGS = [
-  { lat: ORIGIN.lat, lng: ORIGIN.lng, color: (t) => `rgba(16, 185, 129, ${1 - t})` },
-  { lat: 40.7128, lng: -74.0060, color: (t) => `rgba(37, 99, 235, ${0.8 * (1 - t)})` },
-  { lat: 25.2048, lng: 55.2708, color: (t) => `rgba(16, 185, 129, ${0.8 * (1 - t)})` },
-  { lat: 51.9244, lng: 4.4777, color: (t) => `rgba(56, 189, 248, ${0.8 * (1 - t)})` }
+  { lat: ORIGIN.lat, lng: ORIGIN.lng, color: (t) => `rgba(20, 184, 166, ${1 - t})` },
+  { lat: 40.7128, lng: -74.0060, color: (t) => `rgba(15, 118, 110, ${0.8 * (1 - t)})` },
+  { lat: 25.2048, lng: 55.2708, color: (t) => `rgba(20, 184, 166, ${0.8 * (1 - t)})` },
+  { lat: 51.9244, lng: 4.4777, color: (t) => `rgba(94, 234, 212, ${0.8 * (1 - t)})` }
 ];
 
 /* ── Labels ──────────────────────────────────────────────────────────── */
@@ -61,7 +61,7 @@ const LABELS = [
     lat: ORIGIN.lat,
     lng: ORIGIN.lng,
     text: 'India (Hub)',
-    color: '#059669',
+    color: '#047857',
     size: 1.1,
     dot: 0.5
   },
@@ -69,7 +69,7 @@ const LABELS = [
     lat: d.lat,
     lng: d.lng,
     text: d.city,
-    color: '#334155',
+    color: '#3E4B47',
     size: 0.85,
     dot: 0.35
   }))

@@ -10,21 +10,21 @@ const stats = [
 
 export default function TrustBar() {
   return (
-    <section className="w-full bg-white border-b border-[#E5E7EB] py-6">
+    <section className="w-full bg-white border-b border-line py-6">
       <div className="section-container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-4">
           {stats.map((stat, idx) => (
-            <div key={idx} className="text-center group">
-              <div className="text-2xl md:text-3xl font-extrabold text-[#0F172A] tracking-tight font-heading group-hover:text-[#2563EB] transition-colors">
+            <div key={idx} className="text-center">
+              <div className="text-2xl md:text-3xl font-semibold text-navy type-display">
                 {stat.value}
               </div>
-              <div className="text-xs md:text-[13px] font-semibold text-[#64748B] mt-1 tracking-wide uppercase">
+              <div className="text-xs md:text-xs font-semibold text-muted mt-1 tracking-wide uppercase">
                 {stat.label}
               </div>
             </div>
           ))}
         </div>
-        <p className="text-center text-[11px] text-[#94A3B8] mt-3">
+        <p className="text-center text-xs text-faint mt-3">
           {TRADE_STATS.attribution.citation}
         </p>
       </div>

@@ -83,6 +83,7 @@
   /* ── Typography ─────────────────────────────────────────────────────── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -209,6 +210,7 @@
   }
 } /* end @layer base */
 
+@layer components {
 /* ── Type Utility Classes ────────────────────────────────────────────────── */
 .font-heading {
   font-family: var(--font-heading);
@@ -549,14 +551,30 @@
   display: inline-block;
 }
 
-/* ── Scroll fade-in ───────────────────────────────────────────────────── */
-.fade-in {
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+
+/* ── Serif display type (landing headings) ──────────────────────────────
+   Editorial pairing: Fraunces for display, Plus Jakarta Sans for UI.
+   Negative tracking + tight leading per type standards for large titles. */
+.type-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 
-.fade-in.visible {
-  opacity: 1;
-  transform: translateY(0);
+/* ── Surface textures (landing only) ────────────────────────────────────
+   Grain: fractal-noise SVG at very low opacity - adds paper-like tooth
+   without banding. Grid: faint graph-paper lines from repeating
+   linear-gradients. Both sit behind content (position: relative + z-index
+   handled by the section's own stacking context). */
+.texture-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
+
+.texture-grid {
+  background-image:
+    linear-gradient(to right, rgba(19, 78, 74, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(19, 78, 74, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+} /* end @layer components */
