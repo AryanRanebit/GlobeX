@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { tradeController } from './trade.controller';
+import { authenticate, authorize } from '../../middleware/auth.middleware';
+import { Role } from '../../types/prisma';
 
 const router = Router();
 
@@ -7,7 +9,8 @@ const router = Router();
 // (also accessible without auth so buyers, landing, or unauthenticated research can display real data)
 router.get('/markets', tradeController.getMarkets);
 
-// Admin / background refresh
-router.post('/refresh', tradeController.refresh);
+// Admin-only refresh: pulls from the UN Comtrade API and burns daily quota,
+// so it requires a signed-in ADMIN. (The seed creates admin@globex.ai.)
+router.post('/refresh', authenticate, authorize(Role.ADMIN), tradeController.refresh);
 
 export { router as tradeRoutes };

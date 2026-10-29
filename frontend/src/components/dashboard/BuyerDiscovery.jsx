@@ -27,8 +27,7 @@ import {
 import { SkeletonRows } from '../ui/Skeleton';
 import EmptyState from '../ui/EmptyState';
 import ErrorBanner from '../ui/ErrorBanner';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+import { apiFetch } from '../../lib/api';
 
 export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
   const [buyers, setBuyers] = useState([]);
@@ -57,29 +56,12 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
     }
   }, [searchQuery]);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-    };
-  };
-
   // Fetch buyers from API
   const fetchBuyers = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      let res;
-      try {
-        res = await fetch('/api/v1/buyers?limit=100', {
-          headers: getAuthHeaders()
-        });
-      } catch {
-        res = await fetch('http://localhost:3000/api/v1/buyers?limit=100', {
-          headers: getAuthHeaders()
-        });
-      }
+      const res = await apiFetch('/api/v1/buyers?limit=100');
 
       if (res.status === 401) {
         onRequireAuth?.();
@@ -117,31 +99,15 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
         return;
       }
 
-      let res;
       const payload = {
         product: discoverProduct,
         targetCountries: [discoverCountry]
       };
 
-      try {
-        res = await fetch('/api/v1/buyers/discover', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-      } catch {
-        res = await fetch('http://localhost:3000/api/v1/buyers/discover', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-      }
+      const res = await apiFetch('/api/v1/buyers/discover', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
       if (res.status === 401) {
         setIsDiscoverModalOpen(false);

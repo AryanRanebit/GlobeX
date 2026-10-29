@@ -1,3 +1,4 @@
+import { apiFetch } from '../../lib/api';
 import React, { useState } from 'react';
 import { 
   TrendingUp, 
@@ -97,7 +98,7 @@ export default function DashboardHome() {
   const [buyerCount, setBuyerCount] = useState(null);
 
   React.useEffect(() => {
-    fetch('/api/v1/buyers')
+    apiFetch('/api/v1/buyers')
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && typeof data.total === 'number') {

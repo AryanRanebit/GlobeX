@@ -19,8 +19,7 @@ import {
   RefreshCw 
 } from 'lucide-react';
 import { TRADE_STATS } from '../../constants/tradeStats';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+import { apiFetch } from '../../lib/api';
 
 export default function MarketIntelligence({ searchQuery = '', onSearchChange, onNavigateToBuyers }) {
   const [selectedHs, setSelectedHs] = useState('62'); // Default to HS 62 Apparel
@@ -43,13 +42,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
     setLoading(true);
     setError(null);
     try {
-      // First try relative path (via Vite proxy), then direct port 3000 fallback
-      let res;
-      try {
-        res = await fetch(`/api/trade/markets?hs=${hsCode}&year=2025&limit=250`);
-      } catch (e) {
-        res = await fetch(`http://localhost:3000/api/trade/markets?hs=${hsCode}&year=2025&limit=250`);
-      }
+      const res = await apiFetch(`/api/trade/markets?hs=${hsCode}&year=2025&limit=250`);
       
       if (!res.ok) {
         throw new Error(`Failed to fetch trade data (Status ${res.status})`);

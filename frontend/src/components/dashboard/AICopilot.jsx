@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Wrench, BookOpen } from 'lucide-react';
 import ErrorBanner from '../ui/ErrorBanner';
+import { apiFetch } from '../../lib/api';
 import EmptyState from '../ui/EmptyState';
 
 const SESSION_KEY = 'globex_copilot_session_id';
@@ -47,23 +48,15 @@ export default function AICopilot({ onRequireAuth }) {
     setIsThinking(true);
     setError(null);
 
-    let res;
     const payload = { session_id: sessionIdRef.current, message: question };
-    const requestInit = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    };
 
+    let res;
     try {
-      try {
-        res = await fetch('/api/v1/chat', requestInit);
-      } catch {
-        res = await fetch('http://localhost:3000/api/v1/chat', requestInit);
-      }
+      res = await apiFetch('/api/v1/chat', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(payload)
+      });
     } catch (err) {
       setError(err.message || 'Could not connect to the chat service');
       setIsThinking(false);
