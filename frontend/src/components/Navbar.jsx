@@ -17,7 +17,6 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
     { name: 'Solutions', href: '#solutions', type: 'anchor', isActive: currentPage === 'landing' && window.location.hash === '#solutions' },
     { name: 'Features', href: '#features', type: 'anchor', isActive: currentPage === 'landing' && window.location.hash === '#features' },
     { name: 'How It Works', href: '#how-it-works', type: 'anchor', isActive: currentPage === 'landing' && window.location.hash === '#how-it-works' },
-    { name: 'Pricing', href: '#pricing', type: 'anchor', isActive: currentPage === 'landing' && window.location.hash === '#pricing' },
   ];
 
   const handleLinkClick = (e, link) => {
