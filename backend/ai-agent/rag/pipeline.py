@@ -55,7 +55,7 @@ class RAGPipeline:
         settings.chroma_persist_dir.mkdir(parents=True, exist_ok=True)
 
         self._embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
+            model="models/gemini-embedding-001",
             google_api_key=settings.google_api_key,
         )
 
