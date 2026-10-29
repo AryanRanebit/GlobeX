@@ -20,7 +20,7 @@ import { apiFetch } from '../../lib/api';
 
 export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
   const [buyers, setBuyers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState(searchQuery);
+  const [searchTerm, setSearchTerm] = useState('');
   const [countryFilter, setCountryFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('scoreDesc');
   const [selectedBuyer, setSelectedBuyer] = useState(null);
@@ -42,9 +42,10 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
   const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
   if (prevSearchQuery !== searchQuery) {
     setPrevSearchQuery(searchQuery);
-    setSearchTerm(searchQuery);
+    // The global query is product context for discovery - never a buyer-list
+    // filter or a country name (an HS code here zeroed the list silently).
     if (searchQuery && searchQuery.trim()) {
-      setDiscoverCountry(searchQuery.trim());
+      setDiscoverProduct(searchQuery.trim());
     }
   }
 

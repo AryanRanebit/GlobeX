@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { TRADE_STATS } from '../../constants/tradeStats';
 import { apiFetch } from '../../lib/api';
+import { parseHsQuery } from '../../lib/hsQuery';
 
 function TableSkeletonRows({ rows = 8 }) {
   return (
@@ -34,8 +35,13 @@ function TableSkeletonRows({ rows = 8 }) {
 }
 
 export default function MarketIntelligence({ searchQuery = '', onSearchChange, onNavigateToBuyers }) {
-  const [selectedHs, setSelectedHs] = useState('62'); // Default to HS 62 Apparel
-  const [localQuery, setLocalQuery] = useState(searchQuery);
+  // HS-code queries (typed or from trending chips) drive the product
+  // context, not the country filter.
+  const initialParsed = parseHsQuery(searchQuery);
+  const [selectedHs, setSelectedHs] = useState(initialParsed ? initialParsed.hs : '62'); // Default to HS 62 Apparel
+  const [localQuery, setLocalQuery] = useState(initialParsed ? '' : searchQuery);
+  const [productLabel, setProductLabel] = useState(initialParsed ? initialParsed.label : null);
+  const [resolvedHs, setResolvedHs] = useState(initialParsed ? initialParsed.hs : '62');
   const [markets, setMarkets] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +56,19 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
   if (prevSearchQuery !== searchQuery) {
     setPrevSearchQuery(searchQuery);
-    setLocalQuery(searchQuery);
+    const parsed = parseHsQuery(searchQuery);
+    if (parsed) {
+      setLocalQuery('');
+      setProductLabel(parsed.label);
+      if (parsed.hs !== selectedHs) {
+        setLoading(true);
+        setError(null);
+        setSelectedHs(parsed.hs);
+      }
+    } else {
+      setLocalQuery(searchQuery);
+      setProductLabel(null);
+    }
   }
 
   // Fetch real trade markets from backend. Initial state is already
@@ -58,19 +76,30 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   // and retries enter the loading state from their event handlers.
   const fetchMarkets = useCallback(async (hsCode) => {
     try {
-      const res = await apiFetch(`/api/trade/markets?hs=${hsCode}&year=2025&limit=250`);
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch trade data (Status ${res.status})`);
+      // Exact HS codes often have no rows while a parent heading does
+      // (e.g. 620462 -> 6204 -> 62). Walk up prefixes until data appears.
+      const candidates = /^\d+$/.test(hsCode) && hsCode.length > 2
+        ? Array.from({ length: Math.ceil((hsCode.length - 1) / 2) }, (_, i) => hsCode.slice(0, hsCode.length - 2 * i)).filter(c => c.length >= 2)
+        : [hsCode];
+      let json = null;
+      let used = hsCode;
+      for (const code of candidates) {
+        const res = await apiFetch(`/api/trade/markets?hs=${code}&year=2025&limit=250`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch trade data (Status ${res.status})`);
+        }
+        const j = await res.json();
+        if (!(j.success && Array.isArray(j.data))) {
+          throw new Error(j.message || 'Malformed trade data response');
+        }
+        json = j;
+        used = code;
+        if (j.data.length > 0) break;
       }
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        setMarkets(json.data);
-        setMeta(json.meta);
-        setError(null);
-      } else {
-        throw new Error(json.message || 'Malformed trade data response');
-      }
+      setMarkets(json.data);
+      setMeta(json.meta);
+      setResolvedHs(used);
+      setError(null);
     } catch (err) {
       console.error('Error fetching trade data:', err);
       setError(err.message || 'Could not load official Comtrade data.');
@@ -195,6 +224,13 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
             >
               All Goods (TOTAL)
             </button>
+            {!['62', '091030', 'TOTAL'].includes(selectedHs) && (
+              <button
+                className="px-3 py-1.5 rounded-md bg-white text-blue shadow-xs"
+              >
+                HS {selectedHs}
+              </button>
+            )}
           </div>
 
           {/* Search input */}
@@ -229,15 +265,20 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
-                HS {selectedHs}
+                HS {resolvedHs}
               </span>
               <h2 className="text-sm font-bold text-navy">
-                {selectedHs === '62'
+                {productLabel || (resolvedHs === '62'
                   ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
-                  : selectedHs === '091030'
+                  : resolvedHs === '091030'
                     ? 'Turmeric (Ground)'
-                    : 'Total Merchandise Exports (All Goods)'}
+                    : resolvedHs === 'TOTAL'
+                      ? 'Total Merchandise Exports (All Goods)'
+                      : `Commodity Group HS ${resolvedHs}`)}
               </h2>
+              {resolvedHs !== selectedHs && (
+                <span className="text-[11px] text-muted">No 2025 rows for HS {selectedHs}; showing parent heading.</span>
+              )}
             </div>
             <p className="text-xs text-muted mt-0.5">
               Reporter: <strong>India</strong> (Code: 699) | Period: <strong>2025 Annual</strong> | Trade Flow: <strong>Exports (FOB)</strong>
@@ -290,6 +331,17 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               className="mt-2 px-3.5 py-1.5 bg-white border border-red-border rounded-lg text-xs font-semibold text-red-dark hover:bg-red-pale"
             >
               Retry
+            </button>
+          </div>
+        ) : filteredMarkets.length === 0 && !localQuery.trim() ? (
+          <div className="p-10 text-center text-muted">
+            <p className="text-sm font-semibold text-navy">No 2025 export data available for HS {resolvedHs}</p>
+            <p className="text-xs mt-1">This commodity group has no seeded rows yet. Try a trending chapter like HS 62 (Apparel) or HS 091030 (Turmeric).</p>
+            <button
+              onClick={() => handleHsChange('62')}
+              className="mt-3 px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
+            >
+              View HS 62 (Apparel)
             </button>
           </div>
         ) : filteredMarkets.length === 0 ? (

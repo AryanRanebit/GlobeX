@@ -9,10 +9,10 @@ export default function FinalCTA({ onOpenAuth }) {
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           <span>Risk-Free 14-Day Free Trial</span>
         </div>
-        <h2 className="type-h2 type-display text-white mb-3.5">
+        <h2 className="type-display text-white mb-3.5 text-3xl md:text-[2rem]">
           Start Making Data-Driven Export Decisions
         </h2>
-        <p className="text-base text-line-dark mb-8 max-w-xl mx-auto leading-relaxed">
+        <p className="text-sm md:text-base text-line-dark mb-8 max-w-xl mx-auto leading-relaxed">
           Access official UN Comtrade export intelligence, commodity trade flows, and evidence-based buyer discovery for Indian businesses.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
