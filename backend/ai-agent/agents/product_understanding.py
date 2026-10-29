@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 
 from utils.config import get_settings
 from utils.logger import get_logger
+from utils.gemini_status import is_gemini_auth_error
 
 log = get_logger(__name__)
 settings = get_settings()
@@ -130,7 +131,17 @@ Return ONLY a valid JSON object matching this schema (no markdown, no backticks,
         parsed["raw_input"] = raw_input
         return ProductNormalizationResult.model_validate(parsed)
     except Exception as exc:
-        log.warn("Product understanding LLM failed, using structured fallback", error=str(exc))
+        if is_gemini_auth_error(exc):
+            log.warning("Gemini rejected GOOGLE_API_KEY during product understanding")
+            from fastapi import HTTPException
+            from utils.gemini_status import gemini_readiness
+            gemini_readiness.available = False
+            gemini_readiness.reason = "invalid or missing GOOGLE_API_KEY"
+            raise HTTPException(
+                status_code=503,
+                detail="Gemini is unavailable because GOOGLE_API_KEY is invalid. Configure a valid key and try again.",
+            ) from exc
+        log.warning("Product understanding LLM failed, using structured fallback", error=str(exc))
         return _fallback_normalization(raw_input, description, materials)
 
 

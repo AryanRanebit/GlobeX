@@ -39,6 +39,8 @@ class RAGPipeline:
         self._client: chromadb.PersistentClient | None = None
         self._collection: chromadb.Collection | None = None
         self._embeddings: GoogleGenerativeAIEmbeddings | None = None
+        self.available = False
+        self.reason: str | None = "RAG has not been initialized"
         self._splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.chunk_size,
             chunk_overlap=settings.chunk_overlap,
@@ -58,7 +60,9 @@ class RAGPipeline:
         )
 
         if not HAS_CHROMADB:
-            log.warning("ChromaDB not installed. RAG will be disabled and return empty results.")
+            self.available = False
+            self.reason = "ChromaDB is not installed"
+            log.warning("ChromaDB not installed; RAG is disabled")
             return
 
         self._client = chromadb.PersistentClient(
@@ -80,6 +84,8 @@ class RAGPipeline:
                 "ChromaDB already populated",
                 document_count=self._collection.count(),
             )
+        self.available = True
+        self.reason = None
 
     async def _ingest_documents(self, documents: list[dict]) -> None:
         """Chunk, embed, and store documents in ChromaDB."""
@@ -140,9 +146,8 @@ class RAGPipeline:
         Returns:
             List of dicts with keys: content, metadata, distance.
         """
-        if self._collection is None:
-            log.warning("RAG pipeline missing ChromaDB, returning empty results.")
-            return []
+        if self._collection is None or not self.available:
+            raise RuntimeError(self.reason or "RAG pipeline is unavailable")
 
         k = k or settings.retriever_k
         query_embedding = await asyncio.get_event_loop().run_in_executor(

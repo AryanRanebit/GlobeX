@@ -57,18 +57,35 @@ class GlobeXAgent:
     """
 
     def __init__(self) -> None:
-        self._llm = ChatGoogleGenerativeAI(
-            model=settings.gemini_model,
-            google_api_key=settings.google_api_key,
-            temperature=0.3,
-        )
-        self._classifier_llm = ChatGoogleGenerativeAI(
-            model=settings.gemini_model,
-            google_api_key=settings.google_api_key,
-            temperature=0.0,
-            max_retries=0,
-        )
-        self._llm_with_tools = self._llm.bind_tools(ALL_TOOLS)
+        # Construct provider clients only when a request actually needs them.
+        # Importing the app must remain safe when a key is missing or invalid.
+        self._llm_instance: ChatGoogleGenerativeAI | None = None
+        self._classifier_llm_instance: ChatGoogleGenerativeAI | None = None
+
+    @property
+    def _llm(self) -> ChatGoogleGenerativeAI:
+        if self._llm_instance is None:
+            self._llm_instance = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                google_api_key=settings.google_api_key,
+                temperature=0.3,
+            )
+        return self._llm_instance
+
+    @property
+    def _classifier_llm(self) -> ChatGoogleGenerativeAI:
+        if self._classifier_llm_instance is None:
+            self._classifier_llm_instance = ChatGoogleGenerativeAI(
+                model=settings.gemini_model,
+                google_api_key=settings.google_api_key,
+                temperature=0.0,
+                max_retries=0,
+            )
+        return self._classifier_llm_instance
+
+    @property
+    def _llm_with_tools(self):
+        return self._llm.bind_tools(ALL_TOOLS)
 
     # ── Public Entry Point ───────────────────────────────────────────────────
 
