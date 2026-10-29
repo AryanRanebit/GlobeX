@@ -1,26 +1,20 @@
 import React from 'react';
 
 /**
- * Static fallback for the hero globe: the shipped satellite earth texture,
- * cropped to a disc so it reads as a globe. Used when WebGL/THREE fails
- * (error boundary) and below the lg breakpoint (no WebGL mount at all).
+ * Static fallback for the hero globe: a capture of the real 3D globe
+ * (teal arcs, on the hero's cream background so it blends seamlessly).
+ * Used when WebGL/THREE fails (error boundary) and below the lg
+ * breakpoint (no WebGL mount at all).
  */
 export function StaticEarth({ size = 320 }) {
   return (
-    <div
-      className="rounded-full overflow-hidden shadow-2xl ring-1 ring-navy/10"
+    <img
+      src="/globe-static.png"
+      alt="Globe showing live export corridors from India"
+      className="pointer-events-none select-none"
       style={{ width: size, height: size }}
-      role="img"
-      aria-label="Satellite view of Earth showing global trade routes"
-    >
-      <img
-        src="/vibrant_satellite_earth.png"
-        alt=""
-        className="w-full h-full object-cover"
-        style={{ objectPosition: '62% 30%' }}
-        loading="lazy"
-      />
-    </div>
+      loading="lazy"
+    />
   );
 }
 
