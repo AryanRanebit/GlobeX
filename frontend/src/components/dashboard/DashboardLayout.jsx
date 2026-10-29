@@ -63,11 +63,11 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
         aria-current={isActive ? 'page' : undefined}
         className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full ${
           isActive
-            ? 'bg-blue-pale text-blue font-medium'
-            : 'text-muted hover:bg-surface hover:text-navy'
+            ? 'bg-white/10 text-cream font-medium shadow-[inset_2px_0_0_0_var(--color-blue-bright)]'
+            : 'text-sage hover:bg-white/5 hover:text-cream'
         }`}
       >
-        <Icon size={18} className={`shrink-0 ${isActive ? 'text-blue' : 'text-faint'}`} />
+        <Icon size={18} className={`shrink-0 ${isActive ? 'text-blue-bright' : 'text-sage'}`} />
         {expanded && <span className="text-sm whitespace-nowrap">{item.label}</span>}
       </button>
     );
@@ -75,17 +75,17 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
 
   const renderSidebarBody = (expanded) => (
     <>
-      <div className="h-16 flex items-center justify-between px-4 border-b border-line">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="w-8 h-8 rounded bg-blue flex items-center justify-center shrink-0">
-            <span className="text-white font-bold text-sm">G</span>
+      <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-cream flex items-center justify-center shrink-0">
+            <span className="text-deep font-bold text-sm font-heading">G</span>
           </div>
-          {expanded && <span className="font-bold text-navy whitespace-nowrap">GlobeX AI</span>}
+          {expanded && <span className="font-bold text-cream whitespace-nowrap font-heading tracking-tight">GlobeX AI</span>}
         </div>
         {/* Mobile close button (only rendered inside the drawer) */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden p-1 rounded-md text-muted hover:text-navy hover:bg-surface"
+          className="lg:hidden p-1 rounded-md text-sage hover:text-cream hover:bg-white/5"
           aria-label="Close menu"
         >
           <X size={18} />
@@ -94,25 +94,25 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
 
       <nav className="flex-1 p-4 flex flex-col gap-1 overflow-y-auto">
         {expanded && (
-          <div className="text-[10px] font-bold text-faint uppercase tracking-wider mb-2 px-2 mt-2">
+          <div className="text-[10px] font-bold text-sage/70 uppercase tracking-wider mb-2 px-2 mt-2">
             Main Menu
           </div>
         )}
         {menuItems.map((item) => renderNavButton(item, expanded))}
       </nav>
 
-      <div className="p-4 border-t border-line">
+      <div className="p-4 border-t border-white/10">
         <button
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-muted hover:bg-surface hover:text-navy transition-colors w-full mb-1"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sage hover:bg-white/5 hover:text-cream transition-colors w-full mb-1"
           title={!expanded ? 'Settings' : undefined}
           aria-label={!expanded ? 'Settings' : undefined}
         >
-          <Settings size={18} className="text-faint shrink-0" />
+          <Settings size={18} className="text-sage shrink-0" />
           {expanded && <span className="text-sm whitespace-nowrap">Settings</span>}
         </button>
         <button
           onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red hover:bg-red-pale transition-colors w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-soft hover:bg-white/5 transition-colors w-full"
           title={!expanded ? 'Logout' : undefined}
           aria-label={!expanded ? 'Logout' : undefined}
         >
@@ -127,7 +127,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
     <div className="min-h-screen bg-page flex">
       {/* Desktop sidebar (collapsible) */}
       <aside
-        className={`hidden lg:flex bg-white border-r border-line flex-col transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}
+        className={`hidden lg:flex bg-deep flex-col transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}
       >
         {renderSidebarBody(sidebarOpen)}
       </aside>
@@ -140,7 +140,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <aside className="absolute left-0 top-0 h-full w-64 bg-white border-r border-line flex flex-col shadow-xl">
+          <aside className="absolute left-0 top-0 h-full w-64 bg-deep flex flex-col shadow-xl">
             {renderSidebarBody(true)}
           </aside>
         </div>
@@ -149,7 +149,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-line flex items-center justify-between px-4 sm:px-6 shrink-0">
+        <header className="h-16 bg-mist border-b border-line flex items-center justify-between px-4 sm:px-6 shrink-0">
           <div className="flex items-center gap-3">
             {/* Mobile hamburger */}
             <button
@@ -167,7 +167,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
             >
               <Menu size={20} />
             </button>
-            <span className="text-sm font-semibold text-muted capitalize">
+            <span className="text-sm font-semibold text-navy capitalize font-heading">
               {menuItems.find(i => i.id === currentPage)?.label || 'Dashboard'}
             </span>
           </div>
@@ -180,21 +180,21 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
                 placeholder="Search HS codes, buyers..."
-                className="pl-9 pr-4 py-1.5 bg-page border border-line rounded-full text-sm w-64 focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue"
+                className="pl-9 pr-4 py-1.5 bg-white border border-line rounded-lg text-sm w-64 text-ink placeholder:text-faint focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
               />
             </form>
-            <button className="relative p-2 text-muted hover:text-navy transition-colors rounded-full hover:bg-surface" aria-label="Notifications">
+            <button className="relative p-2 text-muted hover:text-navy transition-colors rounded-lg hover:bg-surface" aria-label="Notifications">
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red rounded-full border border-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-accent rounded-full border border-mist"></span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-line border border-line-dark flex items-center justify-center text-sm font-bold text-soft">
+            <div className="w-8 h-8 rounded-full bg-blue-pale border border-blue-border flex items-center justify-center text-sm font-bold text-blue-dark">
               {user?.name?.charAt(0) || 'U'}
             </div>
           </div>
         </header>
 
         {/* Page Content Scrollable Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           <div className="max-w-6xl mx-auto">
             {children}
           </div>

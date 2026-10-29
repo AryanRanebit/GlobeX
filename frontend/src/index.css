@@ -1,71 +1,84 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Volza-Style Enterprise Palette ──────────────────────────────────── */
-  --color-navy: #0F172A;
-  --color-navy-light: #1E293B;
-  --color-blue: #2563EB;
-  --color-blue-dark: #1D4ED8;
-  --color-blue-light: #3B82F6;
-  --color-blue-pale: #EFF6FF;
-  --color-emerald: #059669;
-  --color-emerald-light: #10B981;
-  --color-orange: #F59E0B;
-  --color-red: #EF4444;
+  /* ── Brand Palette: Deep Harbor Teal + Warm Cream + Saffron Amber ─────
+     60% warm neutral base · 30% deep teal brand · 10% amber accent (CTAs) */
 
-  /* ── Accent Palette: Saffron Amber ─────────────────────────────────── */
-  --color-accent: #D97706;
-  --color-accent-hover: #B45309;
+  /* Brand teal (interactive, links, data highlights) */
+  --color-navy: #134E4A;              /* deep teal ink: headings, key figures */
+  --color-navy-light: #115E59;
+  --color-blue: #0F766E;              /* brand primary (teal-700) */
+  --color-blue-dark: #115E59;
+  --color-blue-light: #14B8A6;
+  --color-blue-pale: #F0FDFA;
+  --color-blue-border: #CCEEE7;
+  --color-blue-soft: #99E5DA;
+  --color-blue-bright: #2DD4BF;
+  --color-sky: #5EEAD4;
+
+  /* Accent: saffron amber — reserved for primary CTAs and focus */
+  --color-accent: #B45309;
+  --color-accent-hover: #92400E;
+  --color-accent-active: #78350F;
   --color-accent-light: #FEF3C7;
   --color-accent-subtle: #FFFBEB;
-  --color-accent-border: #FDE68A;
-  --color-accent-text: #92400E;
+  --color-accent-border: #F2DEA6;
+  --color-accent-text: #78350F;
 
+  /* Warm neutral base (canvas, surfaces, borders) */
   --color-bg-white: #FFFFFF;
-  --color-bg-light: #F8FAFC;
-  --color-bg-gray: #F1F5F9;
+  --color-bg-light: #F7F5F0;
+  --color-bg-gray: #EFEBE2;
+  --color-page: #F7F5F0;
+  --color-surface: #EFEBE2;
+  --color-mist: #FBFAF6;
+  --color-line: #E6E1D5;
+  --color-line-dark: #D3CCBE;
+  --color-border: #E6E1D5;
+  --color-border-dark: #D3CCBE;
 
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748B;
-  --color-text-light: #94A3B8;
+  /* Ink scale: warm slate with a teal undertone */
+  --color-text-primary: #1D2624;
+  --color-text-secondary: #3E4B47;
+  --color-text-muted: #62716C;
+  --color-text-light: #8A9893;
+  --color-ink: #3E4B47;
+  --color-soft: #54635E;
+  --color-muted: #62716C;
+  --color-faint: #8A9893;
 
-  --color-border: #E2E8F0;
-  --color-border-dark: #CBD5E1;
-
-  /* ── Consolidated tokens (single source for repeated raw hexes) ─────── */
-  --color-page: #F8FAFC;
-  --color-surface: #F1F5F9;
-  --color-mist: #F9FAFB;
-  --color-line: #E2E8F0;        /* one border grey: was #E5E7EB / #E2E8F0 / #D1D5DB */
-  --color-line-dark: #CBD5E1;
-  --color-ink: #334155;
-  --color-soft: #475569;
-  --color-muted: #64748B;
-  --color-faint: #94A3B8;
-  --color-sky: #38BDF8;
-  --color-blue-border: #DBEAFE;
-  --color-blue-soft: #BFDBFE;
-  --color-blue-bright: #60A5FA;
+  /* Semantic colors — muted, badge-safe pairings */
+  --color-emerald: #047857;
+  --color-emerald-light: #10B981;
   --color-emerald-pale: #ECFDF5;
   --color-emerald-border: #A7F3D0;
-  --color-emerald-dark: #047857;
+  --color-emerald-dark: #065F46;
   --color-emerald-ink: #065F46;
   --color-emerald-deep: #064E3B;
   --color-green-light: #34D399;
+  --color-red: #DC2626;
+  --color-red-soft: #FCA5A5;
   --color-red-pale: #FEF2F2;
   --color-red-border: #FECACA;
-  --color-red-dark: #DC2626;
+  --color-red-dark: #B91C1C;
   --color-red-ink: #991B1B;
   --color-red-deep: #7F1D1D;
-  --color-amber: #FBBF24;
+  --color-amber: #D97706;
   --color-amber-pale: #FEF9C3;
   --color-amber-ink: #78350F;
-  --color-fuchsia: #C026D3;
-  --color-fuchsia-pale: #FDF4FF;
-  --color-indigo-light: #818CF8;
-  --color-violet-light: #A78BFA;
-  --color-pink: #F472B6;
+  --color-orange: #EA580C;
+  /* Legacy bright accents remapped into the brand family (no purple) */
+  --color-fuchsia: #C2410C;
+  --color-fuchsia-pale: #FFF7ED;
+  --color-indigo-light: #14B8A6;
+  --color-violet-light: #2DD4BF;
+  --color-pink: #D97706;
+
+  /* Sidebar: deep harbor teal */
+  --color-deep: #0E3833;
+  --color-deep-2: #12443E;
+  --color-cream: #F5F2EA;
+  --color-sage: #9FBAB3;
 
   /* ── Typography ─────────────────────────────────────────────────────── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -88,13 +101,16 @@
 
   /* ── Component Tokens ───────────────────────────────────────────────── */
   --color-navbar-bg: #FFFFFF;
-  --color-btn-primary-bg: #2563EB;
-  --color-btn-primary-hover: #1D4ED8;
+  --color-btn-primary-bg: #B45309;
+  --color-btn-primary-hover: #92400E;
   --color-card-bg: #FFFFFF;
-  --color-card-border: #E2E8F0;
+  --color-card-border: #E6E1D5;
   --color-input-bg: #FFFFFF;
-  --color-input-border: #E2E8F0;
+  --color-input-border: #D3CCBE;
   --color-modal-bg: #FFFFFF;
+
+  --shadow-float: 0 12px 32px -8px rgba(20, 40, 36, 0.12);
+  --shadow-pop: 0 20px 48px -12px rgba(20, 40, 36, 0.18);
 }
 
 @layer base {
@@ -124,9 +140,9 @@
     font-size: var(--text-h1);
     font-weight: 700;
     letter-spacing: -0.03em;
-    line-height: 1.2;
+    line-height: 1.15;
     margin: 0;
-    color: var(--color-text-primary);
+    color: var(--color-navy);
   }
 
   h2 {
@@ -134,9 +150,9 @@
     font-size: var(--text-h2);
     font-weight: 700;
     letter-spacing: -0.025em;
-    line-height: 1.25;
+    line-height: 1.2;
     margin: 0;
-    color: var(--color-text-primary);
+    color: var(--color-navy);
   }
 
   h3 {
@@ -144,9 +160,9 @@
     font-size: var(--text-h3);
     font-weight: 600;
     letter-spacing: -0.02em;
-    line-height: 1.35;
+    line-height: 1.3;
     margin: 0;
-    color: var(--color-text-primary);
+    color: var(--color-navy);
   }
 
   h4 {
@@ -154,9 +170,9 @@
     font-size: var(--text-h4);
     font-weight: 600;
     letter-spacing: -0.015em;
-    line-height: 1.4;
+    line-height: 1.35;
     margin: 0;
-    color: var(--color-text-primary);
+    color: var(--color-navy);
   }
 
   p {
@@ -184,6 +200,13 @@
     text-decoration: none;
     transition: color 0.15s ease;
   }
+
+  /* Shared focus ring: visible, on-brand, never removed */
+  :focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 } /* end @layer base */
 
 /* ── Type Utility Classes ────────────────────────────────────────────────── */
@@ -196,8 +219,8 @@
   font-size: var(--text-h1);
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.2;
-  color: var(--color-text-primary);
+  line-height: 1.15;
+  color: var(--color-navy);
 }
 
 .type-h2 {
@@ -205,8 +228,8 @@
   font-size: var(--text-h2);
   font-weight: 700;
   letter-spacing: -0.025em;
-  line-height: 1.25;
-  color: var(--color-text-primary);
+  line-height: 1.2;
+  color: var(--color-navy);
 }
 
 .type-h3 {
@@ -214,8 +237,8 @@
   font-size: var(--text-h3);
   font-weight: 600;
   letter-spacing: -0.02em;
-  line-height: 1.35;
-  color: var(--color-text-primary);
+  line-height: 1.3;
+  color: var(--color-navy);
 }
 
 .type-body {
@@ -288,45 +311,96 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* ── Buttons ──────────────────────────────────────────────────────────── */
+/* ── Buttons ────────────────────────────────────────────────────────────
+   Four states each: default / hover / active / disabled (+ focus-visible).
+   Horizontal padding is 2x vertical. Ghost style is secondary-only. */
 .btn-primary {
   background: var(--color-btn-primary-bg);
   color: #FFFFFF;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-weight: 600;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text-small);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-primary:hover {
   background: var(--color-btn-primary-hover);
 }
 
+.btn-primary:active {
+  background: var(--color-accent-active);
+}
+
+.btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 .btn-secondary {
   background: transparent;
   color: var(--color-blue);
-  border: 1px solid var(--color-border-dark);
-  border-radius: 4px;
+  border: 1px solid var(--color-line-dark);
+  border-radius: 8px;
   font-weight: 600;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text-small);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-secondary:hover {
-  background: var(--color-bg-light);
+  background: var(--color-blue-pale);
   border-color: var(--color-blue);
 }
 
-/* ── Volza-style Feature Card ─────────────────────────────────────────── */
+.btn-secondary:active {
+  background: var(--color-blue-border);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Brand (teal) button for non-CTA primary actions */
+.btn-brand {
+  background: var(--color-blue);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  font-size: var(--text-small);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-brand:hover {
+  background: var(--color-blue-dark);
+}
+
+.btn-brand:active {
+  background: var(--color-navy);
+}
+
+.btn-brand:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Feature Card ─────────────────────────────────────────────────────── */
 .feature-card {
   background: #FFFFFF;
   border: 1px solid var(--color-line);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 20px 24px;
   display: flex;
   align-items: flex-start;
@@ -335,7 +409,7 @@
 }
 
 .feature-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-float);
   transform: translateY(-2px);
 }
 
@@ -343,8 +417,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: #EFF6FF;
-  border: 1px solid #DBEAFE;
+  background: var(--color-blue-pale);
+  border: 1px solid var(--color-blue-border);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -352,68 +426,82 @@
 }
 
 .feature-card .icon-wrap svg {
-  color: #2563EB;
+  color: var(--color-blue);
 }
 
 .feature-card .card-title {
   font-size: 0.9375rem;
   font-weight: 600;
-  color: #0F172A;
+  color: var(--color-navy);
   margin-bottom: 4px;
 }
 
 .feature-card .card-desc {
   font-size: 0.8125rem;
-  color: #64748B;
+  color: var(--color-muted);
   line-height: 1.55;
 }
 
-/* ── Enterprise Card ──────────────────────────────────────────────────── */
+/* ── Card ───────────────────────────────────────────────────────────────
+   Static cards are flat (border only); soft high-blur shadows are reserved
+   for floating cards and popovers. */
 .card {
   background: #FFFFFF;
   border: 1px solid var(--color-line);
-  border-radius: 6px;
+  border-radius: 10px;
   transition: box-shadow 0.15s ease;
 }
 
 .card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-float);
 }
 
 /* ── Data Table ───────────────────────────────────────────────────────── */
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.8125rem;
 }
 
 .data-table thead th {
-  background: var(--color-page);
-  color: #64748B;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-mist);
+  color: var(--color-muted);
   font-weight: 600;
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 8px 12px;
+  padding: 10px 12px;
   text-align: left;
-  border-bottom: 1px solid #E5E7EB;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .data-table tbody td {
   padding: 10px 12px;
-  color: #334155;
-  border-bottom: 1px solid #F1F5F9;
+  color: var(--color-ink);
+  border-bottom: 1px solid var(--color-line);
+}
+
+.data-table tbody tr {
+  transition: background 0.12s ease;
 }
 
 .data-table tbody tr:hover {
-  background: #F8FAFC;
+  background: var(--color-mist);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 /* ── Input Fields ─────────────────────────────────────────────────────── */
 .input-field {
   background: #FFFFFF;
-  border: 1px solid var(--color-line);
-  border-radius: 4px;
+  border: 1px solid var(--color-input-border);
+  border-radius: 8px;
   color: var(--color-text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-body);
@@ -427,10 +515,8 @@
 .input-field:focus {
   outline: none;
   border-color: var(--color-blue);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
 }
-
-/* (link reset moved into @layer base above) */
 
 /* ── Section Container ────────────────────────────────────────────────── */
 .section-container {
