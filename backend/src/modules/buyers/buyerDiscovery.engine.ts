@@ -9,7 +9,9 @@ import { env } from '../../config/env';
 import {
   GeminiAgentBuyerProvider,
   deduplicateCandidates,
+  extractDomain,
   generateBuyerSearchQuery,
+  normalizeCompanyName,
   ProviderError,
 } from './buyerDiscovery.providers';
 import { verifyCandidateEvidence } from './buyerDiscovery.verification';
@@ -73,7 +75,7 @@ function enrichCandidate(candidate: DiscoveredCandidate): EnrichedBuyerRecord {
 // ─── Persistence ─────────────────────────────────────────────────────────────
 
 async function persistEnrichedBuyer(record: EnrichedBuyerRecord): Promise<EnrichedBuyerRecord> {
-  const saved = await buyersRepository.createWithProvenance({
+  const provenance = {
     companyName: record.companyName,
     country: record.country,
     countryCode: record.countryCode,
@@ -92,7 +94,20 @@ async function persistEnrichedBuyer(record: EnrichedBuyerRecord): Promise<Enrich
     providerReference: record.providerReference,
     verificationStatus: record.verificationStatus,
     verificationEvidence: record.verificationEvidence as any,
+  };
+  // Dedup on insert: a re-discovered company merges into its existing row
+  // (matched by website domain, else normalized name + country) instead of
+  // being appended as a duplicate on every discovery run.
+  const existing = await buyersRepository.findDuplicate({
+    domain: extractDomain(record.website ?? undefined),
+    normalizedName: normalizeCompanyName(record.companyName),
+    country: record.country,
   });
+  if (existing) {
+    const merged = await buyersRepository.mergeWithProvenance(existing.id, provenance);
+    return { ...record, id: (merged ?? existing).id };
+  }
+  const saved = await buyersRepository.createWithProvenance(provenance);
   return { ...record, id: saved.id };
 }
 
