@@ -224,7 +224,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
   };
 
   return (
-    <div className="flex flex-col gap-5 animate-fade-in">
+    <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -251,7 +251,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
       </div>
 
       {/* Filter and Control Bar */}
-      <div className="bg-white p-3.5 rounded-xl border border-line-dark shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="bg-white p-3.5 rounded-xl border border-line-dark flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
@@ -260,7 +260,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search company, country, industry..."
-            className="w-full pl-9 pr-7 py-1.5 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-[#2563EB] focus:bg-white"
+            className="w-full pl-9 pr-7 py-1.5 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15 focus:bg-white"
           />
           {searchTerm && (
             <button
@@ -277,7 +277,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="px-2.5 py-1.5 bg-page border border-line-dark rounded-lg text-xs font-semibold text-ink focus:outline-none focus:border-[#2563EB]"
+            className="px-2.5 py-1.5 bg-page border border-line-dark rounded-lg text-xs font-semibold text-ink focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
           >
             <option value="ALL">All Countries</option>
             {countries.filter(c => c !== 'ALL').map(c => (
@@ -288,7 +288,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-2.5 py-1.5 bg-page border border-line-dark rounded-lg text-xs font-semibold text-ink focus:outline-none focus:border-[#2563EB]"
+            className="px-2.5 py-1.5 bg-page border border-line-dark rounded-lg text-xs font-semibold text-ink focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
           >
             <option value="scoreDesc">Lead Score: High to Low</option>
             <option value="scoreAsc">Lead Score: Low to High</option>
@@ -308,8 +308,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
       {/* Main Table + Slide-over Drawer Area */}
       <div className="flex gap-6 min-h-[450px] relative">
-        <div className={`flex flex-col bg-white border border-line-dark rounded-xl shadow-xs overflow-hidden transition-all duration-300 ${selectedBuyer ? 'w-full lg:w-2/3' : 'w-full'}`}>
-          <div className="p-4 border-b border-line bg-page flex justify-between items-center">
+        <div className={`flex flex-col bg-white border border-line-dark rounded-xl overflow-hidden transition-all duration-300 ${selectedBuyer ? 'w-full lg:w-2/3' : 'w-full'}`}>
+          <div className="p-4 border-b border-line bg-mist flex justify-between items-center">
             <div>
               <h2 className="text-sm font-bold text-navy">
                 Prospective Buyers <span className="text-xs font-normal text-muted">({filteredBuyers.length} in pipeline)</span>
@@ -320,7 +320,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
             </span>
           </div>
 
-          <div className="flex-1 overflow-x-auto">
+          <div className="flex-1 overflow-auto max-h-[65vh]">
             {isLoading ? (
               <SkeletonRows rows={6} />
             ) : error ? (
@@ -339,26 +339,26 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                 onAction={() => setIsDiscoverModalOpen(true)}
               />
             ) : (
-              <table className="w-full text-left border-collapse text-xs md:text-sm">
-                <thead className="bg-page border-b border-line">
+              <table className="w-full text-left border-separate border-spacing-0 text-xs md:text-sm">
+                <thead>
                   <tr className="text-soft font-bold text-[11px] uppercase tracking-wider">
-                    <th className="py-3 px-4">Company</th>
-                    <th className="py-3 px-4">Destination</th>
-                    <th className="py-3 px-4">Verification Evidence</th>
-                    <th className="py-3 px-4">Lead Score</th>
-                    <th className="py-3 px-4 text-right">Outreach</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Company</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Destination</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Verification Evidence</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Lead Score</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4 text-right">Outreach</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-line">
+                <tbody>
                   {filteredBuyers.map((b) => {
                     const isSelected = selectedBuyer?.id === b.id;
                     return (
                       <tr 
                         key={b.id}
                         onClick={() => setSelectedBuyer(b)}
-                        className={`hover:bg-page cursor-pointer transition-colors ${isSelected ? 'bg-blue-pale' : ''}`}
+                        className={`hover:bg-page cursor-pointer transition-colors ${isSelected ? 'bg-blue-pale/60' : ''}`}
                       >
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 border-b border-line">
                           <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg bg-blue-pale border border-blue-soft flex items-center justify-center text-blue shrink-0 font-bold text-xs">
                               {b.companyName?.charAt(0) || 'B'}
@@ -381,20 +381,20 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                           </div>
                         </td>
 
-                        <td className="py-3 px-4 text-xs font-semibold text-ink">
+                        <td className="py-3 px-4 border-b border-line text-xs font-semibold text-ink">
                           {b.country}
                           {b.countryCode && <span className="ml-1 text-[10px] text-muted font-mono">({b.countryCode})</span>}
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 border-b border-line">
                           {renderVerificationBadge(b)}
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 border-b border-line">
                           <div className="flex items-center gap-2">
-                            <div className="w-12 h-1.5 bg-[#E2E8F0] rounded-full overflow-hidden">
+                            <div className="w-12 h-1.5 bg-surface rounded-full overflow-hidden">
                               <div 
-                                className={`h-full rounded-full ${b.leadScore >= 70 ? 'bg-emerald-light' : b.leadScore >= 40 ? 'bg-orange' : 'bg-[#94A3B8]'}`}
+                                className={`h-full rounded-full ${b.leadScore >= 70 ? 'bg-emerald-light' : b.leadScore >= 40 ? 'bg-orange' : 'bg-faint'}`}
                                 style={{ width: `${b.leadScore || 0}%` }}
                               />
                             </div>
@@ -402,10 +402,10 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                           </div>
                         </td>
 
-                        <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <td className="py-3 px-4 border-b border-line text-right" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={() => setEmailModalBuyer(b)}
-                            className="btn-secondary px-2.5 py-1 text-xs font-semibold inline-flex items-center gap-1.5 hover:bg-blue-pale hover:border-[#2563EB]"
+                            className="btn-secondary px-2.5 py-1 text-xs font-semibold inline-flex items-center gap-1.5 hover:bg-blue-pale hover:border-blue"
                           >
                             <Mail size={12} />
                             <span>Draft Email</span>
@@ -419,7 +419,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
             )}
           </div>
 
-          <div className="p-3 bg-page border-t border-line flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-2">
+          <div className="p-3 bg-mist border-t border-line flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-2">
             <span>Showing {filteredBuyers.length} prospective buyer records</span>
             <span className="text-[11px] text-faint">Evidence standard: Company identity + Web presence required. Customs volume requires audited BOL.</span>
           </div>
@@ -427,8 +427,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
         {/* Slide-out Buyer Detail Drawer */}
         {selectedBuyer && (
-          <div className="w-full lg:w-1/3 bg-white border border-line-dark rounded-xl shadow-lg flex flex-col animate-fade-in shrink-0 overflow-hidden">
-            <div className="p-4 border-b border-line bg-page flex justify-between items-start">
+          <div className="w-full lg:w-1/3 bg-white border border-line-dark rounded-xl shadow-lg flex flex-col shrink-0 overflow-hidden">
+            <div className="p-4 border-b border-line bg-mist flex justify-between items-start">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue">Buyer Evidence Dossier</span>
                 <h3 className="text-base font-bold text-navy mt-0.5">{selectedBuyer.companyName}</h3>
@@ -436,7 +436,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
               </div>
               <button 
                 onClick={() => setSelectedBuyer(null)}
-                className="p-1 rounded-md text-faint hover:text-navy hover:bg-[#E2E8F0]"
+                className="p-1 rounded-md text-faint hover:text-navy hover:bg-surface"
               >
                 <X size={16} />
               </button>
@@ -495,11 +495,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
       {/* Discover Buyers Modal */}
       {isDiscoverModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl border border-line-dark shadow-2xl w-full max-w-md overflow-hidden">
             <div className="bg-navy p-4 text-white flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-sky" />
+                <Sparkles size={16} className="text-blue-bright" />
                 <h3 className="text-sm font-bold">Discover Commercial Importers</h3>
               </div>
               <button onClick={() => setIsDiscoverModalOpen(false)} className="text-faint hover:text-white">
@@ -518,7 +518,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   onChange={(e) => setDiscoverProduct(e.target.value)}
                   placeholder="e.g. Apparel & Cotton Trousers (HS 62)"
                   required
-                  className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
               </div>
 
@@ -532,7 +532,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   onChange={(e) => setDiscoverCountry(e.target.value)}
                   placeholder="e.g. United States, Germany, United Kingdom"
                   required
-                  className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-[#2563EB]"
+                  className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
               </div>
 
@@ -570,11 +570,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
       {/* Draft Email Modal */}
       {emailModalBuyer && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl border border-line-dark shadow-2xl w-full max-w-lg overflow-hidden">
             <div className="bg-navy p-4 text-white flex justify-between items-center">
               <div className="flex items-center gap-2">
-                <Mail size={16} className="text-sky" />
+                <Mail size={16} className="text-blue-bright" />
                 <h3 className="text-sm font-bold">Export Pitch: {emailModalBuyer.companyName}</h3>
               </div>
               <button onClick={() => setEmailModalBuyer(null)} className="text-faint hover:text-white">

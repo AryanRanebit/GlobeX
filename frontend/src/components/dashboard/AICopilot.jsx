@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Sparkles, Wrench, BookOpen, Info } from 'lucide-react';
 import ErrorBanner from '../ui/ErrorBanner';
 import { apiFetch } from '../../lib/api';
@@ -39,6 +39,13 @@ export default function AICopilot({ onRequireAuth }) {
   const [error, setError] = useState(null);
   const [lastQuestion, setLastQuestion] = useState(null);
   const sessionIdRef = useRef(getOrCreateSessionId());
+  const chatScrollRef = useRef(null);
+
+  // Keep the latest exchange in view as messages stream in.
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, isThinking, error]);
 
   const hasToken = () => Boolean(localStorage.getItem('token'));
 
@@ -125,7 +132,7 @@ export default function AICopilot({ onRequireAuth }) {
 
   if (!hasToken()) {
     return (
-      <div className="flex flex-col h-[calc(100vh-120px)] bg-white border border-line rounded-xl shadow-sm animate-fade-in overflow-hidden">
+      <div className="flex flex-col h-[calc(100vh-120px)] bg-white border border-line rounded-xl overflow-hidden">
         <EmptyState
           icon={Bot}
           title="Sign in to use the Trade Copilot"
@@ -138,10 +145,10 @@ export default function AICopilot({ onRequireAuth }) {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] bg-white border border-line rounded-xl shadow-sm animate-fade-in overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-120px)] bg-white border border-line rounded-xl overflow-hidden">
 
       {/* Header */}
-      <div className="p-5 border-b border-line flex items-center gap-3 bg-page">
+      <div className="p-5 border-b border-line flex items-center gap-3 bg-mist">
         <div className="w-10 h-10 rounded-full bg-blue-pale flex items-center justify-center text-blue">
           <Bot size={20} />
         </div>
@@ -152,7 +159,7 @@ export default function AICopilot({ onRequireAuth }) {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+      <div ref={chatScrollRef} className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
         {error && (
           <ErrorBanner
             message={error}
@@ -169,7 +176,7 @@ export default function AICopilot({ onRequireAuth }) {
             <div className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
               msg.type === 'user'
                 ? 'bg-blue text-white rounded-tr-sm'
-                : 'bg-surface text-navy rounded-tl-sm'
+                : 'bg-mist border border-line text-navy rounded-tl-sm'
             }`}>
               {msg.text}
               {msg.type === 'ai' && ((msg.toolsUsed && msg.toolsUsed.length > 0) || msg.ragUsed) && (
@@ -221,7 +228,7 @@ export default function AICopilot({ onRequireAuth }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about tariffs, buyers, or compliance..."
-            className="w-full pl-5 pr-12 py-3 bg-page border border-line rounded-full text-sm focus:outline-none focus:border-blue focus:ring-1 focus:ring-blue"
+            className="w-full pl-5 pr-12 py-3 bg-page border border-line rounded-full text-sm focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
           />
           <button
             type="submit"
