@@ -8,9 +8,6 @@ import {
   ArrowUpRight,
   Package,
   Globe2,
-  BarChart3,
-  Calendar,
-  Sparkles,
   RefreshCw,
   Inbox
 } from 'lucide-react';
@@ -23,8 +20,7 @@ import {
   XAxis, 
   YAxis, 
   Tooltip, 
-  CartesianGrid, 
-  Legend 
+  CartesianGrid
 } from 'recharts';
 
 const TRADE_VOLUME_DATA = [

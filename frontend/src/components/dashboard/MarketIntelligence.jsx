@@ -1,15 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Globe2, 
-  TrendingUp, 
   AlertTriangle, 
-  FileCheck, 
-  CheckCircle2, 
   Search, 
   X, 
   Sparkles, 
-  Filter, 
-  ArrowUpRight, 
   Building2, 
   FileDown, 
   ExternalLink, 
@@ -33,17 +28,21 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
-  useEffect(() => {
+  // Sync the external global search query into local state
+  // (render-time adjustment instead of an effect).
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery);
     setLocalQuery(searchQuery);
-  }, [searchQuery]);
+  }
 
-  // Fetch real trade markets from backend
-  const fetchMarkets = async (hsCode) => {
-    setLoading(true);
-    setError(null);
+  // Fetch real trade markets from backend. Initial state is already
+  // loading=true, so the effect never sets state synchronously; HS switches
+  // and retries enter the loading state from their event handlers.
+  const fetchMarkets = useCallback(async (hsCode) => {
     try {
       const res = await apiFetch(`/api/trade/markets?hs=${hsCode}&year=2025&limit=250`);
-      
+
       if (!res.ok) {
         throw new Error(`Failed to fetch trade data (Status ${res.status})`);
       }
@@ -51,6 +50,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       if (json.success && Array.isArray(json.data)) {
         setMarkets(json.data);
         setMeta(json.meta);
+        setError(null);
       } else {
         throw new Error(json.message || 'Malformed trade data response');
       }
@@ -60,11 +60,30 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Event-handler refresh: enters the loading state, then re-fetches.
+  const refetchMarkets = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchMarkets(selectedHs);
+  }, [fetchMarkets, selectedHs]);
+
+  const handleHsChange = (hs) => {
+    if (hs === selectedHs) return;
+    setLoading(true);
+    setError(null);
+    setSelectedHs(hs);
   };
 
   useEffect(() => {
-    fetchMarkets(selectedHs);
-  }, [selectedHs]);
+    let active = true;
+    // Deferred to a microtask so no state is set synchronously in the effect.
+    Promise.resolve().then(() => {
+      if (active) fetchMarkets(selectedHs);
+    });
+    return () => { active = false; };
+  }, [selectedHs, fetchMarkets]);
 
   // Filtered markets based on search term
   const filteredMarkets = useMemo(() => {
@@ -123,7 +142,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           {/* HS Code Segmented Control */}
           <div className="bg-[#F1F5F9] p-1 rounded-lg border border-[#E2E8F0] flex items-center text-xs font-semibold">
             <button
-              onClick={() => setSelectedHs('62')}
+              onClick={() => handleHsChange('62')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 selectedHs === '62' 
                   ? 'bg-white text-[#2563EB] shadow-xs' 
@@ -133,7 +152,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               HS 62 (Apparel)
             </button>
             <button
-              onClick={() => setSelectedHs('TOTAL')}
+              onClick={() => handleHsChange('TOTAL')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 selectedHs === 'TOTAL' 
                   ? 'bg-white text-[#2563EB] shadow-xs' 
@@ -234,7 +253,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
             <p className="text-sm font-bold">Failed to load trade data</p>
             <p className="text-xs text-[#991B1B]">{error}</p>
             <button 
-              onClick={() => fetchMarkets(selectedHs)}
+              onClick={refetchMarkets}
               className="mt-2 px-3 py-1 bg-white border border-[#FECACA] rounded text-xs font-semibold text-[#DC2626] hover:bg-[#FEE2E2]"
             >
               Retry

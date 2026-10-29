@@ -1,17 +1,11 @@
 import React from 'react';
-import { 
-  TrendingUp, 
-  Users, 
-  ShieldCheck, 
-  ArrowRight, 
-  CheckCircle2, 
-  XCircle, 
-  Building2, 
-  FileText,
+import {
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Building2,
   Sparkles,
-  ExternalLink,
-  Globe2,
-  Lock
+  Globe2
 } from 'lucide-react';
 import { TRADE_STATS } from '../../constants/tradeStats';
 

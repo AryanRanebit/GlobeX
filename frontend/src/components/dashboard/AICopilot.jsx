@@ -1,11 +1,15 @@
 import React, { useState, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Wrench, BookOpen } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Wrench, BookOpen, Info } from 'lucide-react';
 import ErrorBanner from '../ui/ErrorBanner';
 import { apiFetch } from '../../lib/api';
 import EmptyState from '../ui/EmptyState';
 
 const SESSION_KEY = 'globex_copilot_session_id';
 const MOCK_MODE_MARKER = '(Mock Mode)';
+
+// Tools whose output is LLM-generated trade knowledge (tariff rates, rules,
+// HS classifications), shown as estimates rather than official figures.
+const ESTIMATE_TOOLS = ['duty_calculator', 'country_rules', 'hs_code_lookup'];
 
 // One stable session id per browser, so the agent keeps conversation context
 // across messages and page reloads.
@@ -180,6 +184,12 @@ export default function AICopilot({ onRequireAuth }) {
                     <span className="inline-flex items-center gap-1">
                       <BookOpen size={11} />
                       Knowledge base
+                    </span>
+                  )}
+                  {msg.toolsUsed && msg.toolsUsed.some(t => ESTIMATE_TOOLS.includes(t)) && (
+                    <span className="inline-flex items-center gap-1">
+                      <Info size={11} />
+                      AI estimate - verify with official sources
                     </span>
                   )}
                 </div>

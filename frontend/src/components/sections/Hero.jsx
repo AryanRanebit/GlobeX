@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Search, ArrowRight, CheckCircle, TrendingUp, Sparkles, Building2, Globe2 } from 'lucide-react';
+import { Search, ArrowRight, CheckCircle, TrendingUp, Sparkles } from 'lucide-react';
 import Globe from '../Globe';
 import { TRADE_STATS } from '../../constants/tradeStats';
 
@@ -10,7 +10,7 @@ const QUICK_SEARCH_CHIPS = [
   { code: '3004.90', label: 'Medicaments' },
 ];
 
-export default function Hero({ onOpenAuth, onSearch }) {
+export default function Hero({ onSearch }) {
   const globeContainerRef = useRef(null);
   const [globeSize, setGlobeSize] = useState(480);
   const [query, setQuery] = useState('');

@@ -59,10 +59,6 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef(null);
 
-  useEffect(() => {
-    if (isOpen) switchTab(initialTab);
-  }, [isOpen, initialTab]);
-
   // Lock body scroll while open
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -115,6 +111,14 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     setSuccess('');
     setFieldErrors({});
   };
+
+  // Reset to the initial tab whenever the modal (re)opens or the requested
+  // initial tab changes - render-time adjustment instead of an effect.
+  const [prevOpenTab, setPrevOpenTab] = useState({ isOpen, initialTab });
+  if (prevOpenTab.isOpen !== isOpen || prevOpenTab.initialTab !== initialTab) {
+    setPrevOpenTab({ isOpen, initialTab });
+    if (isOpen) switchTab(initialTab);
+  }
 
   const validate = useCallback((fields) => {
     const errs = {};

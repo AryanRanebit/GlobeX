@@ -23,8 +23,11 @@ class MemoryManager:
     Reads/writes to SQLite via SQLAlchemy async ORM.
     """
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(self, db: AsyncSession, owner_id: str | None = None) -> None:
         self.db = db
+        # Backend-authenticated user this request belongs to. New sessions are
+        # stamped with it so only that user can read or delete them later.
+        self.owner_id = owner_id
 
     # ── Session Management ───────────────────────────────────────────────────
 
@@ -34,7 +37,7 @@ class MemoryManager:
         session = result.scalar_one_or_none()
 
         if session is None:
-            session = Session(id=session_id)
+            session = Session(id=session_id, owner_id=self.owner_id)
             self.db.add(session)
             await self.db.commit()
             await self.db.refresh(session)

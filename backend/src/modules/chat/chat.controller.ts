@@ -10,7 +10,7 @@ export const chatController = {
   async chat(req: Request, res: Response, next: NextFunction) {
     try {
       const dto = ChatMessageSchema.parse(req.body);
-      const result = await chatService.chat(dto);
+      const result = await chatService.chat(dto, req.user!.userId);
       res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -24,7 +24,7 @@ export const chatController = {
   async chatStream(req: Request, res: Response, next: NextFunction) {
     try {
       const dto = ChatMessageSchema.parse(req.body);
-      const stream = await chatService.chatStream(dto);
+      const stream = await chatService.chatStream(dto, req.user!.userId);
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -63,7 +63,7 @@ export const chatController = {
   async getHistory(req: Request, res: Response, next: NextFunction) {
     try {
       const { sessionId } = req.params;
-      const data = await chatService.getSessionHistory(sessionId);
+      const data = await chatService.getSessionHistory(sessionId, req.user!.userId);
       res.json({ success: true, data });
     } catch (err) {
       next(err);
@@ -77,7 +77,7 @@ export const chatController = {
   async deleteSession(req: Request, res: Response, next: NextFunction) {
     try {
       const { sessionId } = req.params;
-      await chatService.deleteSession(sessionId);
+      await chatService.deleteSession(sessionId, req.user!.userId);
       res.json({ success: true, message: `Session ${sessionId} deleted` });
     } catch (err) {
       next(err);

@@ -9,36 +9,35 @@ import {
   Play, 
   Check, 
   Loader2, 
-  ShieldAlert, 
   Globe, 
-  ArrowLeft,
-  Calendar,
-  Building,
-  User,
-  MapPin,
-  ExternalLink,
-  ChevronRight
+  ArrowLeft
 } from 'lucide-react';
 
 export default function AiAgentsHub({ onBackToLanding }) {
   const [activeAgent, setActiveAgent] = useState('discovery');
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulatedLogs, setSimulatedLogs] = useState([]);
-  const [simulationStep, setSimulationStep] = useState(0);
+  const [, setSimulationStep] = useState(0);
   const [showOutcome, setShowOutcome] = useState(false);
   const terminalEndRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Reset simulator when changing agent
+  // Reset simulator state when changing agent (render-time adjustment, so the
+  // stale run never renders). The interval itself is cleared in the effect below.
+  const [prevAgent, setPrevAgent] = useState(activeAgent);
+  if (prevAgent !== activeAgent) {
+    setPrevAgent(activeAgent);
+    setIsSimulating(false);
+    setSimulatedLogs([]);
+    setSimulationStep(0);
+    setShowOutcome(false);
+  }
+
   useEffect(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-    setIsSimulating(false);
-    setSimulatedLogs([]);
-    setSimulationStep(0);
-    setShowOutcome(false);
   }, [activeAgent]);
 
   // Clean up interval on unmount
