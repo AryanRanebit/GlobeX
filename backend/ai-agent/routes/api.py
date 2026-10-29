@@ -458,13 +458,52 @@ async def rag_status() -> dict:
 # ── Agent Specific Endpoints ──────────────────────────────────────────────────
 
 ISO3_TO_ISO2: dict[str, str] = {
-    "USA": "US", "GBR": "GB", "ARE": "AE", "ESP": "ES", "DEU": "DE",
-    "NLD": "NL", "FRA": "FR", "ITA": "IT", "CAN": "CA", "AUS": "AU",
-    "JPN": "JP", "CHN": "CN", "SAU": "SA", "BGD": "BD", "NPL": "NP",
-    "SGP": "SG", "TUR": "TR", "IDN": "ID", "MYS": "MY", "ZAF": "ZA",
-    "BRA": "BR", "MEX": "MX", "KOR": "KR", "VNM": "VN", "BEL": "BE",
-    "POL": "PL", "SWE": "SE", "CHE": "CH", "RUS": "RU", "ISR": "IL",
-    "EGY": "EG", "NGA": "NG", "KEN": "KE", "THA": "TH", "LKA": "LK",
+    "ABW": "AW", "AFG": "AF", "AGO": "AO", "AIA": "AI", "ALA": "AX",
+    "ALB": "AL", "AND": "AD", "ARE": "AE", "ARG": "AR", "ARM": "AM",
+    "ATF": "TF", "ATG": "AG", "AUS": "AU", "AUT": "AT", "AZE": "AZ",
+    "BDI": "BI", "BEL": "BE", "BEN": "BJ", "BES": "BQ", "BFA": "BF",
+    "BGD": "BD", "BGR": "BG", "BHR": "BH", "BHS": "BS", "BIH": "BA",
+    "BLM": "BL", "BLR": "BY", "BLZ": "BZ", "BMU": "BM", "BOL": "BO",
+    "BRA": "BR", "BRB": "BB", "BRN": "BN", "BTN": "BT", "BWA": "BW",
+    "CAF": "CF", "CAN": "CA", "CHE": "CH", "CHL": "CL", "CHN": "CN",
+    "CIV": "CI", "CMR": "CM", "COD": "CD", "COG": "CG", "COL": "CO",
+    "COM": "KM", "CPV": "CV", "CRI": "CR", "CUB": "CU", "CUW": "CW",
+    "CYM": "KY", "CYP": "CY", "CZE": "CZ", "DEU": "DE", "DJI": "DJ",
+    "DMA": "DM", "DNK": "DK", "DOM": "DO", "DZA": "DZ", "ECU": "EC",
+    "EGY": "EG", "ERI": "ER", "ESH": "EH", "ESP": "ES", "EST": "EE",
+    "ETH": "ET", "FIN": "FI", "FJI": "FJ", "FRA": "FR", "FRO": "FO",
+    "FSM": "FM", "GAB": "GA", "GBR": "GB", "GEO": "GE", "GHA": "GH",
+    "GIB": "GI", "GIN": "GN", "GMB": "GM", "GNB": "GW", "GNQ": "GQ",
+    "GRC": "GR", "GRD": "GD", "GRL": "GL", "GTM": "GT", "GUM": "GU",
+    "GUY": "GY", "HKG": "HK", "HND": "HN", "HRV": "HR", "HTI": "HT",
+    "HUN": "HU", "IDN": "ID", "IND": "IN", "IOT": "IO", "IRL": "IE",
+    "IRN": "IR", "IRQ": "IQ", "ISL": "IS", "ISR": "IL", "ITA": "IT",
+    "JAM": "JM", "JOR": "JO", "JPN": "JP", "KAZ": "KZ", "KEN": "KE",
+    "KGZ": "KG", "KHM": "KH", "KIR": "KI", "KNA": "KN", "KOR": "KR",
+    "KWT": "KW", "LAO": "LA", "LBN": "LB", "LBR": "LR", "LBY": "LY",
+    "LCA": "LC", "LIE": "LI", "LKA": "LK", "LSO": "LS", "LTU": "LT",
+    "LUX": "LU", "LVA": "LV", "MAC": "MO", "MAF": "MF", "MAR": "MA",
+    "MCO": "MC", "MDA": "MD", "MDG": "MG", "MDV": "MV", "MEX": "MX",
+    "MHL": "MH", "MKD": "MK", "MLI": "ML", "MLT": "MT", "MMR": "MM",
+    "MNE": "ME", "MNG": "MN", "MOZ": "MZ", "MRT": "MR", "MSR": "MS",
+    "MTQ": "MQ", "MUS": "MU", "MWI": "MW", "MYS": "MY", "MYT": "YT",
+    "NAM": "NA", "NCL": "NC", "NER": "NE", "NGA": "NG", "NIC": "NI",
+    "NLD": "NL", "NOR": "NO", "NPL": "NP", "NRU": "NR", "NZL": "NZ",
+    "OMN": "OM", "PAK": "PK", "PAN": "PA", "PER": "PE", "PHL": "PH",
+    "PLW": "PW", "PNG": "PG", "POL": "PL", "PRI": "PR", "PRK": "KP",
+    "PRT": "PT", "PRY": "PY", "PSE": "PS", "PYF": "PF", "QAT": "QA",
+    "REU": "RE", "ROU": "RO", "RUS": "RU", "RWA": "RW", "SAU": "SA",
+    "SDN": "SD", "SEN": "SN", "SGP": "SG", "SHN": "SH", "SJM": "SJ",
+    "SLB": "SB", "SLE": "SL", "SLV": "SV", "SMR": "SM", "SOM": "SO",
+    "SPM": "PM", "SRB": "RS", "SSD": "SS", "STP": "ST", "SUR": "SR",
+    "SVK": "SK", "SVN": "SI", "SWE": "SE", "SWZ": "SZ", "SXN": "SX",
+    "SYC": "SC", "SYR": "SY", "TCA": "TC", "TCD": "TD", "TGO": "TG",
+    "THA": "TH", "TJK": "TJ", "TKM": "TM", "TLS": "TL", "TON": "TO",
+    "TTO": "TT", "TUN": "TN", "TUR": "TR", "TUV": "TV", "TWN": "TW",
+    "TZA": "TZ", "UGA": "UG", "UKR": "UA", "UNK": "XK", "URY": "UY",
+    "USA": "US", "UZB": "UZ", "VCT": "VC", "VEN": "VE", "VGB": "VG",
+    "VIR": "VI", "VNM": "VN", "VUT": "VU", "WLF": "WF", "WSM": "WS",
+    "XKX": "XK", "YEM": "YE", "ZAF": "ZA", "ZMB": "ZM", "ZWE": "ZW",
 }
 
 
@@ -604,7 +643,7 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
         for idx, m in enumerate(top_markets):
             partner = m.get("partnerName", "Unknown")
             iso3 = m.get("partnerIso3", "XX") or "XX"
-            iso2 = ISO3_TO_ISO2.get(iso3, iso3[:2].upper())
+            iso2 = ISO3_TO_ISO2.get(iso3, "XX")
             fob_val = float(m.get("indiaExportValueUsd") or m.get("tradeValueUsd") or 0.0)
             fob_str = f"${fob_val / 1e9:.2f}B" if fob_val >= 1e9 else f"${fob_val / 1e6:.1f}M"
             share_pct = float(m.get("shareOfIndiaExportsPct") or m.get("shareOfTotal") or 0.0)
