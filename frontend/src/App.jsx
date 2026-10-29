@@ -20,6 +20,7 @@ import EmailDrafter from './components/dashboard/EmailDrafter';
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [dashboardPage, setDashboardPage] = useState('dashboard');
+  const [draftPrefill, setDraftPrefill] = useState(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [authInitialTab, setAuthInitialTab] = useState('signup');
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,6 +129,13 @@ export default function App() {
             searchQuery={searchQuery} 
             onSearchChange={setSearchQuery}
             onRequireAuth={requireSignIn}
+            onNavigateToDrafter={(prefill) => {
+              setDraftPrefill(prefill);
+              setDashboardPage('drafter');
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', 'drafter');
+              window.history.pushState({ tab: 'drafter' }, '', url.toString());
+            }}
           />
         )}
         {dashboardPage === 'markets' && (
@@ -145,7 +153,7 @@ export default function App() {
           />
         )}
         {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
-        {dashboardPage === 'drafter' && <EmailDrafter onRequireAuth={requireSignIn} />}
+        {dashboardPage === 'drafter' && <EmailDrafter onRequireAuth={requireSignIn} prefill={draftPrefill} />}
       </DashboardLayout>
     );
   }

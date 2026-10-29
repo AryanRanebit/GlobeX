@@ -25,7 +25,13 @@ const TARGET_MARKETS = [
 const FIELD_CLASS =
   'w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy placeholder:text-faint focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15';
 
-export default function EmailDrafter({ onRequireAuth }) {
+export default function EmailDrafter({ onRequireAuth, prefill }) {
+  const [genOpen, setGenOpen] = useState(!!prefill);
+  const [genBuyer, setGenBuyer] = useState(prefill?.buyerName || '');
+  const [genProduct, setGenProduct] = useState(prefill?.product || '');
+  const [genContext, setGenContext] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiDrafted, setAiDrafted] = useState(false);
   const [marketIdx, setMarketIdx] = useState(0);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -35,6 +41,53 @@ export default function EmailDrafter({ onRequireAuth }) {
   const [copied, setCopied] = useState(false);
 
   const market = TARGET_MARKETS[marketIdx];
+
+
+  const handleGenerateDraft = async (e) => {
+    if (e) e.preventDefault();
+    if (!genBuyer.trim() || !genProduct.trim() || isGenerating) return;
+    setIsGenerating(true);
+    setError(null);
+    setLocalized(null);
+    try {
+      let sender = { name: 'Export Team', companyName: '', industry: '' };
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || 'null');
+        if (u) sender = { name: u.name || sender.name, companyName: u.companyName || '', industry: u.industry || '' };
+      } catch { /* keep defaults */ }
+      const res = await apiFetch('/api/v1/agents/outreach', {
+        method: 'POST',
+        body: JSON.stringify({
+          buyer: {
+            companyName: genBuyer.trim(),
+            country: (prefill?.country) || market.country,
+            industry: 'Import & Distribution',
+            importVolume: 'Unknown',
+          },
+          sender,
+          tone: 'professional',
+          language: 'en',
+          custom_context: `Product: ${genProduct.trim()}.${genContext.trim() ? ' ' + genContext.trim() : ''}`,
+        }),
+      });
+      if (res.status === 401) {
+        onRequireAuth?.();
+        return;
+      }
+      const json = await res.json();
+      const draft = json?.data?.subject ? json.data : (json?.subject ? json : null);
+      if (!res.ok || !draft) {
+        throw new Error(json?.detail || json?.message || 'Draft generation failed');
+      }
+      setSubject(draft.subject || '');
+      setBody(draft.content || '');
+      setAiDrafted(true);
+    } catch (err) {
+      setError(typeof err.message === 'string' ? err.message : 'The drafting service is unavailable right now. Please try again shortly.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleLocalize = async () => {
     if (!body.trim() || isLocalizing) return;
@@ -117,12 +170,78 @@ export default function EmailDrafter({ onRequireAuth }) {
         </div>
       </div>
 
+
+      {/* AI first draft */}
+      <div className="bg-white rounded-xl border border-line overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setGenOpen(!genOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-mist/60"
+        >
+          <span className="flex items-center gap-2 text-sm font-bold text-navy">
+            <Sparkles size={15} className="text-blue" />
+            Write draft for me
+          </span>
+          <span className="text-[11px] text-muted">{genOpen ? 'Hide' : 'Buyer + product in, English first draft out'}</span>
+        </button>
+        {genOpen && (
+          <form onSubmit={handleGenerateDraft} className="px-4 pb-4 pt-1 border-t border-line grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+            <div>
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Buyer company</label>
+              <input
+                type="text"
+                value={genBuyer}
+                onChange={(e) => setGenBuyer(e.target.value)}
+                placeholder="e.g. Al Noor Trading LLC"
+                required
+                className={FIELD_CLASS}
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Product / commodity</label>
+              <input
+                type="text"
+                value={genProduct}
+                onChange={(e) => setGenProduct(e.target.value)}
+                placeholder="e.g. Turmeric powder (HS 091030)"
+                required
+                className={FIELD_CLASS}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isGenerating || !genBuyer.trim() || !genProduct.trim()}
+              className="btn-primary px-4 py-2 text-xs font-semibold flex items-center justify-center gap-1.5 disabled:opacity-60"
+            >
+              {isGenerating ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+              <span>{isGenerating ? 'Drafting...' : 'Generate draft'}</span>
+            </button>
+            <div className="sm:col-span-3">
+              <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Context (optional)</label>
+              <input
+                type="text"
+                value={genContext}
+                onChange={(e) => setGenContext(e.target.value)}
+                placeholder="e.g. met at Gulfood 2026, asked for 25kg bulk cartons"
+                className={FIELD_CLASS}
+              />
+              <p className="text-[10px] text-faint mt-1.5">The AI writes an English first draft you can edit below, then localize. Review names, figures and claims before sending.</p>
+            </div>
+          </form>
+        )}
+      </div>
+
       {/* Side-by-side panes */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Original draft */}
         <div className="bg-white rounded-xl border border-line-dark overflow-hidden flex flex-col">
           <div className="p-4 border-b border-line bg-mist flex items-center justify-between">
             <span className="text-xs font-bold text-navy uppercase tracking-wider">Your draft · English</span>
+            {aiDrafted && (
+              <span className="text-[10px] font-semibold text-accent-hover bg-amber-subtle border border-accent-border px-2 py-0.5 rounded-full">
+                AI first draft - review before sending
+              </span>
+            )}
             <span className="text-[10px] text-faint font-mono">{body.trim().length}/4000</span>
           </div>
           <div className="p-4 flex flex-col gap-3 flex-1">
