@@ -39,6 +39,26 @@ class BuyerDiscoveryError(Exception):
         self.retryable = retryable
 
 
+_HS_TOKEN_RE = re.compile(r"\bHS\s*(?:code\s*)?[:#]?\s*[\d.]{4,10}\b", re.IGNORECASE)
+_PAREN_RE = re.compile(r"[\(\[][^\)\]]*[\)\]]")
+_LONG_DIGIT_RE = re.compile(r"\b\d{4,10}\b")
+_WS_RE = re.compile(r"\s+")
+
+
+def _clean_product_for_search(product: str) -> str:
+    """Reduce a free-form product string to search-friendly keywords.
+
+    Users type things like "Premium basmati rice (HS 100630)". Quoting that
+    verbatim in a web search reliably returns nothing, so strip parenthetical
+    notes, explicit HS-code mentions and bare code numbers before searching.
+    """
+    cleaned = _PAREN_RE.sub(" ", product)
+    cleaned = _HS_TOKEN_RE.sub(" ", cleaned)
+    cleaned = _LONG_DIGIT_RE.sub(" ", cleaned)
+    cleaned = _WS_RE.sub(" ", cleaned).strip(" -–—,")
+    return cleaned or product.strip()
+
+
 def _build_prompt(
     product: str,
     target_countries: list[str],
@@ -48,9 +68,17 @@ def _build_prompt(
     countries = ", ".join(target_countries) if target_countries else "any country"
     hs_clause = f" (HS code {hs_code})" if hs_code else ""
     category_clause = f" in the {category} category" if category else ""
+    search_product = _clean_product_for_search(product)
     return f"""You are a B2B buyer discovery agent with Google Search access.
 
-Task: use Google Search to find REAL companies that import, distribute, or wholesale-buy '{product}'{hs_clause}{category_clause} in: {countries}.
+Task: use Google Search to find REAL companies that import, distribute, or wholesale-buy '{search_product}'{hs_clause}{category_clause} in: {countries}.
+
+Search strategy (required):
+- Run at least 2-3 DIFFERENT Google searches with varied phrasings for each target country, for example:
+  - "{search_product} importers in <country>"
+  - "{search_product} distributors <country>"
+  - "wholesale {search_product} suppliers <country>"
+- Do not stop after a single search. If one phrasing returns nothing useful, try the next one before concluding there are no results.
 
 Strict rules:
 - Every company you return MUST come from your search results. Never invent, guess, or recall a company from memory.
