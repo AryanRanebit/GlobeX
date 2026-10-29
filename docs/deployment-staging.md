@@ -41,10 +41,36 @@ deployed in this order:
 
 ## Step 3: Frontend (Vercel)
 
-- Project env var (Production):
-  - `VITE_API_BASE_URL` — backend URL from Step 2, **no path, no trailing
-    slash**, e.g. `https://globex-api.up.railway.app`
-- Redeploy the frontend (env vars are baked in at build time).
+Project settings (Settings > General / Build & Development):
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `frontend` (recommended; uses `frontend/vercel.json`) |
+| Framework Preset | Vite |
+| Install Command | `npm ci` (from `frontend/vercel.json`) |
+| Build Command | `npm run build` |
+| Output Directory | `dist` |
+| Node.js Version | 22.x or newer (Vite 8 needs 20.19+ / 22.12+) |
+
+Leave the dashboard fields on their defaults (no overrides); the values above
+come from `frontend/vercel.json`.
+
+If Root Directory is left at the repo root instead, the root `vercel.json`
+installs and builds `frontend/` explicitly (`npm --prefix frontend ci`,
+output `frontend/dist`), so that also works. Do not clear the install command
+in that mode: the root `package.json` has no dependencies, so Vercel's default
+install would not install the frontend and the build fails with
+`vite: command not found`.
+
+Environment variable (Production, and Preview if used):
+
+- `VITE_API_BASE_URL` - backend URL from Step 2, **no path, no trailing
+  slash**, e.g. `https://globex-api.up.railway.app`. Baked in at build time:
+  changing it requires a redeploy. If unset, API calls fail visibly instead of
+  hitting a wrong host.
+
+Redeploy after setting the variable. The backend must list the Vercel origin
+in `ALLOWED_ORIGINS` (Step 2).
 
 ## Step 4: Smoke checks (in order)
 
