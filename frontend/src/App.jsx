@@ -15,6 +15,7 @@ import DashboardHome from './components/dashboard/DashboardHome';
 import BuyerDiscovery from './components/dashboard/BuyerDiscovery';
 import MarketIntelligence from './components/dashboard/MarketIntelligence';
 import AICopilot from './components/dashboard/AICopilot';
+import EmailDrafter from './components/dashboard/EmailDrafter';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
@@ -143,6 +144,7 @@ export default function App() {
           />
         )}
         {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
+        {dashboardPage === 'drafter' && <EmailDrafter onRequireAuth={requireSignIn} />}
       </DashboardLayout>
     );
   }

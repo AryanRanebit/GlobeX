@@ -1,7 +1,7 @@
 import { prisma } from '../../config/database';
 import { outreachAgent } from '../agents/OutreachAgent';
 import { AppError } from '../../middleware/error.middleware';
-import type { GenerateOutreachDto } from './outreach.schema';
+import type { GenerateOutreachDto, LocalizeOutreachDto } from './outreach.schema';
 
 export const outreachService = {
   async generate(userId: string, dto: GenerateOutreachDto) {
@@ -43,6 +43,21 @@ export const outreachService = {
     });
 
     return outreach;
+  },
+
+  // Stateless translation of an existing draft - nothing is persisted.
+  async localize(userId: string, dto: LocalizeOutreachDto) {
+    try {
+      return await outreachAgent.localize({
+        subject: dto.subject,
+        content: dto.content,
+        targetLanguage: dto.targetLanguage,
+        targetCountry: dto.targetCountry,
+        userId,
+      });
+    } catch (err: any) {
+      throw new AppError(`Localization unavailable: ${err.message}`, 502);
+    }
   },
 
   async getHistory(userId: string) {

@@ -4,6 +4,7 @@ import {
   Users,
   Globe2,
   MessageSquare,
+  Languages,
   Settings,
   LogOut,
   Bell,
@@ -48,6 +49,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
     { id: 'buyers', label: 'Buyer Discovery', icon: Users },
     { id: 'markets', label: 'Market Intelligence', icon: Globe2 },
     { id: 'copilot', label: 'AI Copilot', icon: MessageSquare },
+    { id: 'drafter', label: 'Email Drafter', icon: Languages },
   ];
 
   const user = getStoredUser();
