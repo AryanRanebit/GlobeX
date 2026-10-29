@@ -60,7 +60,10 @@ Strict rules:
 - Prefer companies that describe themselves as importers, distributors, wholesalers, or retailers of this product.
 - Return at most 5 companies. If you cannot find real companies backed by a source, return an empty buyers array.
 
-Return ONLY a JSON object (no markdown, no commentary):
+How to answer:
+1. First, run your Google searches and briefly list the companies you found, each with the source URL where you saw it.
+2. Then finish your reply with a single fenced JSON code block (```json ... ```) containing exactly this structure and nothing after it:
+```json
 {{
   "buyers": [
     {{
@@ -75,7 +78,8 @@ Return ONLY a JSON object (no markdown, no commentary):
       "sourceUrl": "<url of the page evidencing this company>"
     }}
   ]
-}}"""
+}}
+```"""
 
 
 def _extract_grounding(response: Any) -> tuple[list[dict], list[dict], list[str]]:
@@ -138,15 +142,27 @@ def _host(url: str) -> str:
 
 
 def _parse_buyers_json(raw: str) -> dict | None:
+    """Extract the fenced JSON block the prompt asks the model to finish with.
+
+    The response is expected to be: search commentary with source URLs,
+    then a ```json ... ``` block. Prefer that block; fall back to the
+    widest {...} span so a plain-JSON response still parses.
+    """
     text = raw.strip()
-    text = re.sub(r"```(?:json)?|```", "", text).strip()
-    start, end = text.find("{"), text.rfind("}")
-    if start == -1 or end == -1:
-        return None
-    try:
-        return json.loads(text[start : end + 1])
-    except (json.JSONDecodeError, ValueError):
-        return None
+    fenced = re.findall(r"```(?:json)?\s*(.*?)```", text, flags=re.DOTALL)
+    candidates = [c.strip() for c in fenced if "{" in c]
+    if not candidates:
+        start, end = text.find("{"), text.rfind("}")
+        if start != -1 and end != -1:
+            candidates.append(text[start : end + 1])
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except (json.JSONDecodeError, ValueError):
+            continue
+        if isinstance(parsed, dict) and "buyers" in parsed:
+            return parsed
+    return None
 
 
 def _clean_str(value: Any) -> str | None:
@@ -176,26 +192,42 @@ async def discover_buyers(
         api_key=settings.google_api_key,
         http_options=types.HttpOptions(timeout=REQUEST_TIMEOUT_MS),
     )
-    try:
-        response = await client.aio.models.generate_content(
-            model=settings.gemini_model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.0,
-            ),
-        )
-    except Exception as exc:
-        message = str(exc)
-        retryable = any(
-            token in message
-            for token in ("429", "RESOURCE_EXHAUSTED", "503", "UNAVAILABLE", "timeout", "Deadline")
-        )
-        log.warning("Grounded buyer discovery call failed", error=message, retryable=retryable)
-        raise BuyerDiscoveryError(f"Grounded search failed: {message}", retryable=retryable)
+
+    # gemini-3.6-flash intermittently skips the Google Search tool (the response
+    # then contains no grounding metadata at all). One retry, only when the first
+    # attempt was fast enough to stay under the TS provider's 45s timeout.
+    import time
+
+    deadline = time.monotonic() + (REQUEST_TIMEOUT_MS / 1000)
+    response = None
+    chunks: list[dict] = []
+    supports: list[dict] = []
+    queries: list[str] = []
+    for attempt in (1, 2):
+        try:
+            response = await client.aio.models.generate_content(
+                model=settings.gemini_model,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    temperature=0.0,
+                ),
+            )
+        except Exception as exc:
+            message = str(exc)
+            retryable = any(
+                token in message
+                for token in ("429", "RESOURCE_EXHAUSTED", "503", "UNAVAILABLE", "timeout", "Deadline")
+            )
+            log.warning("Grounded buyer discovery call failed", error=message, retryable=retryable)
+            raise BuyerDiscoveryError(f"Grounded search failed: {message}", retryable=retryable)
+
+        chunks, supports, queries = _extract_grounding(response)
+        if chunks or time.monotonic() > deadline - 22:
+            break
+        log.warning("Grounded search returned no citations; retrying once", product=product, attempt=attempt)
 
     text = getattr(response, "text", None) or ""
-    chunks, supports, queries = _extract_grounding(response)
 
     searched_at = datetime.now(timezone.utc).isoformat()
     base: dict[str, Any] = {
