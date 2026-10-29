@@ -100,7 +100,17 @@ Intent Definitions:
 - greeting: Hello, hi, introductory message.
 - off_topic: Completely unrelated to international trade.
 
-When needs_tool is true, also fill "tool_args" using the schema for the chosen tool
+When needs_tool is true, "tool_name" MUST be exactly one of these (map intent to tool):
+- hs_code_lookup -> "hs_code_lookup"
+- duty_calculation -> "duty_calculator"
+- country_rules -> "country_rules"
+- invoice_generation -> "invoice_generator"
+- packing_list -> "packing_list_generator"
+- top_export_markets -> "top_export_markets"
+- market_share -> "market_share"
+Inventing any other tool name is an error: the tool will not run.
+
+Also fill "tool_args" using the schema for the chosen tool
 (use Session Context for values the user mentioned earlier but not in this message;
 sensible defaults otherwise; null when needs_tool is false):
 - hs_code_lookup: {{"product_name": "<product name>"}}

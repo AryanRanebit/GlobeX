@@ -194,6 +194,17 @@ class GlobeXAgent:
         response_msg = await self._llm.ainvoke(messages)
         response_text = _content_to_text(response_msg.content)
 
+        # Guard against the model returning an empty answer (observed with
+        # gemini-3.6-flash on tool-intent questions when no tool ran): give the
+        # user a usable reply instead of a blank bubble.
+        if not response_text.strip():
+            log.warning("LLM returned empty response", intent=intent, tool=tool_name)
+            response_text = (
+                "I wasn't able to generate an answer for that just now. "
+                "Please try rephrasing your question - for example, name the product "
+                "or HS code and the destination country you are interested in."
+            )
+
         # 7. Persist messages to memory
         await memory.add_message(session_id, "user", user_message)
         await memory.add_message(
