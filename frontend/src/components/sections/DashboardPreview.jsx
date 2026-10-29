@@ -79,13 +79,13 @@ export default function DashboardPreview() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center gap-1 text-xs text-muted italic bg-surface px-2 py-0.5 rounded border border-line">
+                        <span className="inline-flex items-center gap-1 text-xs text-muted italic bg-surface px-2 py-0.5 rounded border border-line whitespace-nowrap">
                           <Info size={11} className="text-faint" />
                           {row.marketSize}
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-xs font-medium text-emerald bg-emerald-pale px-2 py-0.5 rounded border border-emerald-border">
+                        <span className="text-xs font-medium text-emerald bg-emerald-pale px-2 py-0.5 rounded border border-emerald-border whitespace-nowrap">
                           {row.pipeline}
                         </span>
                       </td>
