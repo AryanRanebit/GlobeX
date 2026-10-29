@@ -182,7 +182,7 @@ export interface ComtradeRecord {
   primaryValue: number;
   netWgt: number | null;
   qty: number | null;
-  qtyUnitCode: string | null;
+  qtyUnitCode: string | number | null; // API returns an int (e.g. 8); coerced to String before Prisma writes
   [key: string]: any;
 }
 
