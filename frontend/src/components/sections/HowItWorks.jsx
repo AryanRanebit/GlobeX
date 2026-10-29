@@ -1,5 +1,4 @@
 import React from 'react';
-import { useFadeIn } from '../../lib/useFadeIn';
 import { Search, BarChart3, ListChecks, FileOutput } from 'lucide-react';
 
 const steps = [
@@ -30,15 +29,14 @@ const steps = [
 ];
 
 export default function HowItWorks() {
-  const [fadeRef, fadeClassName] = useFadeIn();
 
   return (
     <section id="how-it-works" className="w-full bg-white py-14 md:py-16 border-b border-line">
-      <div className="section-container" ref={fadeRef}>
-        <div className={fadeClassName}>
+      <div className="section-container">
+        <div>
           <div className="text-center mb-10">
             <span className="type-label text-blue mb-2 block">How It Works</span>
-            <h2 className="type-h2 mb-3">From Product to Actionable Intelligence in 4 Steps</h2>
+            <h2 className="type-h2 type-display mb-3">From Product to Actionable Intelligence in 4 Steps</h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0">
@@ -53,8 +51,8 @@ export default function HowItWorks() {
                   <span className="text-white text-sm font-bold">{step.number}</span>
                 </div>
 
-                <h3 className="text-[14px] font-semibold text-navy mb-1.5">{step.title}</h3>
-                <p className="text-[12px] text-muted leading-relaxed max-w-[200px]">{step.desc}</p>
+                <h3 className="text-sm font-semibold text-navy mb-1.5">{step.title}</h3>
+                <p className="text-xs text-muted leading-relaxed max-w-[200px]">{step.desc}</p>
               </div>
             ))}
           </div>

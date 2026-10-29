@@ -41,7 +41,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   return (
     <>
       {/* Top info bar */}
-      <div className="hidden md:block w-full bg-navy text-white text-[11px] py-1.5 border-b border-navy-light">
+      <div className="hidden md:block w-full bg-navy text-white text-xs py-1.5 border-b border-navy-light">
         <div className="section-container flex items-center justify-between">
           <div className="flex items-center gap-2 text-line-dark">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-light inline-block" />
@@ -127,7 +127,7 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
                 key={link.name} 
                 href={link.href} 
                 onClick={(e) => handleLinkClick(e, link)}
-                className={`text-[15px] font-medium py-3 border-b border-surface ${
+                className={`text-sm font-medium py-3 border-b border-surface ${
                   link.isActive ? 'text-blue' : 'text-navy'
                 }`}
               >
@@ -136,8 +136,8 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
             ))}
           </div>
           <div className="p-5 flex flex-col gap-2.5 border-t border-line">
-            <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-secondary w-full py-2.5 text-[13px]">Sign In</button>
-            <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-primary w-full py-2.5 text-[13px]">Book a Free Demo</button>
+            <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-secondary w-full py-2.5 text-xs">Sign In</button>
+            <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-primary w-full py-2.5 text-xs">Book a Free Demo</button>
           </div>
         </div>
       )}

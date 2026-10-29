@@ -9,7 +9,7 @@ export default function FinalCTA({ onOpenAuth }) {
           <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
           <span>Risk-Free 14-Day Free Trial</span>
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-3.5 font-heading">
+        <h2 className="type-h2 type-display text-white mb-3.5">
           Start Making Data-Driven Export Decisions
         </h2>
         <p className="text-base text-line-dark mb-8 max-w-xl mx-auto leading-relaxed">
@@ -19,12 +19,12 @@ export default function FinalCTA({ onOpenAuth }) {
           <button
             id="cta-primary-btn"
             onClick={onOpenAuth}
-            className="bg-blue hover:bg-blue-dark text-white text-sm font-semibold py-3 px-6 rounded-lg flex items-center gap-2 transition-colors shadow-md"
+            className="btn-primary text-sm font-semibold py-3 px-6 rounded-lg flex items-center gap-2"
           >
             <span>Start Market Analysis</span>
             <ArrowRight size={15} />
           </button>
-          <button className="bg-transparent text-white border border-ink hover:border-muted text-sm font-semibold py-3 px-6 rounded-lg transition-colors">
+          <button className="bg-transparent text-white border border-white/40 hover:bg-white/10 text-sm font-semibold py-3 px-6 rounded-lg transition-colors">
             Schedule a Demo
           </button>
         </div>

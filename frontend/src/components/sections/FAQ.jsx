@@ -49,7 +49,7 @@ function FAQItem({ q, a }) {
       </button>
       {open && (
         <div className="pb-5 pr-8">
-          <p className="text-[15px] md:text-base text-soft leading-relaxed">{a}</p>
+          <p className="text-sm md:text-base text-soft leading-relaxed">{a}</p>
         </div>
       )}
     </div>
@@ -62,7 +62,7 @@ export default function FAQ() {
       <div className="section-container">
         <div className="text-center mb-12">
           <span className="type-label text-blue mb-2 block font-semibold">FAQs</span>
-          <h2 className="type-h2 mb-3 font-heading font-bold text-navy">Frequently Asked Questions</h2>
+          <h2 className="type-h2 type-display mb-3 text-navy">Frequently Asked Questions</h2>
         </div>
 
         <div className="max-w-2xl mx-auto">

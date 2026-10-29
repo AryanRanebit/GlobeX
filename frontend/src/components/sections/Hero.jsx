@@ -49,39 +49,39 @@ export default function Hero({ onSearch }) {
   ];
 
   return (
-    <section id="hero" className="w-full bg-[#F5F7FA] border-b border-[#E5E7EB] relative overflow-hidden">
+    <section id="hero" className="w-full bg-page texture-grid border-b border-line relative overflow-hidden">
       <div className="section-container py-10 md:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
 
           {/* Left: Content & Search */}
           <div className="flex flex-col z-10">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full badge-accent mb-4 w-fit shadow-xs">
-              <span className="flex h-2 w-2 rounded-full bg-[#D97706] animate-pulse" />
-              <span className="text-xs font-bold text-[#92400E] uppercase tracking-wider">
+              <span className="flex h-2 w-2 rounded-full bg-amber animate-pulse" />
+              <span className="text-xs font-bold text-accent-hover uppercase tracking-wider">
                 Export Intelligence Platform
               </span>
             </div>
 
-            <h1 className="type-h1 mb-3.5 leading-tight text-[#0F172A] font-bold font-heading">
+            <h1 className="type-h1 type-display mb-4 text-navy">
               Identify High-Potential Export Markets and Qualified Buyers in Minutes
             </h1>
 
-            <p className="text-base md:text-[17px] text-[#475569] mb-6 leading-relaxed max-w-xl">
+            <p className="text-base md:text-base text-soft mb-6 leading-relaxed max-w-xl">
               GlobeX uses official UN Comtrade trade data and AI-powered research to help Indian exporters compare export values by destination and identify prospective buyers through source-backed web search.
             </p>
 
             {/* HS Code / Product Search Bar */}
-            <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-[#E2E8F0] shadow-md mb-4 max-w-xl">
+            <div className="bg-white p-2.5 sm:p-3 rounded-xl border border-line shadow-md mb-4 max-w-xl">
               <form onSubmit={(e) => handleSearchSubmit(e, 'markets')} className="flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1 flex items-center">
-                  <Search size={18} className="absolute left-3.5 text-[#94A3B8] pointer-events-none" />
+                  <Search size={18} className="absolute left-3.5 text-faint pointer-events-none" />
                   <input
                     id="hero-search-input"
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="Search HS Code (e.g. 6204.62) or product (e.g. Cotton Trousers)..."
-                    className="w-full pl-10 pr-3 py-2.5 text-[14px] bg-[#F8FAFC] border border-[#CBD5E1] rounded-lg text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:border-[#2563EB] focus:bg-white transition-colors"
+                    className="w-full pl-10 pr-3 py-2.5 text-sm bg-mist border border-line-dark rounded-lg text-navy placeholder:text-faint focus:outline-none focus:border-blue focus:bg-white transition-colors"
                   />
                 </div>
                 
@@ -107,9 +107,9 @@ export default function Hero({ onSearch }) {
               </form>
 
               {/* Quick Suggestion Chips */}
-              <div className="mt-2.5 pt-2 border-t border-[#F1F5F9] flex items-center gap-1.5 flex-wrap text-xs">
-                <span className="text-xs font-semibold text-[#64748B] flex items-center gap-1 mr-1">
-                  <Sparkles size={12} className="text-[#D97706]" />
+              <div className="mt-2.5 pt-2 border-t border-surface flex items-center gap-1.5 flex-wrap text-xs">
+                <span className="text-xs font-semibold text-muted flex items-center gap-1 mr-1">
+                  <Sparkles size={12} className="text-amber" />
                   Trending:
                 </span>
                 {QUICK_SEARCH_CHIPS.map((chip) => (
@@ -117,9 +117,9 @@ export default function Hero({ onSearch }) {
                     key={chip.code}
                     type="button"
                     onClick={() => handleChipClick(chip)}
-                    className="px-2.5 py-1 rounded-md bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#334155] text-xs font-medium transition-colors border border-[#E2E8F0] hover:border-[#CBD5E1]"
+                    className="px-2.5 py-1 rounded-md bg-mist hover:bg-surface text-ink text-xs font-medium transition-colors border border-line hover:border-line-dark"
                   >
-                    <span className="font-semibold text-[#2563EB]">{chip.code}</span> ({chip.label})
+                    <span className="font-semibold text-blue">{chip.code}</span> ({chip.label})
                   </button>
                 ))}
               </div>
@@ -128,8 +128,8 @@ export default function Hero({ onSearch }) {
             {/* Trust Checks */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2 mt-2">
               {checks.map((text, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-[#475569]">
-                  <CheckCircle size={15} className="text-[#059669] shrink-0" />
+                <div key={i} className="flex items-center gap-2 text-sm text-soft">
+                  <CheckCircle size={15} className="text-emerald shrink-0" />
                   <span>{text}</span>
                 </div>
               ))}
@@ -141,18 +141,18 @@ export default function Hero({ onSearch }) {
             <Globe width={globeSize} height={globeSize} />
 
             {/* Floating Stat Card */}
-            <div className="absolute -bottom-2 left-6 bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-xl p-3.5 shadow-xl flex items-center gap-3.5 max-w-[300px] pointer-events-none transition-transform hover:scale-105 z-20">
-              <div className="w-10 h-10 rounded-lg bg-[#FFFBEB] border border-[#FDE68A] flex items-center justify-center text-[#D97706] shrink-0">
+            <div className="absolute -bottom-2 left-6 bg-white/95 backdrop-blur-md border border-line rounded-xl p-3.5 shadow-xl flex items-center gap-3.5 max-w-[300px] pointer-events-none z-20">
+              <div className="w-10 h-10 rounded-lg bg-accent-subtle border border-accent-border flex items-center justify-center text-amber shrink-0">
                 <TrendingUp size={20} />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 mb-0.5">
-                  <span className="text-xs font-bold text-[#D97706] uppercase tracking-wider">Live Trade Flow</span>
-                  <span className="inline-block w-2 h-2 rounded-full bg-[#D97706] animate-ping" />
+                  <span className="text-xs font-bold text-amber uppercase tracking-wider">Live Trade Flow</span>
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber" />
                 </div>
-                <p className="text-base font-bold text-[#0F172A] leading-tight font-heading">{TRADE_STATS.totalExportValueFormatted} Indian Exports</p>
-                <p className="text-xs text-[#64748B] mt-0.5">
-                  <span className="text-[#D97706] font-semibold">CY2025</span> · {TRADE_STATS.countriesCovered} Destination Markets
+                <p className="text-base font-bold text-navy leading-tight font-heading">{TRADE_STATS.totalExportValueFormatted} Indian Exports</p>
+                <p className="text-xs text-muted mt-0.5">
+                  <span className="text-amber font-semibold">CY2025</span> · {TRADE_STATS.countriesCovered} Destination Markets
                 </p>
               </div>
             </div>
