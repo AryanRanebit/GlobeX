@@ -12,7 +12,7 @@ export default function FinalCTA({ onOpenAuth }) {
         <h2 className="type-display text-white mb-3.5 text-3xl md:text-[2rem]">
           Start Making Data-Driven Export Decisions
         </h2>
-        <p className="text-sm md:text-base text-line-dark mb-8 max-w-xl mx-auto leading-relaxed">
+        <p className="text-xs md:text-base text-line-dark mb-8 max-w-xl mx-auto leading-relaxed">
           Access official UN Comtrade export intelligence, commodity trade flows, and evidence-based buyer discovery for Indian businesses.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
