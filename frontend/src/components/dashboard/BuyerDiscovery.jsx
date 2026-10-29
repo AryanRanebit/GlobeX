@@ -1,26 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   Search, 
-  Filter, 
-  MoreVertical, 
   Mail, 
-  CheckCircle2, 
-  Building2, 
-  FileText, 
-  AlertCircle,
   X,
   Sparkles,
-  ArrowUpDown,
   Send,
   Copy,
   Check,
-  ChevronRight,
   ExternalLink,
-  ShieldAlert,
   Loader2,
-  Inbox,
   Plus,
-  Info,
   ShieldCheck,
   Globe
 } from 'lucide-react';
@@ -32,7 +21,6 @@ import { apiFetch } from '../../lib/api';
 export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
   const [buyers, setBuyers] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchQuery);
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [countryFilter, setCountryFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('scoreDesc');
   const [selectedBuyer, setSelectedBuyer] = useState(null);
@@ -49,22 +37,30 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState(null);
 
-  useEffect(() => {
+  // Sync the external global search query into local state
+  // (render-time adjustment instead of an effect).
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery);
     setSearchTerm(searchQuery);
     if (searchQuery && searchQuery.trim()) {
       setDiscoverCountry(searchQuery.trim());
     }
-  }, [searchQuery]);
+  }
 
-  // Fetch buyers from API
-  const fetchBuyers = async () => {
-    setIsLoading(true);
-    setError(null);
+  // Fetch buyers from API. Initial state is already loading=true, so the
+  // effect below never sets state synchronously; retries use refetchBuyers.
+  const onRequireAuthRef = useRef(onRequireAuth);
+  useEffect(() => {
+    onRequireAuthRef.current = onRequireAuth;
+  }, [onRequireAuth]);
+
+  const fetchBuyers = useCallback(async () => {
     try {
       const res = await apiFetch('/api/v1/buyers?limit=100');
 
       if (res.status === 401) {
-        onRequireAuth?.();
+        onRequireAuthRef.current?.();
         return;
       }
 
@@ -74,17 +70,30 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
       } else {
         setBuyers([]);
       }
+      setError(null);
     } catch (err) {
       console.error('Error fetching buyers:', err);
       setError(err.message || 'Could not connect to buyer service');
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  // Event-handler refresh: enters the loading state, then re-fetches.
+  const refetchBuyers = () => {
+    setIsLoading(true);
+    setError(null);
+    fetchBuyers();
   };
 
   useEffect(() => {
-    fetchBuyers();
-  }, []);
+    let active = true;
+    // Deferred to a microtask so no state is set synchronously in the effect.
+    Promise.resolve().then(() => {
+      if (active) fetchBuyers();
+    });
+    return () => { active = false; };
+  }, [fetchBuyers]);
 
   // Run discovery pipeline
   const handleRunDiscovery = async (e) => {
@@ -128,7 +137,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
         }
         setIsDiscoverModalOpen(false);
         // Refresh buyers list
-        await fetchBuyers();
+        refetchBuyers();
       } else {
         throw new Error(json.message || 'Discovery execution failed');
       }
@@ -318,7 +327,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
               <div className="p-6">
                 <ErrorBanner
                   message="Could not load the buyer registry."
-                  onRetry={fetchBuyers}
+                  onRetry={refetchBuyers}
                   retryLabel="Retry"
                 />
               </div>

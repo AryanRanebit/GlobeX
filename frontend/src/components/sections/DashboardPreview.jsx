@@ -15,12 +15,12 @@ const realHs62ApparelData = [
 ];
 
 export default function DashboardPreview() {
-  const fade = useFadeIn();
+  const [fadeRef, fadeClassName] = useFadeIn();
 
   return (
     <section id="dashboard" className="w-full bg-[#F5F7FA] py-14 md:py-16 border-b border-[#E5E7EB]">
-      <div className="section-container" ref={fade.ref}>
-        <div className={fade.className}>
+      <div className="section-container" ref={fadeRef}>
+        <div className={fadeClassName}>
           <div className="text-center mb-10">
             <span className="type-label text-[#2563EB] mb-2 block font-semibold uppercase tracking-wider text-xs">Official Trade Data Intelligence</span>
             <h2 className="type-h2 mb-3 font-bold text-2xl md:text-3xl text-[#0F172A] font-heading">

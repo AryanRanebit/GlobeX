@@ -1,19 +1,23 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export function useFadeIn() {
-  const ref = useRef(null);
+  const [node, setNode] = useState(null);
   const [visible, setVisible] = useState(false);
 
+  // Callback ref: gives us the element without reading ref.current during render.
+  const ref = useCallback((el) => {
+    setNode(el);
+  }, []);
+
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    if (!node) return;
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setVisible(true); },
       { threshold: 0.15 }
     );
-    observer.observe(el);
+    observer.observe(node);
     return () => observer.disconnect();
-  }, []);
+  }, [node]);
 
-  return { ref, className: `fade-in${visible ? ' visible' : ''}` };
+  return [ref, `fade-in${visible ? ' visible' : ''}`];
 }

@@ -30,12 +30,12 @@ const steps = [
 ];
 
 export default function HowItWorks() {
-  const fade = useFadeIn();
+  const [fadeRef, fadeClassName] = useFadeIn();
 
   return (
     <section id="how-it-works" className="w-full bg-white py-14 md:py-16 border-b border-line">
-      <div className="section-container" ref={fade.ref}>
-        <div className={fade.className}>
+      <div className="section-container" ref={fadeRef}>
+        <div className={fadeClassName}>
           <div className="text-center mb-10">
             <span className="type-label text-blue mb-2 block">How It Works</span>
             <h2 className="type-h2 mb-3">From Product to Actionable Intelligence in 4 Steps</h2>

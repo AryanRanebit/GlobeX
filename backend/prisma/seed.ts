@@ -83,13 +83,13 @@ async function main() {
   await prisma.compliance.createMany({ data: complianceData });
 
   // ─── Opportunities ───────────────────────────────────────────
-  await prisma.opportunity.createMany({
-    data: [
-      { userId: demoUser.id, productId: product1.id, country: 'Germany', countryCode: 'DE', demandScore: 91, growthRate: '18%', competition: 'Medium', marketSize: '$2.4B', trend: 'Growing', insights: 'Germany is the largest organic food market in Europe. Indian spices are in growing demand especially for wellness and functional food segments.', source: 'ai_analysis' },
-      { userId: demoUser.id, productId: product1.id, country: 'United States', countryCode: 'US', demandScore: 88, growthRate: '22%', competition: 'High', marketSize: '$8.1B', trend: 'Accelerating', insights: 'The US organic spice market is growing rapidly driven by health-conscious consumers. Turmeric specifically saw a 45% spike post-2020 due to wellness trends.', source: 'ai_analysis' },
-      { userId: demoUser.id, productId: product1.id, country: 'United Arab Emirates', countryCode: 'AE', demandScore: 76, growthRate: '12%', competition: 'Low', marketSize: '$890M', trend: 'Stable', insights: 'UAE serves as a gateway to the entire Gulf market. Halal certification opens doors to 50+ countries through UAE-based distributors.', source: 'ai_analysis' },
-    ],
-  });
+  // No opportunities are seeded. Invented demand scores (91/88/76) and growth
+  // rates ("18%"/"22%") previously shipped here and rendered as real-looking
+  // numbers in the demo dashboard; they violated the project's evidence
+  // standard. Real opportunities are created only by the market research
+  // pipeline (POST /api/v1/market/analyze), and demand scores from official
+  // Comtrade trade flows come from /api/v1/trade/markets. Until then the demo
+  // dashboard honestly shows that no analysis has been run yet.
 
   console.log('✅ Seed complete!');
   console.log('\n📧 Demo credentials:');

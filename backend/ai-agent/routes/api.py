@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import Any, AsyncGenerator
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -40,6 +40,34 @@ from utils.gemini_status import gemini_readiness, is_gemini_auth_error, require_
 log = get_logger(__name__)
 settings = get_settings()
 router = APIRouter()
+
+
+# ── Session ownership ────────────────────────────────────────────────────────
+# The Express backend verifies the user's JWT and forwards the authenticated
+# user id as X-User-Id. The header is only ever set server-side after auth;
+# client-supplied identity is never trusted (the backend overwrites it).
+
+async def get_owner_id(x_user_id: str | None = Header(default=None)) -> str | None:
+    """Authenticated user id forwarded by the Express backend, if present."""
+    return x_user_id
+
+
+async def require_owner_id(x_user_id: str | None = Header(default=None)) -> str:
+    """Require the backend-forwarded authenticated user id."""
+    if not x_user_id:
+        raise HTTPException(status_code=401, detail="Missing authenticated user identity.")
+    return x_user_id
+
+
+def _ensure_session_access(session: "Session | None", owner_id: str) -> Session:
+    """404 unless the session exists and belongs to this user.
+
+    Returns 404 (not 403) so session ids of other users cannot be probed.
+    Legacy sessions with no owner predate ownership and are inaccessible.
+    """
+    if session is None or session.owner_id != owner_id:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
 
 
 # ── Request / Response Schemas ───────────────────────────────────────────────
@@ -186,6 +214,7 @@ class ComplianceAgentRequest(BaseModel):
 async def chat(
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    owner_id: str | None = Depends(get_owner_id),
 ) -> ChatResponse:
     """
     Send a message to GlobeX AI and receive a complete response.
@@ -196,8 +225,14 @@ async def chat(
     - Return a structured, personalised response
     """
     require_gemini()
+    if request.session_id:
+        existing = (
+            await db.execute(select(Session).where(Session.id == request.session_id))
+        ).scalar_one_or_none()
+        if existing is not None:
+            _ensure_session_access(existing, owner_id or "")
     session_id = request.session_id or str(uuid.uuid4())
-    memory = MemoryManager(db)
+    memory = MemoryManager(db, owner_id=owner_id)
 
     try:
         result = await globex_agent.chat(
@@ -223,11 +258,18 @@ async def chat(
 async def chat_stream(
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    owner_id: str | None = Depends(get_owner_id),
 ) -> StreamingResponse:
     """Stream the agent response token-by-token using SSE."""
     require_gemini()
+    if request.session_id:
+        existing = (
+            await db.execute(select(Session).where(Session.id == request.session_id))
+        ).scalar_one_or_none()
+        if existing is not None:
+            _ensure_session_access(existing, owner_id or "")
     session_id = request.session_id or str(uuid.uuid4())
-    memory = MemoryManager(db)
+    memory = MemoryManager(db, owner_id=owner_id)
 
     async def event_generator() -> AsyncGenerator[str, None]:
         yield f'data: {{"session_id": "{session_id}"}}\n\n'
@@ -248,16 +290,18 @@ async def chat_stream(
 # ── Session Endpoints ────────────────────────────────────────────────────────
 
 @router.get("/sessions/{session_id}", response_model=SessionInfo)
-async def get_session(session_id: str, db: AsyncSession = Depends(get_db)) -> SessionInfo:
-    """Retrieve session information and context."""
+async def get_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    owner_id: str = Depends(require_owner_id),
+) -> SessionInfo:
+    """Retrieve session information and context (owner only)."""
     result = await db.execute(
         select(Session)
         .options(selectinload(Session.messages))
         .where(Session.id == session_id)
     )
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = _ensure_session_access(result.scalar_one_or_none(), owner_id)
 
     msg_count = len(session.messages)
 
@@ -271,20 +315,30 @@ async def get_session(session_id: str, db: AsyncSession = Depends(get_db)) -> Se
 
 
 @router.get("/sessions/{session_id}/history")
-async def get_history(session_id: str, db: AsyncSession = Depends(get_db)) -> dict:
-    """Get conversation history for a session."""
-    memory = MemoryManager(db)
+async def get_history(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    owner_id: str = Depends(require_owner_id),
+) -> dict:
+    """Get conversation history for a session (owner only)."""
+    existing = (
+        await db.execute(select(Session).where(Session.id == session_id))
+    ).scalar_one_or_none()
+    _ensure_session_access(existing, owner_id)
+    memory = MemoryManager(db, owner_id=owner_id)
     history = await memory.get_conversation_history(session_id)
     return {"session_id": session_id, "messages": history, "count": len(history)}
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_session(session_id: str, db: AsyncSession = Depends(get_db)) -> dict:
-    """Delete a session and all its messages."""
+async def delete_session(
+    session_id: str,
+    db: AsyncSession = Depends(get_db),
+    owner_id: str = Depends(require_owner_id),
+) -> dict:
+    """Delete a session and all its messages (owner only)."""
     result = await db.execute(select(Session).where(Session.id == session_id))
-    session = result.scalar_one_or_none()
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = _ensure_session_access(result.scalar_one_or_none(), owner_id)
     await db.delete(session)
     await db.commit()
     return {"message": f"Session {session_id} deleted"}

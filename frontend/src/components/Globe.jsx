@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, forwardRef, useMemo } from 'react';
+import React, { useEffect, useRef, forwardRef } from 'react';
 import GlobeGL from 'react-globe.gl';
 
 /* ── India & Top Global Export Trade Corridors ────────────────────────── */
@@ -76,7 +76,7 @@ const LABELS = [
 ];
 
 /* ── Globe Component ─────────────────────────────────────────────────── */
-const Globe = forwardRef(({ width, height }, ref) => {
+const Globe = forwardRef(({ width, height }) => {
   const globeEl = useRef();
 
   useEffect(() => {

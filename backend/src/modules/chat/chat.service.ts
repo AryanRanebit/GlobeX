@@ -15,6 +15,15 @@ const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:800
 // Override with AGENT_TIMEOUT_MS.
 const AGENT_TIMEOUT_MS = Number.parseInt(process.env.AGENT_TIMEOUT_MS || '30000', 10);
 
+/**
+ * Headers for calls to the AI agent service. The authenticated user id is
+ * forwarded ONLY by this backend after JWT verification (X-User-Id); the
+ * agent binds chat sessions to it. Clients can never set this themselves.
+ */
+function agentHeaders(userId: string): Record<string, string> {
+  return { 'Content-Type': 'application/json', 'X-User-Id': userId };
+}
+
 export interface ChatResponse {
   session_id: string;
   response: string;
@@ -28,13 +37,13 @@ export const chatService = {
   /**
    * Send a message to the GlobeX AI agent and return a structured response.
    */
-  async chat(dto: ChatMessageDto): Promise<ChatResponse> {
+  async chat(dto: ChatMessageDto, userId: string): Promise<ChatResponse> {
     let res: Response;
 
     try {
       res = await fetch(`${AGENT_SERVICE_URL}/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: agentHeaders(userId),
         body: JSON.stringify({
           session_id: dto.session_id ?? null,
           message: dto.message,
@@ -67,13 +76,13 @@ export const chatService = {
    * Returns a readable stream of SSE events from the AI agent.
    * The caller is responsible for piping this to the HTTP response.
    */
-  async chatStream(dto: ChatMessageDto): Promise<ReadableStream> {
+  async chatStream(dto: ChatMessageDto, userId: string): Promise<ReadableStream> {
     let res: Response;
 
     try {
       res = await fetch(`${AGENT_SERVICE_URL}/chat/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: agentHeaders(userId),
         body: JSON.stringify({
           session_id: dto.session_id ?? null,
           message: dto.message,
@@ -101,8 +110,10 @@ export const chatService = {
   /**
    * Retrieve session history from the Python service.
    */
-  async getSessionHistory(sessionId: string): Promise<unknown> {
-    const res = await fetch(`${AGENT_SERVICE_URL}/sessions/${sessionId}/history`).catch(() => null);
+  async getSessionHistory(sessionId: string, userId: string): Promise<unknown> {
+    const res = await fetch(`${AGENT_SERVICE_URL}/sessions/${sessionId}/history`, {
+      headers: agentHeaders(userId),
+    }).catch(() => null);
     if (!res || !res.ok) {
       throw new AppError(`Session not found or AI service unavailable`, 404);
     }
@@ -112,9 +123,10 @@ export const chatService = {
   /**
    * Delete a session from the Python service.
    */
-  async deleteSession(sessionId: string): Promise<void> {
+  async deleteSession(sessionId: string, userId: string): Promise<void> {
     const res = await fetch(`${AGENT_SERVICE_URL}/sessions/${sessionId}`, {
       method: 'DELETE',
+      headers: agentHeaders(userId),
     }).catch(() => null);
     if (!res || !res.ok) {
       throw new AppError(`Session not found or AI service unavailable`, 404);

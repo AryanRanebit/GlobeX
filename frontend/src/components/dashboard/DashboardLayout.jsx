@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -27,9 +27,13 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
   const [mobileOpen, setMobileOpen] = useState(false);    // mobile: off-canvas drawer
   const [headerSearch, setHeaderSearch] = useState(searchQuery);
 
-  useEffect(() => {
+  // Keep the header search box in sync when the global query changes
+  // (render-time adjustment instead of an effect).
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery);
     setHeaderSearch(searchQuery);
-  }, [searchQuery]);
+  }
 
   const handleHeaderSearchSubmit = (e) => {
     e.preventDefault();

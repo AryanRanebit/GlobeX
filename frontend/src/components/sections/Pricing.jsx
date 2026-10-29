@@ -55,12 +55,12 @@ const plans = [
 ];
 
 export default function Pricing({ onOpenAuth }) {
-  const fade = useFadeIn();
+  const [fadeRef, fadeClassName] = useFadeIn();
 
   return (
     <section id="pricing" className="w-full bg-page py-14 md:py-16 border-b border-line">
-      <div className="section-container" ref={fade.ref}>
-        <div className={fade.className}>
+      <div className="section-container" ref={fadeRef}>
+        <div className={fadeClassName}>
           <div className="text-center mb-12">
             <span className="type-label text-blue mb-2 block font-semibold">Flexible Plans</span>
             <h2 className="type-h2 mb-3 font-heading font-bold text-navy">Simple, Transparent Pricing</h2>
