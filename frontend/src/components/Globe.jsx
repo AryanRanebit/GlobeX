@@ -49,10 +49,10 @@ const HUB_POINTS = [
 
 /* ── Ripple Rings for Live Corridor Activity ─────────────────────────── */
 const RINGS = [
-  { lat: ORIGIN.lat, lng: ORIGIN.lng, color: (t) => `rgba(20, 184, 166, ${1 - t})` },
-  { lat: 40.7128, lng: -74.0060, color: (t) => `rgba(15, 118, 110, ${0.8 * (1 - t)})` },
-  { lat: 25.2048, lng: 55.2708, color: (t) => `rgba(20, 184, 166, ${0.8 * (1 - t)})` },
-  { lat: 51.9244, lng: 4.4777, color: (t) => `rgba(94, 234, 212, ${0.8 * (1 - t)})` }
+  { lat: ORIGIN.lat, lng: ORIGIN.lng, color: '#14B8A6' },
+  { lat: 40.7128, lng: -74.0060, color: '#0F766E' },
+  { lat: 25.2048, lng: 55.2708, color: '#14B8A6' },
+  { lat: 51.9244, lng: 4.4777, color: '#5EEAD4' }
 ];
 
 /* ── Labels ──────────────────────────────────────────────────────────── */
@@ -126,7 +126,7 @@ const Globe = forwardRef(({ width, height }) => {
         height={height}
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-        atmosphereColor="rgba(37, 99, 235, 0.28)"
+        atmosphereColor="rgb(15, 118, 110)"
         atmosphereAltitude={0.16}
         backgroundColor="rgba(0,0,0,0)"
 

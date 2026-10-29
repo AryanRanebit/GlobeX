@@ -20,7 +20,7 @@ export default function Footer({ onNavigate }) {
             <p className="text-sm text-faint leading-relaxed max-w-sm mb-4">
               Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find real buyers with cited sources, and grow your export revenue with data.
             </p>
-            <div className="space-y-1.5 text-xs text-faint">
+            <div className="space-y-1.5 text-xs text-line-dark">
               <p className="text-line-dark font-semibold">Contact & Support:</p>
               <p>Inquiries: Enterprise Desk (TBD)</p>
               <p>Location: Mumbai, Maharashtra, India</p>

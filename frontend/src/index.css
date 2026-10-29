@@ -577,4 +577,31 @@
     linear-gradient(to bottom, rgba(19, 78, 74, 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+
+/* ── Copilot markdown bubbles ─────────────────────────────────────────── */
+.md-body p { margin: 0 0 0.5rem; }
+.md-body p:last-child { margin-bottom: 0; }
+.md-body strong { font-weight: 700; color: var(--color-navy); }
+.md-body em { font-style: italic; }
+.md-body ul, .md-body ol { margin: 0 0 0.5rem; padding-left: 1.25rem; }
+.md-body ul { list-style: disc; }
+.md-body ol { list-style: decimal; }
+.md-body li { margin: 0.125rem 0; }
+.md-body h1, .md-body h2, .md-body h3, .md-body h4 {
+  font-weight: 700;
+  color: var(--color-navy);
+  margin: 0.75rem 0 0.375rem;
+}
+.md-body h1:first-child, .md-body h2:first-child, .md-body h3:first-child { margin-top: 0; }
+.md-body code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  background: var(--color-surface);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+.md-body a { color: var(--color-blue); text-decoration: underline; }
+.md-body table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.8125rem; }
+.md-body th, .md-body td { border: 1px solid var(--color-border); padding: 0.375rem 0.5rem; text-align: left; }
+.md-body th { background: var(--color-surface); font-weight: 600; }
 } /* end @layer components */

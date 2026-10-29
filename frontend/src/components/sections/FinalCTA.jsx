@@ -24,7 +24,10 @@ export default function FinalCTA({ onOpenAuth }) {
             <span>Start Market Analysis</span>
             <ArrowRight size={15} />
           </button>
-          <button className="bg-transparent text-white border border-white/40 hover:bg-white/10 text-sm font-semibold py-3 px-6 rounded-lg transition-colors">
+          <button
+            onClick={onOpenAuth}
+            className="bg-transparent text-white border border-white/40 hover:bg-white/10 text-sm font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
             Schedule a Demo
           </button>
         </div>

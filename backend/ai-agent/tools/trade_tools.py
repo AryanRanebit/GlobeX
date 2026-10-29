@@ -462,7 +462,7 @@ async def _get_trade_markets(params: dict[str, Any]) -> dict | None:
     """
     url = f"{_trade_base_url()}/api/v1/trade/markets"
     try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(url, params=params)
             if resp.status_code != 200:
                 log.warning("Trade markets request failed", status=resp.status_code, url=str(resp.url))

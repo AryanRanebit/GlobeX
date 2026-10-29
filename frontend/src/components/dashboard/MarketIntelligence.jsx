@@ -176,6 +176,16 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               HS 62 (Apparel)
             </button>
             <button
+              onClick={() => handleHsChange('091030')}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                selectedHs === '091030'
+                  ? 'bg-white text-blue shadow-xs'
+                  : 'text-muted hover:text-navy'
+              }`}
+            >
+              HS 091030 (Turmeric)
+            </button>
+            <button
               onClick={() => handleHsChange('TOTAL')}
               className={`px-3 py-1.5 rounded-md transition-all ${
                 selectedHs === 'TOTAL'
@@ -224,7 +234,9 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               <h2 className="text-sm font-bold text-navy">
                 {selectedHs === '62'
                   ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
-                  : 'Total Merchandise Exports (All Goods)'}
+                  : selectedHs === '091030'
+                    ? 'Turmeric (Ground)'
+                    : 'Total Merchandise Exports (All Goods)'}
               </h2>
             </div>
             <p className="text-xs text-muted mt-0.5">

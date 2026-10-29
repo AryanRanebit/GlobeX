@@ -8,8 +8,6 @@ import {
   ArrowUpRight,
   Package,
   Globe2,
-  RefreshCw,
-  Inbox
 } from 'lucide-react';
 
 // Lazy-load the charts row: keeps recharts out of the first paint and shows
@@ -31,7 +29,6 @@ function ChartsSkeleton() {
 
 export default function DashboardHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{"name":"Aryan Rane"}');
-  const [viewState, setViewState] = useState('normal'); // 'normal' | 'loading' | 'empty'
   const [buyerCount, setBuyerCount] = useState(null);
 
   React.useEffect(() => {
@@ -59,88 +56,14 @@ export default function DashboardHome() {
 
         {/* State Simulation Controls */}
         <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex bg-surface rounded-lg p-0.5 text-xs font-semibold">
-            <button
-              onClick={() => setViewState('normal')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                viewState === 'normal'
-                  ? 'bg-white text-navy shadow-xs'
-                  : 'text-muted hover:text-navy'
-              }`}
-            >
-              Live Data
-            </button>
-            <button
-              onClick={() => setViewState('loading')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                viewState === 'loading'
-                  ? 'bg-white text-blue shadow-xs'
-                  : 'text-muted hover:text-navy'
-              }`}
-            >
-              Simulate Loading
-            </button>
-            <button
-              onClick={() => setViewState('empty')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                viewState === 'empty'
-                  ? 'bg-white text-red-dark shadow-xs'
-                  : 'text-muted hover:text-navy'
-              }`}
-            >
-              Simulate Empty
-            </button>
-          </div>
-
           <button className="btn-secondary px-4 py-2 text-xs">
             Download Report
           </button>
         </div>
       </div>
 
-      {/* Loading State Simulator */}
-      {viewState === 'loading' && (
-        <div className="flex flex-col gap-6 animate-pulse">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(n => (
-              <div key={n} className="bg-white p-5 rounded-xl border border-line h-28 flex flex-col justify-between">
-                <div className="flex justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-surface" />
-                  <div className="w-16 h-5 rounded bg-surface" />
-                </div>
-                <div className="w-24 h-4 rounded bg-surface" />
-              </div>
-            ))}
-          </div>
-
-          <ChartsSkeleton />
-        </div>
-      )}
-
-      {/* Empty State Simulator */}
-      {viewState === 'empty' && (
-        <div className="bg-white rounded-xl border border-line p-12 text-center flex flex-col items-center justify-center my-4">
-          <div className="w-16 h-16 rounded-2xl bg-blue-pale border border-blue-border flex items-center justify-center text-blue mb-4">
-            <Inbox size={32} />
-          </div>
-          <h2 className="text-lg font-bold text-navy mb-1">No Trade Records Recorded Yet</h2>
-          <p className="text-sm text-muted max-w-md mx-auto mb-6">
-            Start by running an AI market analysis or a grounded buyer search to populate your active export dashboard.
-          </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setViewState('normal')}
-              className="btn-primary px-5 py-2.5 text-sm font-semibold flex items-center gap-2"
-            >
-              <RefreshCw size={14} />
-              Restore Live Data
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Normal Live State */}
-      {viewState === 'normal' && (
+      {/* Live State */}
+      {
         <>
           {/* Top Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -224,27 +147,6 @@ export default function DashboardHome() {
                   </div>
                   <div>
                     <p className="text-sm text-ink"><strong>Buyer Discovery Agent</strong> is ready: run a grounded live search to find real importers, each with its source link.</p>
-                    <p className="text-xs text-faint mt-1">10 minutes ago</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-accent-subtle border border-accent-border flex items-center justify-center shrink-0 mt-0.5">
-                    <FileText size={14} className="text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-ink"><strong>Compliance Agent</strong> flagged a new mandatory phytosanitary certificate requirement for Germany.</p>
-                    <p className="text-xs text-faint mt-1">2 hours ago</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-emerald-pale border border-emerald-border flex items-center justify-center shrink-0 mt-0.5">
-                    <TrendingUp size={14} className="text-emerald" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-ink"><strong>Market Intelligence Agent</strong> detected a 4.2% drop in ocean freight rates on the Mumbai-Rotterdam route.</p>
-                    <p className="text-xs text-faint mt-1">5 hours ago</p>
                   </div>
                 </div>
 
@@ -283,7 +185,7 @@ export default function DashboardHome() {
 
           </div>
         </>
-      )}
+      }
 
     </div>
   );

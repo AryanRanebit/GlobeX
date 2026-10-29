@@ -23,7 +23,7 @@ export const tradeController = {
    */
   getMarkets: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const hs = (req.query.hs as string) || (req.query.cmdCode as string) || '62';
+      const hs = ((req.query.hs as string) || (req.query.cmdCode as string) || '62').replace(/\./g, '');
       const year = (req.query.year as string) || (req.query.period as string) || '2025';
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
       const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
