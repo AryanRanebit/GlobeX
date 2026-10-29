@@ -173,7 +173,8 @@ export interface ComtradeRecord {
   reporterDesc: string;
   partnerCode: number;
   partnerDesc: string;
-  partnerISO3: string;
+  partnerISO: string;
+  partnerISO3?: string; // not present in API payloads; partnerISO is the real field
   period: number;
   flowCode: string;
   flowDesc: string;
