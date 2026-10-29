@@ -48,7 +48,7 @@ export default function Solutions({ onOpenAuth }) {
               <div className="flex items-center gap-2 font-medium">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-light" />
                 <span className="text-xs text-emerald-light bg-emerald-light/15 px-2 py-0.5 rounded border border-emerald-light/30">
-                  Live 2026 Customs Intelligence
+                  Live 2025 Customs Intelligence
                 </span>
               </div>
             </div>

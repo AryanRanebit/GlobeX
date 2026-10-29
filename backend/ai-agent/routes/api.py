@@ -473,7 +473,7 @@ async def _fetch_trade_market_data(hs_code: str = "62", year: str = "2025") -> d
     backend_url = os.getenv("NODE_BACKEND_URL", "http://localhost:3000").rstrip("/")
     url = f"{backend_url}/api/v1/trade/markets?hs={hs_code}&year={year}&limit=10"
     try:
-        async with httpx.AsyncClient(timeout=4.0) as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(url)
             if resp.status_code == 200:
                 payload = resp.json()

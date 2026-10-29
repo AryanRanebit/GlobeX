@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, ArrowRight, CheckCircle, TrendingUp, Sparkles } from 'lucide-react';
 import Globe from '../Globe';
+import GlobeErrorBoundary, { StaticEarth } from '../GlobeErrorBoundary';
 import { TRADE_STATS } from '../../constants/tradeStats';
 
 const QUICK_SEARCH_CHIPS = [
@@ -14,6 +15,18 @@ export default function Hero({ onSearch }) {
   const globeContainerRef = useRef(null);
   const [globeSize, setGlobeSize] = useState(480);
   const [query, setQuery] = useState('');
+  // Mount WebGL only at lg+; below that the static earth shows instead, so
+  // phones never pay the THREE init cost for an invisible canvas.
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const onChange = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     const updateSize = () => {
@@ -136,9 +149,15 @@ export default function Hero({ onSearch }) {
             </div>
           </div>
 
-          {/* Right: Interactive 3D Globe with Floating Stat Card */}
-          <div ref={globeContainerRef} className="hidden lg:flex items-center justify-center h-[480px] relative">
-            <Globe width={globeSize} height={globeSize} />
+          {/* Right: Interactive 3D Globe (desktop) / static earth (mobile) */}
+          <div ref={globeContainerRef} className="flex items-center justify-center h-72 lg:h-[480px] relative">
+            {isDesktop ? (
+              <GlobeErrorBoundary fallbackSize={globeSize}>
+                <Globe width={globeSize} height={globeSize} />
+              </GlobeErrorBoundary>
+            ) : (
+              <StaticEarth size={260} />
+            )}
 
             {/* Floating Stat Card */}
             <div className="absolute -bottom-2 left-6 bg-white/95 backdrop-blur-md border border-line rounded-xl p-3.5 shadow-xl flex items-center gap-3.5 max-w-[300px] pointer-events-none z-20">

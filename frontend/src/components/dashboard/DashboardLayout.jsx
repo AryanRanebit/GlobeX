@@ -5,7 +5,6 @@ import {
   Globe2,
   MessageSquare,
   Languages,
-  Settings,
   LogOut,
   Bell,
   Search,
@@ -107,14 +106,6 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
       </nav>
 
       <div className="p-4 border-t border-white/10">
-        <button
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sage hover:bg-white/5 hover:text-cream transition-colors w-full mb-1"
-          title={!expanded ? 'Settings' : undefined}
-          aria-label={!expanded ? 'Settings' : undefined}
-        >
-          <Settings size={18} className="text-sage shrink-0" />
-          {expanded && <span className="text-sm whitespace-nowrap">Settings</span>}
-        </button>
         <button
           onClick={onLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-soft hover:bg-white/5 transition-colors w-full"

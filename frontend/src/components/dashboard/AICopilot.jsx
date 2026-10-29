@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Send, Bot, User, Sparkles, Wrench, BookOpen, Info } from 'lucide-react';
 import ErrorBanner from '../ui/ErrorBanner';
 import { apiFetch } from '../../lib/api';
@@ -173,12 +174,16 @@ export default function AICopilot({ onRequireAuth }) {
             <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.type === 'user' ? 'bg-line text-soft' : 'bg-blue-pale text-blue'}`}>
               {msg.type === 'user' ? <User size={14} /> : <Bot size={14} />}
             </div>
-            <div className={`p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+            <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
               msg.type === 'user'
-                ? 'bg-blue text-white rounded-tr-sm'
+                ? 'bg-blue text-white rounded-tr-sm whitespace-pre-wrap'
                 : 'bg-mist border border-line text-navy rounded-tl-sm'
             }`}>
-              {msg.text}
+              {msg.type === 'user' ? msg.text : (
+                <div className="md-body">
+                  <ReactMarkdown>{msg.text}</ReactMarkdown>
+                </div>
+              )}
               {msg.type === 'ai' && ((msg.toolsUsed && msg.toolsUsed.length > 0) || msg.ragUsed) && (
                 <div className="mt-3 pt-2 border-t border-line flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
                   {msg.toolsUsed && msg.toolsUsed.length > 0 && (

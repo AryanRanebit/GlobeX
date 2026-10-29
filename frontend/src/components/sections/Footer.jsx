@@ -20,10 +20,10 @@ export default function Footer({ onNavigate }) {
             <p className="text-sm text-faint leading-relaxed max-w-sm mb-4">
               Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find real buyers with cited sources, and grow your export revenue with data.
             </p>
-            <div className="space-y-1.5 text-xs text-faint">
+            <div className="space-y-1.5 text-xs text-line-dark">
               <p className="text-line-dark font-semibold">Contact & Support:</p>
-              <p>Inquiries: Enterprise Desk (TBD)</p>
-              <p>Location: Mumbai, Maharashtra, India</p>
+              <p className="text-line-dark">Inquiries: Enterprise Desk (TBD)</p>
+              <p className="text-line-dark">Location: Mumbai, Maharashtra, India</p>
               <p className="text-xs text-muted pt-1.5 border-t border-navy-light">
                 Source: UN Comtrade, United Nations Statistics Division (UNSD), India merchandise exports 2025
               </p>
