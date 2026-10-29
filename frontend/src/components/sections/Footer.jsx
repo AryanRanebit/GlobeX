@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3 } from 'lucide-react';
+import { LogoMark } from '../ui/Logo';
 
 export default function Footer({ onNavigate }) {
   return (
@@ -14,10 +14,8 @@ export default function Footer({ onNavigate }) {
               onClick={(e) => { e.preventDefault(); if (onNavigate) onNavigate('landing'); }}
               className="flex items-center gap-2 mb-3.5 inline-flex"
             >
-              <div className="w-6 h-6 rounded bg-blue flex items-center justify-center">
-                <BarChart3 size={13} color="#FFFFFF" strokeWidth={2.5} />
-              </div>
-              <span className="text-base font-bold text-white font-heading">GlobeX</span>
+              <LogoMark size={24} onDark />
+              <span className="text-base font-bold text-white font-heading">Globe<span className="text-[#F59E0B]">X</span></span>
             </a>
             <p className="text-sm text-faint leading-relaxed max-w-sm mb-4">
               Export market intelligence platform for Indian manufacturers, traders, and MSME exporters. Discover markets, find real buyers with cited sources, and grow your export revenue with data.

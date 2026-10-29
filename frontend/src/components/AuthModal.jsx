@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight, BarChart3, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import { LogoMark } from './ui/Logo';
 import { apiFetch } from '../lib/api';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -257,10 +258,8 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
         </button>
 
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-6 h-6 rounded bg-blue flex items-center justify-center">
-            <BarChart3 size={12} color="#FFFFFF" strokeWidth={2.5} />
-          </div>
-          <span className="text-sm font-bold text-navy">GlobeX</span>
+          <LogoMark size={24} />
+          <span className="text-sm font-bold text-navy">Globe<span className="text-accent">X</span></span>
         </div>
 
         <h2 id="auth-modal-title" className="text-lg font-semibold text-navy mb-0.5">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { LogoMark } from './ui/Logo';
 
 export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -64,10 +65,8 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
             onClick={(e) => { e.preventDefault(); onNavigate('landing'); }}
             className="flex items-center gap-2"
           >
-            <div className="w-7 h-7 rounded bg-blue flex items-center justify-center">
-              <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
-            </div>
-            <span className="text-lg font-bold text-navy tracking-tight font-heading">GlobeX</span>
+            <LogoMark size={28} />
+            <span className="text-lg font-bold text-navy tracking-tight font-heading">Globe<span className="text-accent">X</span></span>
           </a>
 
           {/* Desktop Nav */}
@@ -116,10 +115,8 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
         <div className="fixed inset-0 z-[60] bg-white flex flex-col">
           <div className="flex justify-between items-center p-4 border-b border-line">
             <a href="/" onClick={(e) => { e.preventDefault(); onNavigate('landing'); setMobileMenuOpen(false); }} className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded bg-blue flex items-center justify-center">
-                <BarChart3 size={15} color="#FFFFFF" strokeWidth={2.5} />
-              </div>
-              <span className="text-base font-bold text-navy">GlobeX</span>
+              <LogoMark size={26} />
+              <span className="text-base font-bold text-navy">Globe<span className="text-accent">X</span></span>
             </a>
             <button className="text-muted p-2" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
               <X size={20} />
