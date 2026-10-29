@@ -58,7 +58,6 @@ export default function Footer({ onNavigate }) {
           <div>
             <h4 className="text-xs font-bold text-line-dark uppercase tracking-wider mb-3.5 font-heading">Company</h4>
             <ul className="space-y-2.5">
-              <li><a href="#pricing" className="text-sm text-faint hover:text-white transition-colors">Pricing</a></li>
               <li><a href="#faq" className="text-sm text-faint hover:text-white transition-colors">FAQs</a></li>
               <li><a href="#contact" className="text-sm text-faint hover:text-white transition-colors">Contact</a></li>
             </ul>
