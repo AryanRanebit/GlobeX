@@ -68,6 +68,7 @@ Retrieved Knowledge:
 INTENT_CLASSIFIER_PROMPT = """Analyse the following user message and classify the intent.
 
 User Message: {user_message}
+Session Context (may be empty): {session_context}
 
 Respond ONLY with a JSON object (no markdown, no explanation):
 {{
@@ -75,6 +76,7 @@ Respond ONLY with a JSON object (no markdown, no explanation):
   "needs_rag": <true|false>,
   "needs_tool": <true|false>,
   "tool_name": "<tool name or null>",
+  "tool_args": <object with the tool's arguments, or null>,
   "entities": {{
     "product": "<product name or null>",
     "country": "<country name or null>",
@@ -97,6 +99,17 @@ Intent Definitions:
 - document_query: User asks what documents are required for a specific trade.
 - greeting: Hello, hi, introductory message.
 - off_topic: Completely unrelated to international trade.
+
+When needs_tool is true, also fill "tool_args" using the schema for the chosen tool
+(use Session Context for values the user mentioned earlier but not in this message;
+sensible defaults otherwise; null when needs_tool is false):
+- hs_code_lookup: {{"product_name": "<product name>"}}
+- duty_calculator: {{"product": "<product>", "destination_country": "<country>", "product_value_usd": <number>, "hs_code": "<optional>"}}
+- country_rules: {{"country": "<country name>", "product_category": "<optional product category>"}}
+- top_export_markets: {{"hs_code": "<2-8 digit HS code, e.g. 62>", "n": <integer, default 5>}}
+- market_share: {{"country": "<country name>", "hs_code": "<2-8 digit HS code, e.g. 62>"}}
+- invoice_generator: {{"seller_name": "<>", "seller_address": "<>", "buyer_name": "<>", "buyer_address": "<>", "product_description": "<>", "quantity": <number>, "unit": "<e.g. PCS>", "unit_price_usd": <number>, "incoterm": "<e.g. FOB>", "payment_terms": "<>", "country_of_origin": "India", "hs_code": "<>", "freight_usd": <number>, "insurance_usd": <number>}}
+- packing_list_generator: {{"shipper_name": "<>", "consignee_name": "<>", "product_description": "<>", "number_of_packages": <integer>, "package_type": "<e.g. Cartons>", "gross_weight_per_package_kg": <number>, "net_weight_per_package_kg": <number>, "dimensions_cm": "<LxWxH e.g. 60x40x50>", "marks_and_numbers": "<>"}}
 """
 
 MEMORY_EXTRACTION_PROMPT = """Extract trade-relevant entities from this conversation turn.
