@@ -10,6 +10,13 @@ export const outreachController = {
     } catch (err) { next(err); }
   },
 
+  localize: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const localized = await outreachService.localize(req.user!.userId, req.body);
+      sendSuccess(res, localized, 'Outreach localized');
+    } catch (err) { next(err); }
+  },
+
   getHistory: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const history = await outreachService.getHistory(req.user!.userId);
