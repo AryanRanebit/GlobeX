@@ -67,7 +67,7 @@ export default function Hero({ onOpenAuth, onSearch }) {
             </h1>
 
             <p className="text-base md:text-[17px] text-[#475569] mb-6 leading-relaxed max-w-xl">
-              GlobeX uses global customs trade intelligence and AI-powered research to help Indian exporters discover profitable destination countries, see official export values by destination, and connect with verified importers.
+              GlobeX uses official UN Comtrade trade data and AI-powered research to help Indian exporters compare export values by destination and identify prospective buyers through source-backed web search.
             </p>
 
             {/* HS Code / Product Search Bar */}

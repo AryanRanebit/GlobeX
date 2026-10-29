@@ -196,7 +196,7 @@ export default function DashboardHome() {
           </div>
           <h2 className="text-lg font-bold text-navy mb-1">No Trade Records Recorded Yet</h2>
           <p className="text-sm text-muted max-w-md mx-auto mb-6">
-            Start by running an AI market analysis or discovering verified buyers to populate your active export dashboard.
+            Start by running an AI market analysis or a grounded buyer search to populate your active export dashboard.
           </p>
           <div className="flex gap-3">
             <button 
@@ -366,7 +366,7 @@ export default function DashboardHome() {
                     <Users size={14} className="text-blue" />
                   </div>
                   <div>
-                    <p className="text-sm text-ink"><strong>Buyer Discovery Agent</strong> found 3 new high-probability importers in the EU for HS Code 6204.62.</p>
+                    <p className="text-sm text-ink"><strong>Buyer Discovery Agent</strong> is ready: run a grounded live search to find real importers, each with its source link.</p>
                     <p className="text-xs text-faint mt-1">10 minutes ago</p>
                   </div>
                 </div>
@@ -403,7 +403,7 @@ export default function DashboardHome() {
                 <button className="flex items-center justify-between p-3 rounded-lg hover:bg-page transition-colors text-left group">
                   <div>
                     <p className="font-semibold text-sm text-navy">Generate Email Draft</p>
-                    <p className="text-xs text-muted">Pitch directly to a verified buyer</p>
+                    <p className="text-xs text-muted">Pitch directly to a sourced buyer prospect</p>
                   </div>
                   <ArrowUpRight size={16} className="text-faint group-hover:text-blue transition-colors" />
                 </button>

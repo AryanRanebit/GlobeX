@@ -63,30 +63,29 @@ export default function AiAgentsHub({ onBackToLanding }) {
       name: 'Buyer Discovery Agent',
       icon: Search,
       role: 'Global Trade Importer Finder',
-      description: 'Crawls international shipping records, customs registries, and business directories to compile a list of active buyers purchasing your specific HS code products.',
+      description: 'Searches the live web with Google Search grounding to find real companies that import or distribute your product. Every result carries its source link; anything without a citation is dropped.',
       capabilities: [
-        'Real-time scanning of bills of lading and customs manifests.',
-        'Cross-border registry scraping and trade volume tracking.',
-        'Entity resolution to filter duplicate buyers and identify parent companies.'
+        'Grounded live web search for real importers and distributors by product and country.',
+        'Source link attached to every company; uncited suggestions are discarded.',
+        'Honest limits: customs volumes, purchase history and contacts are NOT verified.'
       ],
       simulationLogs: [
         '🚀 Initializing Buyer Discovery Agent...',
-        '🔍 Scanning customs registries for HS Code: 6204.62 (Women\'s Cotton Trousers)...',
-        '📊 Parsing latest bills of lading for the last 6 months...',
-        '🔄 Filtered 12,480 shipments. Isolating active importers in Europe and North America...',
-        '💡 Match found: "Textil GmbH" (Hamburg, Germany) - 18 shipments, total 45 tons.',
-        '💡 Match found: "Nordic Retailers" (Oslo, Norway) - 9 shipments, total 22 tons.',
-        '💡 Match found: "Atlas Imports Inc." (New York, USA) - 34 shipments, total 88 tons.',
-        '✨ Resolving corporate structures and public contact details...',
-        '✅ Agent run complete. 3 high-volume buyers verified and saved to pipeline.'
+        '🔍 Running grounded Google Search: importers of HS 6204.62 (women\'s cotton trousers) in the US and Germany...',
+        '📄 Reading search results: company websites, trade directories, public filings...',
+        '💡 Match: "Gap Inc." (United States) - apparel importer/retailer, source cited.',
+        '💡 Match: "H&M Group" (Sweden) - apparel importer/retailer, source cited.',
+        '💡 Match: "C&A" (Germany) - apparel importer/retailer, source cited.',
+        '🔗 Attaching source links. Dropping any suggestion without a citation...',
+        '✅ 3 source-backed prospects saved. Import volumes and contacts are NOT verified.'
       ],
       outcome: {
-        title: 'Discovered Buyers (HS 6204.62)',
+        title: 'Discovered Prospects (HS 6204.62) - sources attached',
         type: 'table',
         data: [
-          { company: 'Atlas Imports Inc.', country: 'United States', volume: '88 Tons', reliability: '94%', contact: 'procurement@atlasimports.com' },
-          { company: 'Textil GmbH', country: 'Germany', volume: '45 Tons', reliability: '89%', contact: 'buying@textilgmbh.de' },
-          { company: 'Nordic Retailers', country: 'Norway', volume: '22 Tons', reliability: '87%', contact: 'sourcing@nordicretailers.no' }
+          { company: 'Gap Inc.', country: 'United States', volume: 'Not verified', reliability: 'Web evidence', contact: 'gapinc.com' },
+          { company: 'H&M Group', country: 'Sweden', volume: 'Not verified', reliability: 'Web evidence', contact: 'hmgroup.com' },
+          { company: 'C&A', country: 'Germany', volume: 'Not verified', reliability: 'Web evidence', contact: 'c-and-a.com' }
         ]
       }
     },
@@ -134,8 +133,8 @@ export default function AiAgentsHub({ onBackToLanding }) {
       ],
       simulationLogs: [
         '🚀 Initializing Outreach & RFP Agent...',
-        '📧 Fetching buyer profile: "Textil GmbH" (Hamburg, Germany)...',
-        '✍️ Analyzing history: Frequently imports organic cotton textiles from South Asia...',
+        '📧 Fetching buyer profile: "C&A" (Germany) - a prospect saved by Buyer Discovery...',
+        '✍️ Using public web sources about the prospect to tailor the pitch (no purchase history is claimed)...',
         '🌐 Selecting draft language: German (Deutsch) for high response rate...',
         '📝 Generating personalized value proposition based on organic certifications...',
         '⚙️ Applying tone setting: Formal corporate partner...',
@@ -149,7 +148,7 @@ export default function AiAgentsHub({ onBackToLanding }) {
         subject: 'Partnerschaftsanfrage: Bio-Baumwolltextilien direkt vom Hersteller',
         body: `Sehr geehrte Damen und Herren,
 
-wir haben festgestellt, dass Ihr Unternehmen Textil GmbH ein führender Importeur von ökologischen Textilien in Deutschland ist. 
+wir schreiben Ihnen, weil Ihr Unternehmen C&A als Importeur und Händler von Textilien in Deutschland öffentlich bekannt ist.
 
 Als zertifizierter Hersteller in Indien bieten wir hochwertige Bio-Baumwolltextilien an, die den globalen GOTS-Standards entsprechen. Durch unsere vertikal integrierte Produktion können wir Ihre Lieferkettenstabilität sichern und attraktive Einkaufskonditionen bei 0% Zoll (unter dem aktuellen Handelsabkommen) garantieren.
 
@@ -194,33 +193,30 @@ Sourcing-Team`
       id: 'scoring',
       name: 'Lead Scoring Agent',
       icon: CheckCircle2,
-      role: 'Buyer Trust & Credit Scorer',
-      description: 'Calculates propensity scores for buyers by correlating trade frequencies, order volumes, financial stability records, and historical supplier retention rates.',
+      role: 'Buyer Evidence Scorer',
+      description: 'Scores a saved buyer prospect strictly from the evidence on its record - identity, web domain, contact details, product fit. It does not check credit registries, shipment histories, or supplier retention.',
       capabilities: [
-        'Correlates trade frequency to identify stable, recurring importers.',
-        'Performs basic business credit registry checks where available.',
-        'Assigns an overall Lead Score out of 100 based on fit.'
+        'Transparent score breakdown: every point traces to a named evidence factor.',
+        'Missing evidence scores zero, never negative - and is shown as missing.',
+        'Not a credit rating: no financial or customs data is connected.'
       ],
       simulationLogs: [
         '🚀 Initializing Lead Scoring Agent...',
-        '📊 Processing importer data for: "Atlas Imports Inc."...',
-        '📈 Transaction history audit: 34 shipments over 12 months (Stable demand).',
-        '🔄 Supplier retention analysis: Supplier longevity averages 3.2 years.',
-        '💳 Querying corporate registries for credit stability indicators...',
-        '⚖️ Risk analysis: No legal disputes or customs violations found.',
-        '🎛️ Fitting parameters: Volume Match (10/10), Stability (9/10), Growth (8/10).',
-        '💡 Final score computed: 94/100.',
-        '✅ Scoring complete. Lead flagged as tier-1 priority target.'
+        '📊 Scoring prospect: "C&A" (Germany) - saved from grounded search...',
+        '🔎 Evidence found: company identity, website domain, product/industry fit...',
+        '⚠️ Evidence missing: shipment volumes, credit history, supplier retention (no customs or registry data connected)...',
+        '🎛️ Missing signals score zero, not negative, and are listed in the breakdown...',
+        '✅ Score computed from available evidence only. This is not a credit rating.'
       ],
       outcome: {
-        title: 'Lead Profile: Atlas Imports Inc.',
+        title: 'Evidence Score: C&A (Germany)',
         type: 'scoring',
-        score: 94,
+        score: 45,
         metrics: [
-          { name: 'Import Frequency', rating: 'High (Monthly)', score: 95 },
-          { name: 'Shipment Volume Fit', rating: 'Optimal Match', score: 92 },
-          { name: 'Financial Reliability', rating: 'Strong Credit', score: 94 },
-          { name: 'Supplier Loyalty', rating: 'High Retention', score: 90 }
+          { name: 'Company Identity', rating: 'Present (web source cited)', score: 20 },
+          { name: 'Website Domain', rating: 'Present', score: 10 },
+          { name: 'Contact Details', rating: 'Partial', score: 15 },
+          { name: 'Customs / Credit Evidence', rating: 'Not available', score: 0 }
         ]
       }
     }
@@ -490,9 +486,9 @@ Sourcing-Team`
                         <tr>
                           <th>Importer Company</th>
                           <th>Country</th>
-                          <th>Est. Import Volume</th>
-                          <th>Reliability Score</th>
-                          <th>Verified Contact</th>
+                          <th>Import Volume</th>
+                          <th>Evidence</th>
+                          <th>Source</th>
                         </tr>
                       </thead>
                       <tbody>

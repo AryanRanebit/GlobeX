@@ -8,7 +8,6 @@
 import { env } from '../../config/env';
 import {
   GeminiAgentBuyerProvider,
-  MockBuyerDataProvider,
   deduplicateCandidates,
   generateBuyerSearchQuery,
   ProviderError,
@@ -28,13 +27,18 @@ import { buyersRepository } from './buyers.repository';
 
 export function selectProvider(override?: IBuyerDataProvider): IBuyerDataProvider {
   if (override) return override;
-  // Use the Gemini agent provider when the service URL is configured and reachable.
-  // Fall through to mock if AGENT_SERVICE_URL is missing or empty.
+  // The only production provider is the grounded Gemini agent (Google Search
+  // grounding). The mock provider exists for tests only and is never selected
+  // implicitly — surfacing a configuration error is more honest than silently
+  // returning fabricated companies.
   const serviceUrl = env.AGENT_SERVICE_URL;
   if (serviceUrl && serviceUrl.length > 0) {
     return new GeminiAgentBuyerProvider(serviceUrl);
   }
-  return new MockBuyerDataProvider();
+  throw new ProviderError(
+    'Buyer discovery is not configured: AGENT_SERVICE_URL is not set.',
+    false,
+  );
 }
 
 // ─── Enrich a single candidate ───────────────────────────────────────────────
@@ -118,18 +122,9 @@ export async function runBuyerDiscovery(
       });
       allCandidates.push(...result.candidates);
     } catch (err) {
-      if (!providerOverride && provider.name !== 'mock_provider') {
-        const fallbackProvider = new MockBuyerDataProvider();
-        const fallbackResult = await fallbackProvider.searchCandidates({
-          product: dto.product,
-          category: dto.category,
-          hsCode: dto.hsCode,
-          targetMarket: market,
-        });
-        allCandidates.push(...fallbackResult.candidates);
-      } else {
-        throw err;
-      }
+      // No silent fallback to fabricated candidates: provider failures surface
+      // as an honest error (502/503 via the service layer) instead of mock buyers.
+      throw err;
     }
   }
 
@@ -149,9 +144,7 @@ export async function runBuyerDiscovery(
     targetCountries: dto.targetCountries,
     searchedAt,
     provider: provider.name,
-    dataSourceMode: enrichedBuyers.length > 0 && provider.name === 'mock_provider'
-      ? 'mock_provider'
-      : 'live_provider',
+    dataSourceMode: provider.name === 'mock_provider' ? 'mock_provider' : 'live_provider',
     totalCandidatesDiscovered: allCandidates.length,
     totalUniqueBuyers: uniqueCandidates.length,
     queriesUsed,

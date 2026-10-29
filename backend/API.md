@@ -316,12 +316,14 @@ Response: 200 OK
   "data": [
     {
       "id": "uuid",
-      "companyName": "Spice World Inc.",
+      "companyName": "Example Apparel Importer Inc.",
       "country": "United States",
-      "industry": "Food Processing",
-      "leadScore": 87,
-      "website": "https://spiceworld.com",
-      "email": "imports@spiceworld.com"
+      "industry": "Apparel Import & Distribution",
+      "leadScore": 45,
+      "website": "https://example.com",
+      "email": null,
+      "verificationStatus": "partially_verified",
+      "sourceUrl": "https://source-site.example/importers-page"
     }
   ],
   "meta": {
@@ -335,6 +337,44 @@ Response: 200 OK
 }
 ```
 
+### Discover Buyers (grounded live search)
+```http
+POST /buyers/discover
+Authorization: Bearer <accessToken>
+Content-Type: application/json
+
+{
+  "product": "Cotton Trousers",
+  "targetCountries": ["United States"],
+  "hsCode": "6204.62"
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "data": {
+    "product": "Cotton Trousers",
+    "targetCountries": ["United States"],
+    "searchedAt": "2026-01-01T00:00:00.000Z",
+    "provider": "gemini_agent",
+    "dataSourceMode": "live_provider",
+    "totalCandidatesDiscovered": 4,
+    "totalUniqueBuyers": 3,
+    "queriesUsed": ["importers of \"Cotton Trousers\" in United States"],
+    "buyers": [ /* EnrichedBuyerRecord[] — see below */ ]
+  }
+}
+```
+
+The discovery pipeline asks the Python agent to run Gemini with Google Search
+grounding. The agent keeps only companies attributable to a real search-result
+citation and attaches the source URL; the Express pipeline deduplicates,
+verifies evidence, scores, and persists each buyer. Returned companies are
+prospects with web evidence — customs records, purchase history, and contact
+details are not claimed. When grounded search finds nothing credible, `buyers`
+is empty and nothing is persisted. Provider failures return an honest
+`502`/`503` error instead of fabricated companies.
+
 ### Get Buyer Details
 ```http
 GET /buyers/:id
@@ -345,14 +385,14 @@ Response: 200 OK
   "success": true,
   "data": {
     "id": "uuid",
-    "companyName": "Spice World Inc.",
+    "companyName": "Example Apparel Importer Inc.",
     "country": "United States",
     "countryCode": "US",
-    "industry": "Food Processing",
-    "website": "https://spiceworld.com",
-    "email": "imports@spiceworld.com",
-    "leadScore": 87,
-    "isVerified": true,
+    "industry": "Apparel Import & Distribution",
+    "website": "https://example.com",
+    "email": null,
+    "leadScore": 45,
+    "isVerified": false,
     "leads": [...],
     "_count": { "outreaches": 3 }
   }
@@ -472,8 +512,8 @@ Response: 201 Created
   "success": true,
   "data": {
     "id": "uuid",
-    "subject": "Export Partnership Inquiry — Kumar Spices × Spice World",
-    "content": "Dear Spice World Procurement Team...",
+    "subject": "Export Partnership Inquiry — Kumar Spices × Example Apparel Importer",
+    "content": "Dear Example Apparel Importer Procurement Team...",
     "tone": "professional",
     "language": "en",
     "createdAt": "2024-01-15T10:30:00Z"

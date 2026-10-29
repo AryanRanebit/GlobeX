@@ -73,10 +73,11 @@ export interface BuyerDiscoveryOutput {
     country: string;
     countryCode: string;
     industry: string;
-    website?: string;
-    email?: string;
-    estimatedLeadScore: number;
+    website?: string | null;
+    email?: string | null;
+    estimatedLeadScore: number | null;
     source: string;
+    sourceUrl?: string | null;
   }[];
   searchedAt: string;
 }

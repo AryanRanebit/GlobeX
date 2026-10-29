@@ -25,6 +25,7 @@ from agents.product_understanding import understand_product, ProductNormalizatio
 from database.models import Session, get_db
 from memory.memory_manager import MemoryManager
 from rag.pipeline import rag_pipeline
+from services.buyer_discovery import BuyerDiscoveryError, discover_buyers
 from tools.trade_tools import (
     country_rules,
     duty_calculator,
@@ -120,6 +121,8 @@ class RAGQueryRequest(BaseModel):
 class BuyerDiscoveryAgentRequest(BaseModel):
     product: str
     target_countries: list[str] | None = None
+    category: str | None = None
+    hs_code: str | None = None
 
 class ProductUnderstandingRequest(BaseModel):
     product_name: str
@@ -738,110 +741,27 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         raise HTTPException(status_code=500, detail=str(exc))
 
 
-def _fallback_buyer_candidates(product: str, target_countries: list[str] | None = None) -> dict:
-    country = (target_countries[0] if target_countries and len(target_countries) > 0 else "United States").strip()
-    is_us = "United States" in country or "US" in country
-    is_uae = "UAE" in country or "Emirates" in country or "AE" in country
-    return {
-        "searchedAt": datetime.now().isoformat(),
-        "buyers": [
-            {
-                "companyName": f"Global Commodity Imports LLC ({country})",
-                "country": country,
-                "countryCode": "US" if is_us else ("AE" if is_uae else "DE"),
-                "industry": f"{product} Import & Distribution",
-                "website": "https://www.globalcommodity-imports.com",
-                "email": "procurement@globalcommodity-imports.com",
-                "estimatedLeadScore": 72,
-                "source": "ai_prospect",
-                "importVolume": "Medium",
-                "isVerified": False,
-                "annualRevenue": "$24M+",
-                "employeeCount": 120
-            },
-            {
-                "companyName": f"Continental Sourcing & Trading GmbH",
-                "country": country,
-                "countryCode": "US" if is_us else ("AE" if is_uae else "DE"),
-                "industry": "Commercial Wholesale & Retail",
-                "website": "https://www.continentalsourcing-trade.com",
-                "email": "purchasing@continentalsourcing-trade.com",
-                "estimatedLeadScore": 68,
-                "source": "ai_prospect",
-                "importVolume": "Medium",
-                "isVerified": False,
-                "annualRevenue": "$15M",
-                "employeeCount": 75
-            }
-        ]
-    }
-
-
 @router.post("/agents/buyer-discovery", summary="Agent Buyer Discovery")
 async def agent_buyer_discovery(request: BuyerDiscoveryAgentRequest) -> dict:
-    """Discover real buyers for a product using Google Web Search grounding."""
+    """Discover real buyers for a product using Gemini with Google Search grounding.
+
+    Every returned company carries a grounding citation. When grounded search
+    finds nothing credible, an honest empty result is returned instead of
+    fabricated companies.
+    """
     try:
-        if settings.google_api_key == "your_google_api_key_here" or not settings.google_api_key:
-            return _fallback_buyer_candidates(request.product, request.target_countries)
-
-        countries_str = f" in countries: {', '.join(request.target_countries)}" if request.target_countries else " globally"
-        prompt = f"""You are a B2B buyer discovery AI agent. Search the web for real, actual companies that import or buy the product '{request.product}'{countries_str}.
-        You MUST find 3-5 real companies. DO NOT make up company names. Use search to find real importers.
-        Provide:
-        - companyName
-        - country (e.g. United States)
-        - countryCode (2-letter ISO code e.g. US)
-        - industry
-        - website
-        - email (if found, otherwise a generic contact email or empty string)
-        - importVolume (estimated as Low, Medium, or High)
-        - isVerified (MUST BE false unless verified against official government corporate registry or bill of lading)
-        - annualRevenue (estimated string e.g. $5M, or N/A)
-        - employeeCount (estimated integer, or 0)
-
-        Return ONLY a JSON object:
-        {{
-          "searchedAt": "{datetime.now().isoformat()}",
-          "buyers": [
-            {{
-              "companyName": "<real company name>",
-              "country": "<country>",
-              "countryCode": "<2-letter code>",
-              "industry": "<industry>",
-              "website": "<website url>",
-              "email": "<email>",
-              "estimatedLeadScore": <integer 1-100 based on fit>,
-              "source": "ai_web_search",
-              "importVolume": "<High | Medium | Low>",
-              "isVerified": false,
-              "annualRevenue": "<string>",
-              "employeeCount": <integer>
-            }}
-          ]
-        }}"""
-        
-        response = await globex_agent._classifier_llm.ainvoke(prompt)
-        raw = response.content
-        if isinstance(raw, list):
-            parts = []
-            for item in raw:
-                if isinstance(item, dict):
-                    parts.append(item.get("text", ""))
-                else:
-                    parts.append(str(item))
-            raw = "".join(parts)
-        raw = str(raw).strip()
-        raw = re.sub(r"```(?:json)?|```", "", raw).strip()
-        
-        start_idx = raw.find("{")
-        end_idx = raw.rfind("}")
-        if start_idx != -1 and end_idx != -1:
-            raw = raw[start_idx:end_idx + 1]
-            
-        return json.loads(raw)
-    except Exception as exc:
-        log.warning("Buyer discovery LLM search failed or returned malformed JSON, using trade registry fallback", error=str(exc))
-        return _fallback_buyer_candidates(request.product, request.target_countries)
+        return await discover_buyers(
+            product=request.product,
+            target_countries=request.target_countries,
+            category=request.category,
+            hs_code=request.hs_code,
+        )
+    except BuyerDiscoveryError as exc:
+        log.warning("Buyer discovery unavailable", error=str(exc), retryable=exc.retryable)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE if exc.retryable else status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        )
 
 
 @router.post("/agents/compliance", summary="Agent Trade Compliance & Customs Assessment")
