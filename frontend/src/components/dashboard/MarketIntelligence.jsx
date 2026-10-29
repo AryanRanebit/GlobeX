@@ -15,6 +15,7 @@ import {
 import { TRADE_STATS } from '../../constants/tradeStats';
 import { apiFetch } from '../../lib/api';
 import { parseHsQuery } from '../../lib/hsQuery';
+import AnalysisModal from './AnalysisModal';
 
 function TableSkeletonRows({ rows = 8 }) {
   return (
@@ -50,6 +51,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   // Drill-down market modal
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
   // Sync the external global search query into local state
   // (render-time adjustment instead of an effect).
@@ -299,6 +301,14 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               {meta?.totalMarkets || filteredMarkets.length} Countries
             </span>
           </div>
+          <button
+            onClick={() => setIsAnalysisOpen(true)}
+            className="btn-primary ml-2 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 self-center"
+            title="Run the full AI market analysis for this product"
+          >
+            <Sparkles size={13} />
+            <span>Run Full Analysis</span>
+          </button>
         </div>
       </div>
 
@@ -582,6 +592,22 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       )}
 
       {/* One-Page Report Modal */}
+      {isAnalysisOpen && (
+        <AnalysisModal
+          isOpen={isAnalysisOpen}
+          onClose={() => setIsAnalysisOpen(false)}
+          initialProduct={
+            productLabel || (resolvedHs === '62'
+              ? 'Apparel & Cotton Trousers'
+              : resolvedHs === '091030'
+                ? 'Turmeric (Ground)'
+                : resolvedHs === 'TOTAL'
+                  ? 'General Merchandise'
+                  : `HS ${resolvedHs} commodity`)
+          }
+        />
+      )}
+
       {isReportOpen && selectedMarket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-line shadow-[var(--shadow-pop)] max-w-3xl w-full max-h-[95vh] overflow-y-auto p-8 print:p-0 print:border-none print:shadow-none flex flex-col gap-6">
