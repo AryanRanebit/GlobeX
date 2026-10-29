@@ -150,17 +150,17 @@ export default function Hero({ onSearch }) {
           </div>
 
           {/* Right: Interactive 3D Globe (desktop) / static earth (mobile) */}
-          <div ref={globeContainerRef} className="flex items-center justify-center h-72 lg:h-[480px] relative">
+          <div ref={globeContainerRef} className="w-full flex items-center justify-center h-[340px] lg:h-[480px] relative">
             {isDesktop ? (
               <GlobeErrorBoundary fallbackSize={globeSize}>
                 <Globe width={globeSize} height={globeSize} />
               </GlobeErrorBoundary>
             ) : (
-              <StaticEarth size={260} />
+              <StaticEarth size={320} />
             )}
 
             {/* Floating Stat Card */}
-            <div className="absolute -bottom-2 left-6 bg-white/95 backdrop-blur-md border border-line rounded-xl p-3.5 shadow-xl flex items-center gap-3.5 max-w-[300px] pointer-events-none z-20">
+            <div className="absolute -bottom-2 left-4 lg:left-6 w-72 max-w-[calc(100%-2rem)] lg:w-auto lg:max-w-[300px] bg-white/95 backdrop-blur-md border border-line rounded-xl p-3.5 shadow-xl flex items-center gap-3.5 pointer-events-none z-20">
               <div className="w-10 h-10 rounded-lg bg-accent-subtle border border-accent-border flex items-center justify-center text-amber shrink-0">
                 <TrendingUp size={20} />
               </div>

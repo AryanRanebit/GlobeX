@@ -122,7 +122,7 @@ Return ONLY a valid JSON object matching this schema (no markdown, no backticks,
             temperature=0.0,
             max_retries=0,
         )
-        response = await asyncio.wait_for(llm.ainvoke(prompt), timeout=6.0)
+        response = await asyncio.wait_for(llm.ainvoke(prompt), timeout=20.0)
         cleaned = _clean_json_str(response.content)
         parsed = json.loads(cleaned)
         

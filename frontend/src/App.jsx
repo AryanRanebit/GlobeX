@@ -76,6 +76,7 @@ export default function App() {
     if (!localStorage.getItem('token')) {
       // Require a real sign-in instead of minting a fake demo session.
       // The query stays in the URL and is applied after sign-in reloads the app.
+      setAuthInitialTab('signin');
       setAuthOpen(true);
       return;
     }
