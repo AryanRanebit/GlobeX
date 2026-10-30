@@ -16,6 +16,9 @@ import {
 import { TRADE_STATS } from '../../constants/tradeStats';
 import { apiFetch } from '../../lib/api';
 import { parseHsQuery } from '../../lib/hsQuery';
+import AnalysisModal from './AnalysisModal';
+import Term from '../ui/Jargon';
+import ScrollHint from '../ui/ScrollHint';
 
 function TableSkeletonRows({ rows = 8 }) {
   return (
@@ -51,6 +54,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   // Drill-down market modal
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 
   // Tariff/duty lookup (WITS via backend) for the drilled-down market
   const [tariff, setTariff] = useState(null);
@@ -284,30 +288,31 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
 
       {/* Commodity Summary Card */}
       <div className="bg-white rounded-xl border border-line p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-pale border border-blue-border text-blue flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-pale border border-blue-border text-blue flex items-center justify-center shrink-0 mt-0.5">
             <Globe2 size={20} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
+          <div className="min-w-0">
+            {/* Badge row first, title on its own line, metadata de-emphasized */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <Term t="HS code" className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
                 HS {resolvedHs}
-              </span>
-              <h2 className="text-sm font-bold text-navy">
-                {productLabel || (resolvedHs === '62'
-                  ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
-                  : resolvedHs === '091030'
-                    ? 'Turmeric (Ground)'
-                    : resolvedHs === 'TOTAL'
-                      ? 'Total Merchandise Exports (All Goods)'
-                      : `Commodity Group HS ${resolvedHs}`)}
-              </h2>
+              </Term>
               {resolvedHs !== selectedHs && (
                 <span className="text-[11px] text-muted">No 2025 rows for HS {selectedHs}; showing parent heading.</span>
               )}
             </div>
-            <p className="text-xs text-muted mt-0.5">
-              Reporter: <strong>India</strong> (Code: 699) | Period: <strong>2025 Annual</strong> | Trade Flow: <strong>Exports (FOB)</strong>
+            <h2 className="text-base font-bold text-navy font-heading leading-snug mt-1.5">
+              {productLabel || (resolvedHs === '62'
+                ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
+                : resolvedHs === '091030'
+                  ? 'Turmeric (Ground)'
+                  : resolvedHs === 'TOTAL'
+                    ? 'Total Merchandise Exports (All Goods)'
+                    : `Commodity Group HS ${resolvedHs}`)}
+            </h2>
+            <p className="text-[11px] text-muted mt-1">
+              Reporter: India (Code: 699) · Period: 2025 Annual · Trade Flow: Exports (<Term t="FOB" />)
             </p>
           </div>
         </div>
@@ -325,6 +330,14 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               {meta?.totalMarkets || filteredMarkets.length} Countries
             </span>
           </div>
+          <button
+            onClick={() => setIsAnalysisOpen(true)}
+            className="btn-primary ml-2 px-4 py-2 text-xs font-semibold flex items-center gap-1.5 self-center"
+            title="Run the full AI market analysis for this product"
+          >
+            <Sparkles size={13} />
+            <span>Run Full Analysis</span>
+          </button>
         </div>
       </div>
 
@@ -363,12 +376,20 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           <div className="p-10 text-center text-muted">
             <p className="text-sm font-semibold text-navy">No 2025 export data available for HS {resolvedHs}</p>
             <p className="text-xs mt-1">This commodity group has no seeded rows yet. Try a trending chapter like HS 62 (Apparel) or HS 091030 (Turmeric).</p>
-            <button
-              onClick={() => handleHsChange('62')}
-              className="mt-3 px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
-            >
-              View HS 62 (Apparel)
-            </button>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handleHsChange('62')}
+                className="px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
+              >
+                View HS 62 (Apparel)
+              </button>
+              <button
+                onClick={() => handleHsChange('091030')}
+                className="px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
+              >
+                View HS 091030 (Turmeric)
+              </button>
+            </div>
           </div>
         ) : filteredMarkets.length === 0 ? (
           <div className="p-10 text-center text-muted">
@@ -382,13 +403,15 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
             </button>
           </div>
         ) : (
+          <>
+          <ScrollHint />
           <div className="max-h-[65vh] overflow-auto">
             <table className="w-full text-left border-separate border-spacing-0 text-xs md:text-sm">
               <thead>
                 <tr className="text-soft font-bold text-[11px] uppercase tracking-wider">
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4 w-12 text-center">#</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Destination Market</th>
-                  <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">India Exports (2025 FOB)</th>
+                  <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">India Exports (2025 <Term t="FOB" />)</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Share of India Exports</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">
                     <span className="flex items-center gap-1">
@@ -470,6 +493,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Data Semantics & Source Notice Footer */}
@@ -654,6 +678,22 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       )}
 
       {/* One-Page Report Modal */}
+      {isAnalysisOpen && (
+        <AnalysisModal
+          isOpen={isAnalysisOpen}
+          onClose={() => setIsAnalysisOpen(false)}
+          initialProduct={
+            productLabel || (resolvedHs === '62'
+              ? 'Apparel & Cotton Trousers'
+              : resolvedHs === '091030'
+                ? 'Turmeric (Ground)'
+                : resolvedHs === 'TOTAL'
+                  ? 'General Merchandise'
+                  : `HS ${resolvedHs} commodity`)
+          }
+        />
+      )}
+
       {isReportOpen && selectedMarket && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl border border-line shadow-[var(--shadow-pop)] max-w-3xl w-full max-h-[95vh] overflow-y-auto p-8 print:p-0 print:border-none print:shadow-none flex flex-col gap-6">

@@ -120,7 +120,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
   );
 
   return (
-    <div className="min-h-screen bg-page flex">
+    <div className="min-h-screen bg-page bg-app-ship flex">
       {/* Desktop sidebar (collapsible) */}
       <aside
         className={`hidden lg:flex bg-deep flex-col transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'}`}

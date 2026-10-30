@@ -8,6 +8,7 @@ import {
   Tooltip,
   CartesianGrid
 } from 'recharts';
+import Term from '../ui/Jargon';
 
 const TOP_MARKETS_DATA = [
   { country: 'USA', fullName: 'United States', volume: 2671, share: '31.8%' },
@@ -30,7 +31,7 @@ function CustomBarTooltip({ active, payload }) {
       <div className="bg-white p-3 rounded-lg border border-line shadow-md text-xs">
         <p className="font-bold text-navy">{data.fullName}</p>
         <p className="text-blue font-semibold mt-0.5">
-          India FOB Exports: <span className="font-bold">${data.volume >= 1000 ? `${(data.volume / 1000).toFixed(2)}B` : `${data.volume}M`} USD</span>
+          India <Term t="FOB" /> Exports: <span className="font-bold">${data.volume >= 1000 ? `${(data.volume / 1000).toFixed(2)}B` : `${data.volume}M`} USD</span>
         </p>
         <p className="text-emerald font-medium">
           Share of India Exports: {data.share}
@@ -58,7 +59,7 @@ export default function DashboardCharts() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-base font-bold text-navy font-heading">Top Destination Markets (HS 62)</h2>
-            <p className="text-xs text-muted mt-0.5">India-reported exports (FOB) in $M USD — Source: UN Comtrade 2025</p>
+            <p className="text-xs text-muted mt-0.5">India-reported exports (<Term t="FOB" />) in $M USD — Source: UN Comtrade 2025</p>
           </div>
           <span className="px-2.5 py-1 bg-emerald-pale text-emerald-dark text-xs font-semibold rounded-md border border-emerald-border">
             196 Destinations

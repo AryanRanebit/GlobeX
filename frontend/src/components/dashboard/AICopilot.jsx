@@ -251,6 +251,9 @@ export default function AICopilot({ onRequireAuth }) {
           <button onClick={() => setInput("What are the US import tariffs for spices?")} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-pale text-blue rounded-full text-xs font-medium hover:bg-blue-border whitespace-nowrap">
             <Sparkles size={12} /> What are the US import tariffs for spices?
           </button>
+          <button onClick={() => setInput("Draft an intro email to a spice importer in Germany")} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-pale text-blue rounded-full text-xs font-medium hover:bg-blue-border whitespace-nowrap">
+            <Sparkles size={12} /> Draft an intro email to a spice importer in Germany
+          </button>
         </div>
       </div>
 

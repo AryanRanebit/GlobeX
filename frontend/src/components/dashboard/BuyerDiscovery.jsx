@@ -4,9 +4,6 @@ import {
   Mail, 
   X,
   Sparkles,
-  Send,
-  Copy,
-  Check,
   ExternalLink,
   Loader2,
   Plus,
@@ -15,18 +12,17 @@ import {
 } from 'lucide-react';
 import { SkeletonRows } from '../ui/Skeleton';
 import EmptyState from '../ui/EmptyState';
+import Term from '../ui/Jargon';
+import ScrollHint from '../ui/ScrollHint';
 import ErrorBanner from '../ui/ErrorBanner';
 import { apiFetch } from '../../lib/api';
 
-export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth }) {
+export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onRequireAuth, onNavigateToDrafter }) {
   const [buyers, setBuyers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [countryFilter, setCountryFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('scoreDesc');
   const [selectedBuyer, setSelectedBuyer] = useState(null);
-  const [emailModalBuyer, setEmailModalBuyer] = useState(null);
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -185,19 +181,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
     return ['ALL', ...list];
   }, [buyers]);
 
-  const handleCopyEmail = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopiedEmail(true);
-    setTimeout(() => setCopiedEmail(false), 2000);
-  };
 
-  const handleSendEmail = () => {
-    setEmailSent(true);
-    setTimeout(() => {
-      setEmailModalBuyer(null);
-      setEmailSent(false);
-    }, 1200);
-  };
 
   // Contact enrichment ("Option C"): free website scrape first, Hunter.io
   // fallback when configured on the backend. Quota exhaustion surfaces as
@@ -378,6 +362,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
             </span>
           </div>
 
+          {!isLoading && !error && filteredBuyers.length > 0 && <ScrollHint />}
           <div className="flex-1 overflow-auto max-h-[65vh]">
             {isLoading ? (
               <SkeletonRows rows={6} />
@@ -403,7 +388,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Company</th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Destination</th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Verification Evidence</th>
-                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Lead Score</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4"><Term t="lead score">Lead Score</Term></th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4 text-right">Outreach</th>
                   </tr>
                 </thead>
@@ -462,7 +447,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
                         <td className="py-3 px-4 border-b border-line text-right" onClick={(e) => e.stopPropagation()}>
                           <button
-                            onClick={() => setEmailModalBuyer(b)}
+                            onClick={() => onNavigateToDrafter?.({
+                              buyerName: b.companyName,
+                              product: b.productCategory || b.industry || '',
+                              country: b.country,
+                            })}
                             className="btn-secondary px-2.5 py-1 text-xs font-semibold inline-flex items-center gap-1.5 hover:bg-blue-pale hover:border-blue"
                           >
                             <Mail size={12} />
@@ -554,7 +543,11 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
 
             <div className="p-4 border-t border-line bg-page">
               <button
-                onClick={() => setEmailModalBuyer(selectedBuyer)}
+                onClick={() => onNavigateToDrafter?.({
+                  buyerName: selectedBuyer.companyName,
+                  product: selectedBuyer.productCategory || selectedBuyer.industry || '',
+                  country: selectedBuyer.country,
+                })}
                 className="btn-primary w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-2 shadow-xs"
               >
                 <Sparkles size={14} />
@@ -592,6 +585,19 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   required
                   className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <span className="text-[10px] text-faint">Try:</span>
+                  {['Basmati rice', 'Turmeric', 'Cotton trousers'].map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      onClick={() => setDiscoverProduct(ex)}
+                      className="px-2 py-0.5 bg-blue-pale text-blue rounded-full text-[10px] font-medium hover:bg-blue-border"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -606,6 +612,19 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   required
                   className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <span className="text-[10px] text-faint">Try:</span>
+                  {['United Arab Emirates', 'Germany', 'United States'].map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      onClick={() => setDiscoverCountry(ex)}
+                      className="px-2 py-0.5 bg-blue-pale text-blue rounded-full text-[10px] font-medium hover:bg-blue-border"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-3 rounded-lg bg-blue-pale border border-blue-soft text-xs text-blue-dark leading-relaxed">
@@ -640,81 +659,6 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
         </div>
       )}
 
-      {/* Draft Email Modal */}
-      {emailModalBuyer && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl border border-line-dark shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="bg-navy p-4 text-white flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-blue-bright" />
-                <h3 className="text-sm font-bold">Export Pitch: {emailModalBuyer.companyName}</h3>
-              </div>
-              <button onClick={() => setEmailModalBuyer(null)} className="text-faint hover:text-white">
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-3.5">
-              <div>
-                <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Recipient</label>
-                <input
-                  type="text"
-                  readOnly
-                  value={`${emailModalBuyer.companyName} <${emailModalBuyer.email || 'procurement@' + (emailModalBuyer.website ? emailModalBuyer.website.replace(/^https?:\/\/(www\.)?/, '') : 'importer.com')}>`}
-                  className="w-full px-3 py-1.5 bg-page border border-line-dark rounded text-xs text-navy font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Subject</label>
-                <input
-                  type="text"
-                  readOnly
-                  value={`Export Supply Inquiry: Direct Factory Consignments from India`}
-                  className="w-full px-3 py-1.5 bg-white border border-line-dark rounded text-xs font-semibold text-navy"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-bold text-muted uppercase tracking-wider block mb-1">Pitch Body</label>
-                <textarea
-                  rows={7}
-                  readOnly
-                  value={`Dear Procurement Team at ${emailModalBuyer.companyName},\n\nWe are an established Indian export manufacturer specializing in certified consignments with complete quality documentation and preferential tariff clearance.\n\nFollowing trade statistics in ${emailModalBuyer.country}, we understand your market prioritizes dependable lead times and certified factory-direct supply.\n\nCould we provide our latest 2026 catalogue and price specifications for your upcoming procurement review?\n\nWarm regards,\nGlobeX Export Network`}
-                  className="w-full p-3 bg-page border border-line-dark rounded text-xs text-ink leading-relaxed resize-none focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="p-4 bg-page border-t border-line flex justify-between items-center">
-              <button
-                onClick={() => handleCopyEmail(`Dear Procurement Team at ${emailModalBuyer.companyName},\n\nWe are an established Indian export manufacturer...`)}
-                className="btn-secondary px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5"
-              >
-                {copiedEmail ? <Check size={14} className="text-emerald" /> : <Copy size={14} />}
-                <span>{copiedEmail ? 'Copied' : 'Copy Pitch'}</span>
-              </button>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setEmailModalBuyer(null)}
-                  className="px-3 py-1.5 text-xs font-semibold text-muted hover:text-navy"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSendEmail}
-                  disabled={emailSent}
-                  className="btn-primary px-4 py-1.5 text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-                >
-                  {emailSent ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
-                  <span>{emailSent ? 'Sent!' : 'Save Outreach Draft'}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
