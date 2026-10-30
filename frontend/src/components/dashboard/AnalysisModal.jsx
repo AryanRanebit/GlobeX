@@ -4,7 +4,7 @@ import { apiFetch } from '../../lib/api';
 import Term from '../ui/Jargon';
 import ScrollHint from '../ui/ScrollHint';
 
-const POLL_INTERVAL_MS = 2500;
+const POLL_INTERVAL_MS = 5000;
 const POLL_TIMEOUT_MS = 150000;
 
 /**
@@ -74,6 +74,11 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
   const runAnalysis = async (e) => {
     if (e) e.preventDefault();
     if (!product.trim()) return;
+    if (product.trim().length > 1000) {
+      setError('Product description too long (max 1000 characters)');
+      setPhase('failed');
+      return;
+    }
     clearTimeout(pollRef.current);
     setPhase('running');
     setError(null);
@@ -86,7 +91,8 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.message || `Analysis could not be started (status ${res.status})`);
+        const detail = Array.isArray(json.errors) && json.errors[0]?.message;
+        throw new Error(detail || json.message || `Analysis could not be started (status ${res.status})`);
       }
       const jobId = json.data.jobId || json.data.id;
       pollStatus(jobId, Date.now());

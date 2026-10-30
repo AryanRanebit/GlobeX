@@ -868,8 +868,12 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         
         The email should:
         1. Be written with a polite, professional {request.tone} tone.
-        2. Introduce the exporter, their product range, and standard certifications (e.g. ISO, GMP).
-        3. Explain why this partnership makes sense for the buyer.
+        2. Introduce the exporter using ONLY the details given above. Do NOT invent or
+           assume claims about the exporter's size, years in business, reputation, quality,
+           certifications, capacity, shelf life, delivery performance or existing customers.
+           If such details are not provided, either omit them or use conditional phrasing
+           (e.g. "we would be glad to share our product specifications and certifications").
+        3. Explain why a conversation could make sense for the buyer, based only on the buyer details above.
         4. End with a clear call-to-action (e.g., brief Zoom call, product catalogue).
         5. Be concise (under 200 words).
         

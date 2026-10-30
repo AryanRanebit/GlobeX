@@ -14,7 +14,7 @@ export const validate =
         field: e.path.join('.'),
         message: e.message,
       }));
-      sendError(res, 'Validation failed', 422, errors);
+      sendError(res, errors[0]?.message || 'Validation failed', 422, errors);
       return;
     }
 

@@ -77,18 +77,11 @@ class OutreachAgentImpl implements IOutreachAgent {
 
     const content = `${greeting},
 
-I hope this message finds you well. My name is ${input.sender.name}, and I represent ${input.sender.companyName}, a leading ${input.sender.industry} company based in India.
+I hope this message finds you well. My name is ${input.sender.name}, and I represent ${input.sender.companyName}, a ${input.sender.industry} company based in India.
 
-We have been closely following ${input.buyer.companyName}'s impressive growth in the ${input.buyer.industry} sector in ${input.buyer.country}. Given your company's reputation for quality sourcing, I believe there's a strong potential for a mutually beneficial partnership.
+We have been closely following ${input.buyer.companyName}'s impressive growth in the ${input.buyer.industry} sector in ${input.buyer.country}. I would welcome a conversation about whether there is a fit between our companies.
 
-${input.sender.companyName} specialises in producing premium export-grade products that meet international quality standards including ISO, FSSAI, and relevant certifications for your market. We currently export to multiple countries and are expanding our presence in ${input.buyer.country}.
-
-What we offer:
-• Competitive pricing with consistent quality
-• Flexible MOQ and customisable packaging
-• Reliable supply chain with on-time delivery
-• Full compliance with ${input.buyer.country} import regulations
-• Dedicated export documentation support
+I would be glad to share our product specifications and the certifications we can provide for ${input.buyer.country}.
 
 I would love the opportunity to share our product catalogue and discuss how we can support ${input.buyer.companyName}'s sourcing needs. Would you be open to a brief call this week or next?
 
