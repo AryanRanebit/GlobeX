@@ -52,6 +52,9 @@ export default function DashboardHome() {
           setBuyerCount(data.total);
         } else if (Array.isArray(data?.buyers)) {
           setBuyerCount(data.buyers.length);
+        } else if (Array.isArray(data?.data)) {
+          // Live API shape: { success, message, data: [...buyers] }
+          setBuyerCount(data.data.length);
         }
       })
       .catch(() => {});

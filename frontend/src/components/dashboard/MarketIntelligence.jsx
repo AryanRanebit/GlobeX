@@ -262,30 +262,31 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
 
       {/* Commodity Summary Card */}
       <div className="bg-white rounded-xl border border-line p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-blue-pale border border-blue-border text-blue flex items-center justify-center shrink-0">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-lg bg-blue-pale border border-blue-border text-blue flex items-center justify-center shrink-0 mt-0.5">
             <Globe2 size={20} />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            {/* Badge row first, title on its own line, metadata de-emphasized */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <Term t="HS code" className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
                 HS {resolvedHs}
               </Term>
-              <h2 className="text-sm font-bold text-navy">
-                {productLabel || (resolvedHs === '62'
-                  ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
-                  : resolvedHs === '091030'
-                    ? 'Turmeric (Ground)'
-                    : resolvedHs === 'TOTAL'
-                      ? 'Total Merchandise Exports (All Goods)'
-                      : `Commodity Group HS ${resolvedHs}`)}
-              </h2>
               {resolvedHs !== selectedHs && (
                 <span className="text-[11px] text-muted">No 2025 rows for HS {selectedHs}; showing parent heading.</span>
               )}
             </div>
-            <p className="text-xs text-muted mt-0.5">
-              Reporter: <strong>India</strong> (Code: 699) | Period: <strong>2025 Annual</strong> | Trade Flow: <strong>Exports (<Term t="FOB" />)</strong>
+            <h2 className="text-base font-bold text-navy font-heading leading-snug mt-1.5">
+              {productLabel || (resolvedHs === '62'
+                ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
+                : resolvedHs === '091030'
+                  ? 'Turmeric (Ground)'
+                  : resolvedHs === 'TOTAL'
+                    ? 'Total Merchandise Exports (All Goods)'
+                    : `Commodity Group HS ${resolvedHs}`)}
+            </h2>
+            <p className="text-[11px] text-muted mt-1">
+              Reporter: India (Code: 699) · Period: 2025 Annual · Trade Flow: Exports (<Term t="FOB" />)
             </p>
           </div>
         </div>
