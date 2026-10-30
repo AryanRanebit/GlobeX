@@ -42,22 +42,36 @@ import type {
 
 // ─── Query Generator ─────────────────────────────────────────────────────────
 
+export function cleanProductForSearch(product: string): string {
+  const cleaned = product
+    .replace(/\([^)]*\)|\[[^\]]*\]/g, ' ')
+    .replace(/\bHS\s*(?:code\s*)?[:#]?\s*[\d.]{4,10}\b/gi, ' ')
+    .replace(/\b\d{4,10}\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return cleaned || product.trim();
+}
+
 export function generateBuyerSearchQuery(
   product: string,
   targetMarket: string,
 ): string {
   const market = targetMarket.trim();
-  return `importers of "${product}" in ${market}`;
+  return `importers of "${cleanProductForSearch(product)}" in ${market}`;
 }
 
 // ─── Name Normalizer ─────────────────────────────────────────────────────────
 
 export function normalizeCompanyName(raw: string): string {
   return raw
-    .trim()
-    .replace(/\s+/g, ' ')
     .toLowerCase()
-    .replace(/\b(ltd|llc|inc|corp|gmbh|plc|pvt|limited|co\.|s\.a\.|b\.v\.)\b\.?$/gi, '')
+    .replace(/\([^)]*\)|\[[^\]]*\]/g, ' ')
+    .replace(/[.,'&\-_/]/g, ' ')
+    .replace(
+      /\b(ltd|limited|llc|llp|inc|corp|corporation|gmbh|plc|pvt|co|sa|bv|fz|fze|est|pjsc|sarl|pty)\b/g,
+      ' ',
+    )
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -88,7 +102,10 @@ export function deduplicationKey(candidate: Pick<DiscoveredCandidate, 'normalize
 export function deduplicateCandidates(candidates: DiscoveredCandidate[]): DiscoveredCandidate[] {
   const seen = new Map<string, DiscoveredCandidate>();
   for (const c of candidates) {
-    const key = deduplicationKey(c);
+    // A shared website domain is stronger identity evidence than a name match:
+    // the same company often appears under several name variants across runs
+    // (e.g. "MKY KSA" vs "Mohammad Khemais Al Yarabi (MKY KSA)" on mkyksa.com).
+    const key = c.domain ? `domain::${c.domain}` : deduplicationKey(c);
     if (!seen.has(key)) {
       seen.set(key, c);
     }
