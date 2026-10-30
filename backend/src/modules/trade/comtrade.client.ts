@@ -86,6 +86,7 @@ export interface ComtradeQueryParams {
   period?: string;
   cmdCode?: string;
   flowCode?: string;
+  partnerCode?: string;
   partner2Code?: string;
   customsCode?: string;
   motCode?: string;

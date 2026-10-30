@@ -7,6 +7,8 @@
 
 import { prisma } from '../../config/database';
 import { comtradeClient } from './comtrade.client';
+import { logger } from '../../utils/logger';
+import { selectMirrorPerReporter, computeIndiaShare } from './mirrorMetrics';
 
 export interface TradeMarketRow {
   rank?: number;
@@ -17,6 +19,8 @@ export interface TradeMarketRow {
   indiaExportLabel: string;
   destinationMarketSizeUsd: number | null;
   destinationMarketSizeStatus: 'Not available from free data' | 'Available (Destination-reported imports CIF)';
+  /** Period the destination import figure belongs to (may differ from requested year) */
+  destinationMarketSizePeriod: string | null;
   indiaShareOfDestinationImportPct: number | null;
   indiaShareStatus: 'Not available from free data' | 'Available';
   shareOfIndiaExportsPct?: number;
@@ -103,7 +107,7 @@ export const tradeService = {
       };
     }
 
-    const [rows, totalMarkets, worldRow, latestRow, destinationImports, destinationFromIndia] = await Promise.all([
+    const [rows, totalMarkets, worldRow, latestRow, destinationImports] = await Promise.all([
       prisma.tradeFlow.findMany({
         where,
         orderBy: { [sortBy]: sortDir },
@@ -132,40 +136,34 @@ export const tradeService = {
         orderBy: { fetchedAt: 'desc' },
         select: { fetchedAt: true, source: true, cmdDescription: true },
       }),
-      // Look up destination-reported imports from World (flow='M', partner='0')
+      // Destination-reported imports from World (flow='M', partner='0').
+      // All periods fetched; per reporter we prefer the requested year and
+      // otherwise take the latest seeded period (period surfaced per row).
       prisma.tradeFlow.findMany({
-        where: { partnerCode: '0', period: year, flowCode: 'M', cmdCode: hs },
-        select: { reporterCode: true, tradeValueUsd: true },
-      }),
-      // Look up destination-reported imports from India (flow='M', partner='699')
-      prisma.tradeFlow.findMany({
-        where: { partnerCode: '699', period: year, flowCode: 'M', cmdCode: hs },
-        select: { reporterCode: true, tradeValueUsd: true },
+        where: { partnerCode: '0', flowCode: 'M', cmdCode: hs },
+        orderBy: { period: 'desc' },
+        select: { reporterCode: true, tradeValueUsd: true, period: true },
       }),
     ]);
 
     const worldTotal = worldRow?.tradeValueUsd ?? null;
 
-    // Build lookup maps for destination-reported figures if present
-    const destMarketSizeMap = new Map<string, number>();
-    for (const d of destinationImports) {
-      destMarketSizeMap.set(d.reporterCode, d.tradeValueUsd);
-    }
-
-    const destFromIndiaMap = new Map<string, number>();
-    for (const d of destinationFromIndia) {
-      destFromIndiaMap.set(d.reporterCode, d.tradeValueUsd);
-    }
+    // Build lookup for destination-reported figures if present.
+    // Rows arrive newest-first; keep the requested-year row when present,
+    // otherwise the most recent period available for that reporter.
+    const mirrorByReporter = selectMirrorPerReporter(destinationImports, year);
 
     // Attach rankings and enforce strict separation between India exports and destination market size
     const rankedMarkets: TradeMarketRow[] = rows.map((r, idx) => {
-      const destImportTotal = destMarketSizeMap.get(r.partnerCode) ?? null;
-      const destImportFromIndia = destFromIndiaMap.get(r.partnerCode) ?? null;
+      const mirror = mirrorByReporter.get(r.partnerCode) ?? null;
+      const destImportTotal = mirror && mirror.value > 0 ? mirror.value : null;
+      const destImportPeriod = mirror?.period ?? null;
 
-      const hasDestData = destImportTotal !== null && destImportTotal > 0;
-      const indiaSharePct = hasDestData && destImportFromIndia !== null
-        ? (destImportFromIndia / destImportTotal!) * 100
-        : null;
+      const hasDestData = destImportTotal !== null;
+      // India's market share: India-reported exports to the destination
+      // divided by the destination's own import declarations from World
+      // (mirror data). Never a proxy: null unless genuine mirror data exists.
+      const indiaSharePct = computeIndiaShare(r.tradeValueUsd, destImportTotal);
 
       const shareOfIndiaExports = worldTotal && worldTotal > 0
         ? (r.tradeValueUsd / worldTotal) * 100
@@ -180,6 +178,7 @@ export const tradeService = {
         indiaExportLabel: 'India-Reported Exports (FOB)',
         destinationMarketSizeUsd: destImportTotal,
         destinationMarketSizeStatus: hasDestData ? 'Available (Destination-reported imports CIF)' : 'Not available from free data',
+        destinationMarketSizePeriod: hasDestData ? destImportPeriod : null,
         indiaShareOfDestinationImportPct: indiaSharePct,
         indiaShareStatus: indiaSharePct !== null ? 'Available' : 'Not available from free data',
         shareOfIndiaExportsPct: shareOfIndiaExports,
@@ -214,7 +213,7 @@ export const tradeService = {
         dataSemantics: {
           indiaReportedExports: 'Merchandise exports reported by India (FOB). Does NOT represent destination total market size.',
           destinationMarketSize: 'Total imports declared by destination from World (flow=M, partner=0). Shows "Not available from free data" if destination import series is unseeded.',
-          indiaShareOfDestination: 'Destination imports from India / Destination imports from World. Shows "Not available from free data" when destination import series is unseeded.',
+          indiaShareOfDestination: 'India-reported exports to destination / destination-reported imports from World (mirror). Shows "Not available from free data" when the destination import series is unseeded.',
         },
       },
     };
@@ -274,5 +273,135 @@ export const tradeService = {
     }
 
     return upserted;
+  },
+
+  /**
+   * Seed destination market-size mirror data: for the top destinations of
+   * Indian exports (by value) of one HS code, fetch each destination's OWN
+   * import declarations from World (reporter=destination, partner=0,
+   * flow='M') from UN Comtrade and store them as TradeFlow rows.
+   *
+   * This is genuine mirror data - never a proxy - so getMarkets can replace
+   * "Not available from free data" with real destination market sizes and
+   * India market shares. Batch/admin use only: each destination costs one
+   * Comtrade call (free tier ~500/day, 1 req/sec), so run it as a seed,
+   * never per user request.
+   */
+  async seedMirrorImports(options: {
+    hs: string;
+    year?: string;
+    topN?: number;
+  }): Promise<{
+    hs: string;
+    requestedDestinations: number;
+    seeded: number;
+    missing: string[];
+    periodUsed: Record<string, string>;
+  }> {
+    const { hs } = options;
+    const year = options.year || '2025';
+    const topN = options.topN ?? 25;
+
+    // Top destinations for Indian exports of this HS code
+    const indiaExports = await prisma.tradeFlow.findMany({
+      where: {
+        reporterCode: '699',
+        period: year,
+        flowCode: 'X',
+        cmdCode: hs,
+        partnerName: { not: 'World' },
+      },
+      orderBy: { tradeValueUsd: 'desc' },
+      take: topN,
+      select: { partnerCode: true, partnerName: true, partnerIso3: true },
+    });
+
+    const missing: string[] = [];
+    const periodUsed: Record<string, string> = {};
+    let seeded = 0;
+
+    for (const dest of indiaExports) {
+      // Genuine mirror query: reporter = destination, partner = World, imports
+      const fetchYear = async (y: string) =>
+        comtradeClient.query({
+          reporterCode: dest.partnerCode,
+          period: y,
+          cmdCode: hs,
+          flowCode: 'M',
+          partnerCode: '0',
+          maxRecords: '10',
+        });
+
+      let records: any[] = [];
+      let usedPeriod = year;
+      try {
+        records = (await fetchYear(year)).filter((r: any) => Number(r.partnerCode) === 0);
+        // Fall back one year when the destination has not reported the
+        // requested year yet (kept under its true period, never relabeled).
+        if (records.length === 0) {
+          const prev = String(Number(year) - 1);
+          records = (await fetchYear(prev)).filter((r: any) => Number(r.partnerCode) === 0);
+          usedPeriod = prev;
+        }
+      } catch (err) {
+        logger.warn(`[MirrorSeed] ${dest.partnerName} (${dest.partnerCode}) HS ${hs}: ${(err as Error).message}`);
+        missing.push(`${dest.partnerName}: fetch failed`);
+        continue;
+      }
+
+      const rec = records[0];
+      if (!rec || !(Number(rec.primaryValue) > 0)) {
+        missing.push(`${dest.partnerName}: no ${year}/${Number(year) - 1} import declaration in Comtrade`);
+        continue;
+      }
+
+      await prisma.tradeFlow.upsert({
+        where: {
+          reporterCode_partnerCode_period_flowCode_cmdCode: {
+            reporterCode: dest.partnerCode,
+            partnerCode: '0',
+            period: usedPeriod,
+            flowCode: 'M',
+            cmdCode: hs,
+          },
+        },
+        update: {
+          reporterName: dest.partnerName,
+          partnerName: 'World',
+          partnerIso3: null,
+          tradeValueUsd: Number(rec.primaryValue) || 0,
+          netWeightKg: rec.netWgt != null ? Number(rec.netWgt) : null,
+          cmdDescription: rec.cmdDesc || null,
+          source: 'COMTRADE',
+          sourceDetail: `UN Comtrade mirror (destination-reported imports CIF), extracted ${new Date().toISOString().slice(0, 10)}`,
+          fetchedAt: new Date(),
+        },
+        create: {
+          reporterCode: dest.partnerCode,
+          reporterName: dest.partnerName,
+          partnerCode: '0',
+          partnerName: 'World',
+          partnerIso3: null,
+          period: usedPeriod,
+          flowCode: 'M',
+          cmdCode: hs,
+          cmdDescription: rec.cmdDesc || null,
+          tradeValueUsd: Number(rec.primaryValue) || 0,
+          netWeightKg: rec.netWgt != null ? Number(rec.netWgt) : null,
+          source: 'COMTRADE',
+          sourceDetail: `UN Comtrade mirror (destination-reported imports CIF), extracted ${new Date().toISOString().slice(0, 10)}`,
+        },
+      });
+      periodUsed[dest.partnerName] = usedPeriod;
+      seeded++;
+    }
+
+    return {
+      hs,
+      requestedDestinations: indiaExports.length,
+      seeded,
+      missing,
+      periodUsed,
+    };
   },
 };

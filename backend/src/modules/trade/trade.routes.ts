@@ -13,4 +13,7 @@ router.get('/markets', tradeController.getMarkets);
 // so it requires a signed-in ADMIN. (The seed creates admin@globex.ai.)
 router.post('/refresh', authenticate, authorize(Role.ADMIN), tradeController.refresh);
 
+// Admin-only batch seed of mirror (destination-reported import) data.
+router.post('/seed-mirror', authenticate, authorize(Role.ADMIN), tradeController.seedMirror);
+
 export { router as tradeRoutes };

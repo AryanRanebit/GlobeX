@@ -70,4 +70,27 @@ export const tradeController = {
       next(err);
     }
   },
+
+  /**
+   * POST /api/v1/trade/seed-mirror
+   *
+   * Admin-only batch seed of destination market-size mirror data
+   * (destination-reported imports from World) for the top export
+   * destinations of one HS code. Each destination costs one Comtrade call.
+   */
+  seedMirror: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const hs = (req.body.hs as string) || '62';
+      const year = (req.body.year as string) || '2025';
+      const topN = Math.min(Number(req.body.topN) || 25, 100);
+      const result = await tradeService.seedMirrorImports({ hs, year, topN });
+      return sendSuccess(
+        res,
+        result,
+        `Mirror seed for HS ${hs}: ${result.seeded}/${result.requestedDestinations} destinations seeded.`,
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
 };

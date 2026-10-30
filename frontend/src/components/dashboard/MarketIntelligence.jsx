@@ -626,10 +626,25 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
                   <span>Market Size & Share Contract Guarantee</span>
                 </div>
                 <p className="leading-relaxed">
-                  <strong>Destination Market Size:</strong> <span className="font-semibold">{selectedMarket.destinationMarketSizeStatus || 'Not available from free data'}</span>.
+                  <strong>Destination Market Size:</strong>{' '}
+                  {selectedMarket.destinationMarketSizeUsd ? (
+                    <span className="font-semibold">
+                      {formatUsd(selectedMarket.destinationMarketSizeUsd)}
+                      <span className="font-normal text-[11px]"> ({selectedMarket.partnerName}-reported imports from World, CIF{selectedMarket.destinationMarketSizePeriod ? `, ${selectedMarket.destinationMarketSizePeriod}` : ''})</span>
+                    </span>
+                  ) : (
+                    <span className="font-semibold">{selectedMarket.destinationMarketSizeStatus || 'Not available from free data'}</span>
+                  )}
                 </p>
+                {selectedMarket.indiaShareOfDestinationImportPct !== null && selectedMarket.indiaShareOfDestinationImportPct !== undefined && (
+                  <p className="leading-relaxed">
+                    <strong>India's Share of {selectedMarket.partnerName}'s Import Market:</strong>{' '}
+                    <span className="font-semibold">{selectedMarket.indiaShareOfDestinationImportPct.toFixed(2)}%</span>
+                    <span className="font-normal text-[11px]"> (India-reported exports / {selectedMarket.partnerName}-reported world imports)</span>
+                  </p>
+                )}
                 <p className="leading-relaxed text-[11px] text-accent-text">
-                  India-reported export value ({formatUsd(selectedMarket.indiaExportValueUsd || selectedMarket.tradeValueUsd)}) represents what Indian exporters shipped to {selectedMarket.partnerName}. It does NOT represent {selectedMarket.partnerName}'s total global imports. In compliance with data integrity contracts, GlobeX never substitutes India's exports as destination market size.
+                  India-reported export value ({formatUsd(selectedMarket.indiaExportValueUsd || selectedMarket.tradeValueUsd)}) represents what Indian exporters shipped to {selectedMarket.partnerName}. {selectedMarket.destinationMarketSizeUsd ? 'Destination market size above is genuine mirror data: the destination’s own customs import declarations, never a proxy.' : `It does NOT represent {selectedMarket.partnerName}'s total global imports. In compliance with data integrity contracts, GlobeX never substitutes India's exports as destination market size.`}
                 </p>
               </div>
 
@@ -762,8 +777,15 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
                 <p className="font-bold text-navy">Data Semantics & Market Size Advisory:</p>
                 <p className="text-[11px] text-muted">
                   • <strong>Reported Export Value:</strong> Sourced from India Customs export declarations (FOB).<br />
-                  • <strong>Destination Market Size:</strong> Not available from free data (requires {selectedMarket.partnerName}'s domestic import declarations from World).<br />
-                  • <strong>India Share of Market:</strong> Not available from free data.
+                  • <strong>Destination Market Size:</strong>{' '}
+                  {selectedMarket.destinationMarketSizeUsd
+                    ? `${formatUsd(selectedMarket.destinationMarketSizeUsd)} (${selectedMarket.partnerName}-reported imports from World, CIF${selectedMarket.destinationMarketSizePeriod ? `, ${selectedMarket.destinationMarketSizePeriod}` : ''})`
+                    : `Not available from free data (requires ${selectedMarket.partnerName}'s domestic import declarations from World).`}
+                  <br />
+                  • <strong>India Share of Market:</strong>{' '}
+                  {selectedMarket.indiaShareOfDestinationImportPct !== null && selectedMarket.indiaShareOfDestinationImportPct !== undefined
+                    ? `${selectedMarket.indiaShareOfDestinationImportPct.toFixed(2)}% of ${selectedMarket.partnerName}'s import market (mirror-based)`
+                    : 'Not available from free data.'}
                 </p>
               </div>
               <p>
