@@ -94,12 +94,6 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
             >
               Sign In
             </button>
-            <button
-              onClick={onOpenAuth}
-              className="btn-primary text-sm font-semibold py-2 px-4.5 rounded-lg shadow-xs"
-            >
-              Book a Free Demo
-            </button>
           </div>
 
           {/* Mobile Hamburger */}
@@ -137,7 +131,6 @@ export default function Navbar({ onOpenAuth, currentPage, onNavigate }) {
           </div>
           <div className="p-5 flex flex-col gap-2.5 border-t border-line">
             <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-secondary w-full py-2.5 text-xs">Sign In</button>
-            <button onClick={() => { setMobileMenuOpen(false); onOpenAuth(); }} className="btn-primary w-full py-2.5 text-xs">Book a Free Demo</button>
           </div>
         </div>
       )}
