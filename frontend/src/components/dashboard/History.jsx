@@ -144,20 +144,25 @@ function StoredSearchModal({ entry, onClose }) {
  * One coherent port scene for the History page blank area (user-requested):
  * SKY (clouds, gulls, paper plane) on top, GROUND/PORT (dock on posts, tower
  * crane, stacked containers) at the bottom LEFT, and open SEA (horizon, wave
- * rows, lighthouse at the harbor mouth, anchor) to the RIGHT. No sun and no
- * ship here on purpose: the global .bg-app-ship scene already paints the sun
- * (top) and its ship with waves (bottom right). Flipping the port to the left
- * means that global ship sails in the same open water this scene draws, and
- * the wave rows at this scene's bottom edge merge into the global waves -
- * one sun, one sea, one ship on the page.
+ * rows, lighthouse at the harbor mouth) to the RIGHT. No sun, no ship and no
+ * anchor here on purpose: the global .bg-app-ship scene paints the sun (top)
+ * and its ship with waves (bottom right), so this scene's open water merges
+ * into that same sea - one sun, one sea, one ship on the page.
+ * Perspective (user-requested): the dock deck recedes toward the horizon as
+ * a trapezoid with shrinking posts, a second container stack far down the
+ * dock is drawn smaller, and wave rows grow in amplitude and opacity as they
+ * come closer to the viewer (far rows near the horizon are fainter).
  * Same style as the global scene: teal #134E4A / wave teal #0F766E / amber
- * #B45309, stroke-width 2-2.2, opacity 0.16-0.28, round caps.
+ * #B45309, stroke-width 2-2.2, round caps.
  * Rendered twice from the same SceneContent: full width on desktop, a
  * left-cropped viewBox on mobile so port + lighthouse stay legible at 390px.
  * vector-effect=non-scaling-stroke keeps the line weight constant at any size.
  */
 const artTeal = { stroke: '#134E4A', strokeOpacity: 0.16, strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' };
+const artTealFar = { stroke: '#134E4A', strokeOpacity: 0.11, strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' };
 const artWave = { stroke: '#0F766E', strokeOpacity: 0.16, strokeWidth: 2, strokeLinecap: 'round', fill: 'none' };
+const artWaveFar = { stroke: '#0F766E', strokeOpacity: 0.08, strokeWidth: 2, strokeLinecap: 'round', fill: 'none' };
+const artWaveNear = { stroke: '#0F766E', strokeOpacity: 0.22, strokeWidth: 2, strokeLinecap: 'round', fill: 'none' };
 const artAmber = { stroke: '#B45309', strokeOpacity: 0.28, strokeWidth: 2.2, strokeLinecap: 'round', fill: 'none' };
 
 const waveRow = (y, amp, step, x0, x1) => {
@@ -166,18 +171,22 @@ const waveRow = (y, amp, step, x0, x1) => {
   return d;
 };
 
-function ContainerBox({ x, y }) {
+function ContainerBox({ x, y, w = 46, h = 26, far = false }) {
+  const p = far ? artTealFar : artTeal;
   return (
-    <g {...artTeal}>
-      <rect x={x} y={y} width="46" height="26" />
-      <line x1={x + 11} y1={y} x2={x + 11} y2={y + 26} />
-      <line x1={x + 23} y1={y} x2={x + 23} y2={y + 26} />
-      <line x1={x + 35} y1={y} x2={x + 35} y2={y + 26} />
+    <g {...p}>
+      <rect x={x} y={y} width={w} height={h} />
+      <line x1={x + w * 0.25} y1={y} x2={x + w * 0.25} y2={y + h} />
+      <line x1={x + w * 0.5} y1={y} x2={x + w * 0.5} y2={y + h} />
+      <line x1={x + w * 0.75} y1={y} x2={x + w * 0.75} y2={y + h} />
     </g>
   );
 }
 
 function SceneContent() {
+  // dock deck recedes toward a vanishing region near the horizon (right)
+  const deckTop = (x) => 236 - (10 * x) / 500;
+  const deckBottom = (x) => 258 - (16 * x) / 500;
   return (
     <g vectorEffect="non-scaling-stroke">
       {/* ===== SKY ===== */}
@@ -194,23 +203,29 @@ function SceneContent() {
       <path d="M660 60 L692 44 L672 74 L666 60 Z" {...artTeal} />
       <line x1="666" y1="60" x2="692" y2="44" {...artTeal} />
 
-      {/* ===== GROUND / PORT (left) ===== */}
-      {/* dock deck on posts rising from the sea */}
-      <line x1="0" y1="232" x2="480" y2="232" {...artTeal} />
-      <line x1="0" y1="246" x2="480" y2="246" {...artTeal} />
-      {[40, 120, 200, 280, 360, 440].map((x) => (
-        <line key={x} x1={x} y1="246" x2={x} y2="278" {...artTeal} />
-      ))}
+      {/* ===== GROUND / PORT (left, dock deck receding toward the horizon) ===== */}
+      {/* trapezoid deck: top edge slopes up to the far end, face below it */}
+      <line x1="0" y1="236" x2="500" y2="226" {...artTeal} />
+      <line x1="0" y1="258" x2="500" y2="242" {...artTeal} />
+      <line x1="0" y1="236" x2="0" y2="258" {...artTeal} />
+      <line x1="500" y1="226" x2="500" y2="242" {...artTeal} />
+      {/* posts under the deck, shrinking with distance */}
+      {[40, 120, 200, 280, 360, 440].map((x, i) => {
+        const top = deckBottom(x);
+        const len = 34 - (20 * i) / 5;
+        return <line key={x} x1={x} y1={top} x2={x} y2={top + len} {...artTeal} />;
+      })}
       {/* tower crane on the dock, jib reaching out over the water */}
       <g {...artTeal}>
-        <line x1="330" y1="232" x2="330" y2="76" />
-        <line x1="366" y1="232" x2="366" y2="76" />
+        <line x1="330" y1="229" x2="330" y2="76" />
+        <line x1="366" y1="229" x2="366" y2="76" />
         <line x1="330" y1="76" x2="366" y2="76" />
         <path d="M330 98 L366 120 M366 98 L330 120" />
         <path d="M330 120 L366 142 M366 120 L330 142" />
         <path d="M330 142 L366 164 M366 142 L330 164" />
         <path d="M330 164 L366 186 M366 164 L330 186" />
         <path d="M330 186 L366 208 M366 186 L330 208" />
+        <path d="M330 208 L366 229 M366 208 L330 229" />
         <path d="M330 76 L348 40 L366 76" />
         <line x1="348" y1="40" x2="348" y2="76" />
         <line x1="348" y1="40" x2="240" y2="64" />
@@ -225,21 +240,26 @@ function SceneContent() {
         <line x1="521" y1="130" x2="521" y2="154" />
         <line x1="531" y1="130" x2="531" y2="154" />
       </g>
-      {/* stacked containers on the dock */}
-      <ContainerBox x={60} y={206} />
-      <ContainerBox x={110} y={206} />
-      <ContainerBox x={160} y={206} />
-      <ContainerBox x={210} y={206} />
-      <ContainerBox x={85} y={180} />
-      <ContainerBox x={135} y={180} />
-      <ContainerBox x={110} y={154} />
+      {/* near container stack on the dock */}
+      <ContainerBox x={60} y={207} w={48} h={28} />
+      <ContainerBox x={112} y={207} w={48} h={28} />
+      <ContainerBox x={164} y={207} w={48} h={28} />
+      <ContainerBox x={216} y={207} w={48} h={28} />
+      <ContainerBox x={86} y={181} w={44} h={26} />
+      <ContainerBox x={138} y={181} w={44} h={26} />
+      <ContainerBox x={112} y={157} w={40} h={24} />
+      {/* far container stack down the dock: smaller and fainter (distance) */}
+      <ContainerBox x={425} y={210} w={30} h={17} far />
+      <ContainerBox x={457} y={210} w={30} h={17} far />
+      <ContainerBox x={441} y={195} w={28} h={15} far />
 
       {/* ===== SEA (right, open water - the global ship sails here) ===== */}
-      <line x1="480" y1="232" x2="1200" y2="232" {...artWave} />
-      <path d={waveRow(268, 7, 26, 0, 1196)} {...artWave} />
-      <path d={waveRow(308, 6, 30, -13, 1187)} {...artWave} />
-      {/* lighthouse on rocks at the harbor mouth */}
-      <g {...artTeal}>
+      <line x1="500" y1="228" x2="1200" y2="228" {...artWaveFar} />
+      <path d={waveRow(250, 3, 22, 520, 1198)} {...artWaveFar} />
+      <path d={waveRow(272, 6, 26, 0, 1196)} {...artWave} />
+      <path d={waveRow(312, 9, 32, -16, 1184)} {...artWaveNear} />
+      {/* lighthouse on rocks at the harbor mouth (far, slightly fainter) */}
+      <g {...artTealFar}>
         <path d="M552 236 Q568 218 588 230 Q606 216 624 230 Q638 220 650 236" />
         <path d="M582 230 L590 138 M634 230 L626 138" />
         <line x1="587" y1="170" x2="630" y2="170" />
@@ -253,15 +273,6 @@ function SceneContent() {
       <line x1="600" y1="118" x2="552" y2="130" {...artAmber} />
       <line x1="616" y1="110" x2="664" y2="94" {...artAmber} />
       <line x1="616" y1="118" x2="664" y2="130" {...artAmber} />
-      {/* anchor resting in the open water */}
-      <g {...artTeal}>
-        <circle cx="850" cy="246" r="6" />
-        <line x1="850" y1="252" x2="850" y2="302" />
-        <line x1="834" y1="268" x2="866" y2="268" />
-        <path d="M826 284 Q826 306 850 302 Q874 306 874 284" />
-        <line x1="826" y1="284" x2="820" y2="292" />
-        <line x1="874" y1="284" x2="880" y2="292" />
-      </g>
     </g>
   );
 }
