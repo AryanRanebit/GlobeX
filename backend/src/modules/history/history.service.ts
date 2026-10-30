@@ -98,7 +98,7 @@ export const historyService = {
    */
   async listForUser(userId: string, limit = 50, offset = 0) {
     const take = Math.min(Math.max(limit, 1), 100);
-    const [entries, total] = await Promise.all([
+    const [entries, total, byType, hsCodes] = await Promise.all([
       prisma.analysisHistory.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
@@ -113,8 +113,28 @@ export const historyService = {
         },
       }),
       prisma.analysisHistory.count({ where: { userId } }),
+      prisma.analysisHistory.groupBy({
+        by: ['analysisType'],
+        where: { userId },
+        _count: { _all: true },
+      }),
+      prisma.analysisHistory.findMany({
+        where: { userId, hsCode: { not: null } },
+        select: { hsCode: true },
+        distinct: ['hsCode'],
+      }),
     ]);
-    return { entries, total };
+    const countOf = (t: string) => byType.find((r) => r.analysisType === t)?._count._all ?? 0;
+    return {
+      entries,
+      total,
+      stats: {
+        total,
+        fullAnalyses: countOf('full_analysis'),
+        marketSearches: countOf('market_search'),
+        uniqueHsCodes: hsCodes.length,
+      },
+    };
   },
 
   /**

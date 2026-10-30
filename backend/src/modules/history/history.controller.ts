@@ -30,9 +30,10 @@ export const historyController = {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
       const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
-      const { entries, total } = await historyService.listForUser(req.user!.userId, limit, offset);
+      const { entries, total, stats } = await historyService.listForUser(req.user!.userId, limit, offset);
       sendSuccess(res, entries, 'Analysis history retrieved', 200, {
         pagination: { limit, offset, total },
+        stats,
       });
     } catch (err) {
       next(err);

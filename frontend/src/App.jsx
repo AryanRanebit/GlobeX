@@ -155,7 +155,16 @@ export default function App() {
         )}
         {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
         {dashboardPage === 'drafter' && <EmailDrafter onRequireAuth={requireSignIn} prefill={draftPrefill} />}
-        {dashboardPage === 'history' && <History />}
+        {dashboardPage === 'history' && (
+          <History
+            onNavigate={(tab) => {
+              setDashboardPage(tab);
+              const url = new URL(window.location.href);
+              url.searchParams.set('tab', tab);
+              window.history.pushState({}, '', url.toString());
+            }}
+          />
+        )}
       </DashboardLayout>
     );
   }

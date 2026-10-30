@@ -8,7 +8,11 @@ import {
   X,
   RefreshCw,
   BookmarkCheck,
-  ChevronRight
+  ChevronRight,
+  Boxes,
+  Users,
+  MessageSquare,
+  ArrowRight
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import AnalysisModal from './AnalysisModal';
@@ -135,8 +139,9 @@ function StoredSearchModal({ entry, onClose }) {
   );
 }
 
-export default function History() {
+export default function History({ onNavigate }) {
   const [entries, setEntries] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openingId, setOpeningId] = useState(null);
@@ -152,6 +157,7 @@ export default function History() {
         throw new Error(json.message || `Could not load history (status ${res.status})`);
       }
       setEntries(Array.isArray(json.data) ? json.data : []);
+      setStats(json.meta?.stats || null);
     } catch (err) {
       setError(err.message || 'Could not load your analysis history.');
     } finally {
@@ -262,6 +268,55 @@ export default function History() {
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Stats strip (fills the page when the list is short; pushes down naturally as it grows) */}
+      {!loading && stats && entries.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { icon: HistoryIcon, label: 'Saved Results', value: stats.total },
+            { icon: Sparkles, label: 'Full Analyses', value: stats.fullAnalyses },
+            { icon: Globe2, label: 'Market Searches', value: stats.marketSearches },
+            { icon: Boxes, label: 'Products & HS Codes', value: stats.uniqueHsCodes },
+          ].map(({ icon: Icon, label, value }) => (
+            <div key={label} className="bg-white p-5 rounded-xl border border-line transition-shadow hover:shadow-[var(--shadow-float)]">
+              <div className="w-9 h-9 rounded-lg bg-blue-pale border border-blue-border flex items-center justify-center mb-3">
+                <Icon size={16} className="text-blue" />
+              </div>
+              <p className="text-xs text-muted">{label}</p>
+              <p className="text-2xl font-black text-navy font-heading mt-0.5">{value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Quick actions: visual fill + genuine next steps, matches dashboard card language */}
+      {!loading && (
+        <div>
+          <p className="text-[10px] font-bold text-faint uppercase tracking-wider mb-2 px-1">Explore next</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { icon: Globe2, title: 'Explore new markets', sub: 'Search any HS code or product in Market Intelligence', tab: 'markets' },
+              { icon: Users, title: 'Discover buyers', sub: 'Find verified importers for your product', tab: 'buyers' },
+              { icon: MessageSquare, title: 'Ask AI Copilot', sub: 'Trade questions answered with cited data', tab: 'copilot' },
+            ].map(({ icon: Icon, title, sub, tab }) => (
+              <button
+                key={tab}
+                onClick={() => onNavigate && onNavigate(tab)}
+                className="bg-white p-5 rounded-xl border border-line text-left transition-shadow hover:shadow-[var(--shadow-float)] group"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-pale border border-blue-border flex items-center justify-center">
+                    <Icon size={16} className="text-blue" />
+                  </div>
+                  <ArrowRight size={15} className="text-faint group-hover:text-blue transition-colors" />
+                </div>
+                <p className="text-sm font-bold text-navy">{title}</p>
+                <p className="text-xs text-muted mt-1 leading-relaxed">{sub}</p>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
