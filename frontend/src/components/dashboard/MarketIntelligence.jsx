@@ -16,6 +16,8 @@ import { TRADE_STATS } from '../../constants/tradeStats';
 import { apiFetch } from '../../lib/api';
 import { parseHsQuery } from '../../lib/hsQuery';
 import AnalysisModal from './AnalysisModal';
+import Term from '../ui/Jargon';
+import ScrollHint from '../ui/ScrollHint';
 
 function TableSkeletonRows({ rows = 8 }) {
   return (
@@ -266,9 +268,9 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
+              <Term t="HS code" className="font-mono text-xs font-bold text-blue-dark bg-blue-border px-2 py-0.5 rounded">
                 HS {resolvedHs}
-              </span>
+              </Term>
               <h2 className="text-sm font-bold text-navy">
                 {productLabel || (resolvedHs === '62'
                   ? 'Apparel & Clothing Accessories (Not Knitted/Crocheted)'
@@ -283,7 +285,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               )}
             </div>
             <p className="text-xs text-muted mt-0.5">
-              Reporter: <strong>India</strong> (Code: 699) | Period: <strong>2025 Annual</strong> | Trade Flow: <strong>Exports (FOB)</strong>
+              Reporter: <strong>India</strong> (Code: 699) | Period: <strong>2025 Annual</strong> | Trade Flow: <strong>Exports (<Term t="FOB" />)</strong>
             </p>
           </div>
         </div>
@@ -347,12 +349,20 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           <div className="p-10 text-center text-muted">
             <p className="text-sm font-semibold text-navy">No 2025 export data available for HS {resolvedHs}</p>
             <p className="text-xs mt-1">This commodity group has no seeded rows yet. Try a trending chapter like HS 62 (Apparel) or HS 091030 (Turmeric).</p>
-            <button
-              onClick={() => handleHsChange('62')}
-              className="mt-3 px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
-            >
-              View HS 62 (Apparel)
-            </button>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handleHsChange('62')}
+                className="px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
+              >
+                View HS 62 (Apparel)
+              </button>
+              <button
+                onClick={() => handleHsChange('091030')}
+                className="px-3.5 py-1.5 bg-white border border-line-dark rounded-lg text-xs font-semibold text-blue hover:border-blue"
+              >
+                View HS 091030 (Turmeric)
+              </button>
+            </div>
           </div>
         ) : filteredMarkets.length === 0 ? (
           <div className="p-10 text-center text-muted">
@@ -366,13 +376,15 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
             </button>
           </div>
         ) : (
+          <>
+          <ScrollHint />
           <div className="max-h-[65vh] overflow-auto">
             <table className="w-full text-left border-separate border-spacing-0 text-xs md:text-sm">
               <thead>
                 <tr className="text-soft font-bold text-[11px] uppercase tracking-wider">
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4 w-12 text-center">#</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Destination Market</th>
-                  <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">India Exports (2025 FOB)</th>
+                  <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">India Exports (2025 <Term t="FOB" />)</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Share of India Exports</th>
                   <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">
                     <span className="flex items-center gap-1">
@@ -454,6 +466,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Data Semantics & Source Notice Footer */}

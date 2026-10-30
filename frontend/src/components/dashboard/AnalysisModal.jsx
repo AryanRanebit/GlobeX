@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, Loader2, AlertTriangle, ShieldCheck, Info } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
+import Term from '../ui/Jargon';
+import ScrollHint from '../ui/ScrollHint';
 
 const POLL_INTERVAL_MS = 2500;
 const POLL_TIMEOUT_MS = 150000;
@@ -140,6 +142,23 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) 
           </form>
         )}
 
+        {/* Examples so a first-time user can tap instead of type */}
+        {phase === 'idle' && !product.trim() && (
+          <div className="flex flex-wrap items-center gap-2 -mt-2">
+            <span className="text-[11px] text-muted">Try an example:</span>
+            {['Basmati rice', 'Turmeric fingers', 'Cotton trousers'].map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                onClick={() => setProduct(ex)}
+                className="px-2.5 py-1 bg-blue-pale text-blue rounded-full text-[11px] font-medium hover:bg-blue-border"
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Running state */}
         {phase === 'running' && (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
@@ -199,6 +218,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) 
               </div>
             ) : (
               <div className="border border-line rounded-xl overflow-hidden">
+                <ScrollHint />
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
@@ -232,7 +252,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) 
                   </table>
                 </div>
                 <p className="text-[10px] text-faint px-3 py-2 bg-mist border-t border-line">
-                  Score = the market's India-reported export value (FOB) as a % of the largest listed market. It reflects existing trade volume, not forecast demand. Competition and destination market size are not available from free single-reporter data.
+                  Score = the market's India-reported export value (<Term t="FOB" />) as a % of the largest listed market. It reflects existing trade volume, not forecast demand. Competition and destination market size are not available from free single-reporter data.
                 </p>
               </div>
             )}

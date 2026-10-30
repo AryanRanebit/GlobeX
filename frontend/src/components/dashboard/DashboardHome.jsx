@@ -8,7 +8,12 @@ import {
   ArrowUpRight,
   Package,
   Globe2,
+  PackageSearch,
+  BarChart3,
+  Mail,
+  X,
 } from 'lucide-react';
+import Term from '../ui/Jargon';
 
 // Lazy-load the charts row: keeps recharts out of the first paint and shows
 // skeleton cards (same dimensions, no layout shift) while the chunk loads.
@@ -30,6 +35,14 @@ function ChartsSkeleton() {
 export default function DashboardHome() {
   const user = JSON.parse(localStorage.getItem('user') || '{"name":"Aryan Rane"}');
   const [buyerCount, setBuyerCount] = useState(null);
+  // First-time orientation strip; stays hidden once dismissed.
+  const [showHowItWorks, setShowHowItWorks] = useState(
+    () => localStorage.getItem('globex_hide_how_it_works') !== '1'
+  );
+  const dismissHowItWorks = () => {
+    localStorage.setItem('globex_hide_how_it_works', '1');
+    setShowHowItWorks(false);
+  };
 
   React.useEffect(() => {
     apiFetch('/api/v1/buyers')
@@ -62,6 +75,39 @@ export default function DashboardHome() {
         </div>
       </div>
 
+      {/* How it works - plain-language orientation for first-time users */}
+      {showHowItWorks && (
+        <div className="bg-white rounded-xl border border-line p-5 relative">
+          <button
+            onClick={dismissHowItWorks}
+            className="absolute top-3 right-3 text-faint hover:text-navy"
+            aria-label="Dismiss how it works"
+          >
+            <X size={15} />
+          </button>
+          <h2 className="text-base font-bold text-navy font-heading">How GlobeX works</h2>
+          <p className="text-xs text-muted mt-0.5 mb-4">From your product to a pitch in the buyer's language, in four steps.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { icon: PackageSearch, step: '1', title: 'Add your product', text: 'Type what you export - e.g. turmeric or cotton trousers. No codes needed.' },
+              { icon: BarChart3, step: '2', title: 'Compare markets', text: 'See real 2025 export values by destination, from official UN Comtrade data.' },
+              { icon: Users, step: '3', title: 'Find buyers', text: 'Run Buyer Discovery to get verified importers, each with its source link.' },
+              { icon: Mail, step: '4', title: 'Send a local pitch', text: 'Draft in English with AI, then localize to the buyer\'s language in one click.' },
+            ].map(({ icon: StepIcon, step, title, text }) => (
+              <div key={step} className="flex gap-3">
+                <div className="w-9 h-9 rounded-lg bg-blue-pale border border-blue-border text-blue flex items-center justify-center shrink-0">
+                  <StepIcon size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-navy">{step}. {title}</p>
+                  <p className="text-xs text-muted mt-0.5 leading-snug">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Live State */}
       {
         <>
@@ -77,7 +123,7 @@ export default function DashboardHome() {
                   <TrendingUp size={12} /> UN Comtrade 2025
                 </span>
               </div>
-              <h3 className="text-muted text-sm font-medium">India HS 62 Exports</h3>
+              <h3 className="text-muted text-sm font-medium">India <Term t="HS code">HS 62</Term> Exports</h3>
               <p className="text-2xl font-bold text-navy font-heading tracking-tight mt-1">$8.39B USD</p>
             </div>
 

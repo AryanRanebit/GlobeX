@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { SkeletonRows } from '../ui/Skeleton';
 import EmptyState from '../ui/EmptyState';
+import Term from '../ui/Jargon';
+import ScrollHint from '../ui/ScrollHint';
 import ErrorBanner from '../ui/ErrorBanner';
 import { apiFetch } from '../../lib/api';
 
@@ -303,6 +305,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
             </span>
           </div>
 
+          {!isLoading && !error && filteredBuyers.length > 0 && <ScrollHint />}
           <div className="flex-1 overflow-auto max-h-[65vh]">
             {isLoading ? (
               <SkeletonRows rows={6} />
@@ -328,7 +331,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Company</th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Destination</th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Verification Evidence</th>
-                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4">Lead Score</th>
+                    <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4"><Term t="lead score">Lead Score</Term></th>
                     <th className="sticky top-0 z-10 bg-mist border-b border-line py-3 px-4 text-right">Outreach</th>
                   </tr>
                 </thead>
@@ -511,6 +514,19 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   required
                   className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <span className="text-[10px] text-faint">Try:</span>
+                  {['Basmati rice', 'Turmeric', 'Cotton trousers'].map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      onClick={() => setDiscoverProduct(ex)}
+                      className="px-2 py-0.5 bg-blue-pale text-blue rounded-full text-[10px] font-medium hover:bg-blue-border"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -525,6 +541,19 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
                   required
                   className="w-full px-3 py-2 bg-page border border-line-dark rounded-lg text-xs text-navy focus:outline-none focus:border-blue focus:ring-2 focus:ring-blue/15"
                 />
+                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                  <span className="text-[10px] text-faint">Try:</span>
+                  {['United Arab Emirates', 'Germany', 'United States'].map((ex) => (
+                    <button
+                      key={ex}
+                      type="button"
+                      onClick={() => setDiscoverCountry(ex)}
+                      className="px-2 py-0.5 bg-blue-pale text-blue rounded-full text-[10px] font-medium hover:bg-blue-border"
+                    >
+                      {ex}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-3 rounded-lg bg-blue-pale border border-blue-soft text-xs text-blue-dark leading-relaxed">
