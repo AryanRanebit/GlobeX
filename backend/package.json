@@ -16,7 +16,8 @@
     "seed:comtrade": "tsx prisma/seed_comtrade.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
-    "test": "vitest run"
+    "test": "vitest run",
+    "seed:mirror": "tsx prisma/seed_mirror_imports.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
