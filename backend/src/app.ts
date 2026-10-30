@@ -24,6 +24,7 @@ import { chatRoutes } from './modules/chat/chat.routes';
 import { agentsRoutes } from './modules/agents/agents.routes';
 import { tradeRoutes } from './modules/trade/trade.routes';
 import { tariffRoutes } from './modules/tariff/tariff.routes';
+import { historyRoutes } from './modules/history/history.routes';
 
 export const createApp = () => {
   const app = express();
@@ -100,6 +101,9 @@ export const createApp = () => {
   app.use(`${BASE}/tariff`, tariffRoutes);
   // Convenience alias for unversioned /api/trade
   app.use('/api/trade', tradeRoutes);
+  app.use(`${BASE}/history`, historyRoutes);
+  // Convenience alias for unversioned /api/history
+  app.use('/api/history', historyRoutes);
 
   // ─── Error Handling ─────────────────────────────────────────────
   app.use(notFound);

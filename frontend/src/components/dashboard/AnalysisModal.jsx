@@ -13,7 +13,7 @@ const POLL_TIMEOUT_MS = 150000;
  * result - top markets, scores, classification status, and the API's own
  * disclaimers, prominently when the analysis fell back to aggregate data.
  */
-export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) {
+export default function AnalysisModal({ isOpen, onClose, initialProduct = '', storedResult = null }) {
   const [product, setProduct] = useState(initialProduct);
   const [phase, setPhase] = useState('idle'); // idle | running | done | failed
   const [jobState, setJobState] = useState('');
@@ -23,14 +23,22 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) 
 
   useEffect(() => {
     if (isOpen) {
-      setProduct(initialProduct);
-      setPhase('idle');
-      setResult(null);
+      if (storedResult) {
+        // History replay: render the stored snapshot only. No analysis
+        // job is started and no external API is called.
+        setProduct(storedResult.product || initialProduct);
+        setResult(storedResult);
+        setPhase('done');
+      } else {
+        setProduct(initialProduct);
+        setPhase('idle');
+        setResult(null);
+      }
       setError(null);
       setJobState('');
     }
     return () => clearTimeout(pollRef.current);
-  }, [isOpen, initialProduct]);
+  }, [isOpen, initialProduct, storedResult]);
 
   if (!isOpen) return null;
 
@@ -257,13 +265,21 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '' }) 
               </div>
             )}
 
-            {/* Run again */}
-            <button
-              onClick={() => setPhase('idle')}
-              className="self-start text-xs font-semibold text-blue hover:underline"
-            >
-              Run analysis for another product
-            </button>
+            {/* Run again (not in history replay mode) */}
+            {!storedResult && (
+              <button
+                onClick={() => setPhase('idle')}
+                className="self-start text-xs font-semibold text-blue hover:underline"
+              >
+                Run analysis for another product
+              </button>
+            )}
+            {storedResult && (
+              <p className="text-[11px] text-faint flex items-center gap-1.5">
+                <ShieldCheck size={12} className="shrink-0" />
+                Saved result - reopened from your history without re-running the analysis.
+              </p>
+            )}
           </>
         )}
       </div>

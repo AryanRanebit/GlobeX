@@ -393,3 +393,22 @@ CREATE INDEX "trade_flows_period_idx" ON "trade_flows"("period");
 CREATE INDEX "trade_flows_partnerIso3_idx" ON "trade_flows"("partnerIso3");
 CREATE INDEX "trade_flows_tradeValueUsd_idx" ON "trade_flows"("tradeValueUsd");
 
+
+-- CreateTable
+CREATE TABLE "analysis_history" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "hsCode" TEXT,
+    "productName" TEXT,
+    "analysisType" TEXT NOT NULL,
+    "resultJson" JSONB NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "analysis_history_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "analysis_history_userId_createdAt_idx" ON "analysis_history"("userId", "createdAt");
+
+-- AddForeignKey
+ALTER TABLE "analysis_history" ADD CONSTRAINT "analysis_history_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

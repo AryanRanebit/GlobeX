@@ -3,6 +3,7 @@ import { marketResearchAgent } from '../agents/MarketResearchAgent';
 import type { AnalyzeMarketDto } from './market.schema';
 import { researchJobService } from './researchJob.service';
 import { tariffService, normalizeHsCode, type TariffInfo } from '../tariff/tariff.service';
+import { historyService } from '../history/history.service';
 
 export interface CountryOpportunity {
   country: string;
@@ -143,12 +144,23 @@ export const marketService = {
       });
     }
 
-    return {
+    const finalResult = {
       ...agentResult,
       candidateHsCode: agentResult.candidateHsCodes?.[0]?.hs_code || null,
       savedOpportunitiesCount: agentResult.recommendedCountries.length,
       productId: targetProductId,
     };
+
+    // Analysis history: snapshot the completed analysis so the user can
+    // reopen it from History with zero external API calls. Best-effort.
+    void historyService.recordFullAnalysis(
+      userId,
+      finalResult.candidateHsCode,
+      finalResult.product || dto.product,
+      finalResult,
+    );
+
+    return finalResult;
   },
 
   /**

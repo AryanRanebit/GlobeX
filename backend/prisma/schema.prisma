@@ -30,6 +30,7 @@ model User {
   outreaches    Outreach[]
   products      Product[]
   researchJobs  ResearchJob[]
+  analysisHistories AnalysisHistory[]
 
   @@index([email])
   @@index([industry])
@@ -343,4 +344,18 @@ enum DataSource {
   COMTRADE
   SEED_CSV
   MANUAL
+}
+
+model AnalysisHistory {
+  id           String   @id @default(uuid())
+  userId       String
+  hsCode       String?
+  productName  String?
+  analysisType String
+  resultJson   Json
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("analysis_history")
 }
