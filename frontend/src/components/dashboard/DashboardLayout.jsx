@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard,
+  History,
   Users,
   Globe2,
   MessageSquare,
@@ -49,6 +50,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
     { id: 'markets', label: 'Market Intelligence', icon: Globe2 },
     { id: 'copilot', label: 'AI Copilot', icon: MessageSquare },
     { id: 'drafter', label: 'Email Drafter', icon: Languages },
+    { id: 'history', label: 'History', icon: History },
   ];
 
   const user = getStoredUser();

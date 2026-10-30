@@ -16,6 +16,7 @@ import BuyerDiscovery from './components/dashboard/BuyerDiscovery';
 import MarketIntelligence from './components/dashboard/MarketIntelligence';
 import AICopilot from './components/dashboard/AICopilot';
 import EmailDrafter from './components/dashboard/EmailDrafter';
+import History from './components/dashboard/History';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
@@ -154,6 +155,7 @@ export default function App() {
         )}
         {dashboardPage === 'copilot' && <AICopilot onRequireAuth={requireSignIn} />}
         {dashboardPage === 'drafter' && <EmailDrafter onRequireAuth={requireSignIn} prefill={draftPrefill} />}
+        {dashboardPage === 'history' && <History />}
       </DashboardLayout>
     );
   }

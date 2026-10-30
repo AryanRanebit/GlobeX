@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { tradeService } from './trade.service';
+import { historyService } from '../history/history.service';
 import { sendSuccess } from '../../utils/apiResponse';
 
 /**
@@ -42,6 +43,18 @@ export const tradeController = {
         search,
         includeWorld,
       });
+
+      // Analysis history: snapshot this search for signed-in users so it
+      // can be reopened later with zero external API calls. Fire-and-forget
+      // and best-effort: a history failure must never affect the response.
+      if (req.user?.userId && result.markets.length > 0) {
+        void historyService.recordMarketSearch(
+          req.user.userId,
+          hs,
+          result.meta?.cmdDescription ?? null,
+          { markets: result.markets, meta: result.meta },
+        );
+      }
 
       return sendSuccess(
         res,
