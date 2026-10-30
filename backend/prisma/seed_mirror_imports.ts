@@ -30,7 +30,15 @@ async function main() {
     select: { cmdCode: true },
     distinct: ['cmdCode'],
   });
-  const cmdCodes = cmdRows.map((r) => r.cmdCode);
+  let cmdCodes = cmdRows.map((r) => r.cmdCode);
+  // Optional single-HS run: MIRROR_HS=100630 npm run seed:mirror
+  if (process.env.MIRROR_HS) {
+    cmdCodes = cmdCodes.filter((c) => c === process.env.MIRROR_HS);
+    if (cmdCodes.length === 0) {
+      console.error(`MIRROR_HS=${process.env.MIRROR_HS} has no seeded India-export rows for ${year}.`);
+      process.exit(1);
+    }
+  }
   console.log(`Seeded HS codes for ${year}: ${cmdCodes.join(', ') || '(none!)'}`);
 
   const grand = { seeded: 0, requested: 0 };
