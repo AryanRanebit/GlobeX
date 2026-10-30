@@ -142,13 +142,18 @@ function StoredSearchModal({ entry, onClose }) {
 
 /**
  * One coherent port scene for the History page blank area (user-requested):
- * SKY (sun, clouds, gulls, paper plane) on top, SEA (horizon, waves,
- * lighthouse, anchor, sailboat) in the middle, GROUND/PORT (dock on posts,
- * tower crane, stacked containers) at the bottom right. Drawn in the exact
- * style of the global .bg-app-ship scene: teal #134E4A / wave teal #0F766E /
- * amber #B45309, stroke-width 2-2.2, opacity 0.16-0.28, round caps.
- * Rendered twice from the same SceneContent: full width on desktop, and a
- * center-cropped viewBox on mobile so the scene stays legible at 390px.
+ * SKY (clouds, gulls, paper plane) on top, GROUND/PORT (dock on posts, tower
+ * crane, stacked containers) at the bottom LEFT, and open SEA (horizon, wave
+ * rows, lighthouse at the harbor mouth, anchor) to the RIGHT. No sun and no
+ * ship here on purpose: the global .bg-app-ship scene already paints the sun
+ * (top) and its ship with waves (bottom right). Flipping the port to the left
+ * means that global ship sails in the same open water this scene draws, and
+ * the wave rows at this scene's bottom edge merge into the global waves -
+ * one sun, one sea, one ship on the page.
+ * Same style as the global scene: teal #134E4A / wave teal #0F766E / amber
+ * #B45309, stroke-width 2-2.2, opacity 0.16-0.28, round caps.
+ * Rendered twice from the same SceneContent: full width on desktop, a
+ * left-cropped viewBox on mobile so port + lighthouse stay legible at 390px.
  * vector-effect=non-scaling-stroke keeps the line weight constant at any size.
  */
 const artTeal = { stroke: '#134E4A', strokeOpacity: 0.16, strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' };
@@ -176,121 +181,98 @@ function SceneContent() {
   return (
     <g vectorEffect="non-scaling-stroke">
       {/* ===== SKY ===== */}
-      {/* sun with rays */}
-      <circle cx="312" cy="52" r="22" {...artAmber} />
-      {[...Array(8)].map((_, i) => {
-        const a = (i * Math.PI) / 4 + Math.PI / 8;
-        return (
-          <line
-            key={i}
-            x1={312 + Math.cos(a) * 30} y1={52 + Math.sin(a) * 30}
-            x2={312 + Math.cos(a) * 38} y2={52 + Math.sin(a) * 38}
-            {...artAmber}
-          />
-        );
-      })}
       {/* clouds - same path language as the global scene */}
       <path d="M150 96 a13 13 0 0 1 -2 -26 a17 17 0 0 1 32 -7 a14 14 0 0 1 20 6 a12 12 0 0 1 -2 27 z" fill="#F7F5F0" {...artTeal} />
       <path d="M950 76 a15 15 0 0 1 -2 -30 a19 19 0 0 1 36 -8 a16 16 0 0 1 22 7 a13 13 0 0 1 -2 31 z" fill="#F7F5F0" {...artTeal} />
-      <path d="M470 168 a10 10 0 0 1 -1.5 -20 a13 13 0 0 1 24 -5 a11 11 0 0 1 15 4.5 a9 9 0 0 1 -1.5 20.5 z" fill="#F7F5F0" {...artTeal} />
+      <path d="M700 168 a10 10 0 0 1 -1.5 -20 a13 13 0 0 1 24 -5 a11 11 0 0 1 15 4.5 a9 9 0 0 1 -1.5 20.5 z" fill="#F7F5F0" {...artTeal} />
       {/* gulls */}
       <path d="M440 34 q6 -7 12 0 q6 -7 12 0" {...artTeal} />
       <path d="M600 28 q6 -7 12 0 q6 -7 12 0" {...artTeal} />
       <path d="M1040 110 q5 -6 10 0 q5 -6 10 0" {...artTeal} />
-      {/* paper plane on a dashed trade route, flying in toward the port */}
-      <path d="M410 118 Q470 60 528 52" {...artWave} strokeDasharray="2 8" />
-      <path d="M528 60 L560 44 L540 74 L534 60 Z" {...artTeal} />
-      <line x1="534" y1="60" x2="560" y2="44" {...artTeal} />
+      {/* paper plane on a dashed trade route, heading out to sea */}
+      <path d="M420 130 Q560 40 660 52" {...artWave} strokeDasharray="2 8" />
+      <path d="M660 60 L692 44 L672 74 L666 60 Z" {...artTeal} />
+      <line x1="666" y1="60" x2="692" y2="44" {...artTeal} />
 
-      {/* ===== SEA ===== */}
-      <line x1="0" y1="232" x2="560" y2="232" {...artWave} />
-      <path d={waveRow(258, 7, 26, 0, 1196)} {...artWave} />
-      <path d={waveRow(296, 6, 30, -13, 1187)} {...artWave} />
-      {/* small sailboat on the horizon (desktop-left) */}
-      <g {...artTeal}>
-        <path d="M96 232 L178 232 L162 252 L114 252 Z" />
-        <line x1="138" y1="232" x2="138" y2="188" />
-        <path d="M142 192 L142 228 L172 228 Z" />
-        <path d="M134 200 L134 228 L108 228 Z" />
-      </g>
-      {/* lighthouse on rocks, standing in the sea */}
-      <g {...artTeal}>
-        <path d="M312 236 Q328 218 348 230 Q366 216 384 230 Q398 220 410 236" />
-        <path d="M342 230 L350 138 M394 230 L386 138" />
-        <line x1="347" y1="170" x2="390" y2="170" />
-        <line x1="345" y1="200" x2="392" y2="200" />
-        <rect x="346" y="124" width="44" height="14" />
-        <rect x="354" y="104" width="28" height="20" />
-        <path d="M350 104 Q368 86 386 104" />
-      </g>
-      <circle cx="368" cy="114" r="4" {...artAmber} />
-      <line x1="360" y1="110" x2="312" y2="94" {...artAmber} />
-      <line x1="360" y1="118" x2="312" y2="130" {...artAmber} />
-      <line x1="376" y1="110" x2="424" y2="94" {...artAmber} />
-      <line x1="376" y1="118" x2="424" y2="130" {...artAmber} />
-      {/* anchor resting in the shallows */}
-      <g {...artTeal}>
-        <circle cx="490" cy="246" r="6" />
-        <line x1="490" y1="252" x2="490" y2="302" />
-        <line x1="474" y1="268" x2="506" y2="268" />
-        <path d="M466 284 Q466 306 490 302 Q514 306 514 284" />
-        <line x1="466" y1="284" x2="460" y2="292" />
-        <line x1="514" y1="284" x2="520" y2="292" />
-      </g>
-
-      {/* ===== GROUND / PORT ===== */}
+      {/* ===== GROUND / PORT (left) ===== */}
       {/* dock deck on posts rising from the sea */}
-      <line x1="560" y1="232" x2="1200" y2="232" {...artTeal} />
-      <line x1="560" y1="246" x2="1200" y2="246" {...artTeal} />
-      {[600, 680, 760, 840, 920, 1000, 1080, 1160].map((x) => (
+      <line x1="0" y1="232" x2="480" y2="232" {...artTeal} />
+      <line x1="0" y1="246" x2="480" y2="246" {...artTeal} />
+      {[40, 120, 200, 280, 360, 440].map((x) => (
         <line key={x} x1={x} y1="246" x2={x} y2="278" {...artTeal} />
       ))}
-      {/* tower crane loading a container, standing on the dock */}
+      {/* tower crane on the dock, jib reaching out over the water */}
       <g {...artTeal}>
-        <line x1="690" y1="232" x2="690" y2="76" />
-        <line x1="726" y1="232" x2="726" y2="76" />
-        <line x1="690" y1="76" x2="726" y2="76" />
-        <path d="M690 98 L726 120 M726 98 L690 120" />
-        <path d="M690 120 L726 142 M726 120 L690 142" />
-        <path d="M690 142 L726 164 M726 142 L690 164" />
-        <path d="M690 164 L726 186 M726 164 L690 186" />
-        <path d="M690 186 L726 208 M726 186 L690 208" />
-        <path d="M690 76 L708 40 L726 76" />
-        <line x1="708" y1="40" x2="708" y2="76" />
-        <line x1="708" y1="40" x2="580" y2="64" />
-        <line x1="708" y1="40" x2="880" y2="64" />
-        <line x1="580" y1="64" x2="880" y2="64" />
-        <line x1="580" y1="64" x2="580" y2="76" />
-        <rect x="572" y="76" width="16" height="14" />
-        <rect x="612" y="56" width="18" height="8" />
-        <line x1="621" y1="64" x2="621" y2="130" />
-        <rect x="601" y="130" width="40" height="24" />
-        <line x1="611" y1="130" x2="611" y2="154" />
-        <line x1="621" y1="130" x2="621" y2="154" />
-        <line x1="631" y1="130" x2="631" y2="154" />
+        <line x1="330" y1="232" x2="330" y2="76" />
+        <line x1="366" y1="232" x2="366" y2="76" />
+        <line x1="330" y1="76" x2="366" y2="76" />
+        <path d="M330 98 L366 120 M366 98 L330 120" />
+        <path d="M330 120 L366 142 M366 120 L330 142" />
+        <path d="M330 142 L366 164 M366 142 L330 164" />
+        <path d="M330 164 L366 186 M366 164 L330 186" />
+        <path d="M330 186 L366 208 M366 186 L330 208" />
+        <path d="M330 76 L348 40 L366 76" />
+        <line x1="348" y1="40" x2="348" y2="76" />
+        <line x1="348" y1="40" x2="240" y2="64" />
+        <line x1="348" y1="40" x2="560" y2="64" />
+        <line x1="240" y1="64" x2="560" y2="64" />
+        <line x1="240" y1="64" x2="240" y2="76" />
+        <rect x="232" y="76" width="16" height="14" />
+        <rect x="512" y="56" width="18" height="8" />
+        <line x1="521" y1="64" x2="521" y2="130" />
+        <rect x="501" y="130" width="40" height="24" />
+        <line x1="511" y1="130" x2="511" y2="154" />
+        <line x1="521" y1="130" x2="521" y2="154" />
+        <line x1="531" y1="130" x2="531" y2="154" />
       </g>
       {/* stacked containers on the dock */}
-      <ContainerBox x={800} y={206} />
-      <ContainerBox x={850} y={206} />
-      <ContainerBox x={900} y={206} />
-      <ContainerBox x={950} y={206} />
-      <ContainerBox x={825} y={180} />
-      <ContainerBox x={875} y={180} />
-      <ContainerBox x={1020} y={206} />
-      <ContainerBox x={1070} y={206} />
-      <ContainerBox x={1045} y={180} />
-      <ContainerBox x={1120} y={206} />
+      <ContainerBox x={60} y={206} />
+      <ContainerBox x={110} y={206} />
+      <ContainerBox x={160} y={206} />
+      <ContainerBox x={210} y={206} />
+      <ContainerBox x={85} y={180} />
+      <ContainerBox x={135} y={180} />
+      <ContainerBox x={110} y={154} />
+
+      {/* ===== SEA (right, open water - the global ship sails here) ===== */}
+      <line x1="480" y1="232" x2="1200" y2="232" {...artWave} />
+      <path d={waveRow(268, 7, 26, 0, 1196)} {...artWave} />
+      <path d={waveRow(308, 6, 30, -13, 1187)} {...artWave} />
+      {/* lighthouse on rocks at the harbor mouth */}
+      <g {...artTeal}>
+        <path d="M552 236 Q568 218 588 230 Q606 216 624 230 Q638 220 650 236" />
+        <path d="M582 230 L590 138 M634 230 L626 138" />
+        <line x1="587" y1="170" x2="630" y2="170" />
+        <line x1="585" y1="200" x2="632" y2="200" />
+        <rect x="586" y="124" width="44" height="14" />
+        <rect x="594" y="104" width="28" height="20" />
+        <path d="M590 104 Q608 86 626 104" />
+      </g>
+      <circle cx="608" cy="114" r="4" {...artAmber} />
+      <line x1="600" y1="110" x2="552" y2="94" {...artAmber} />
+      <line x1="600" y1="118" x2="552" y2="130" {...artAmber} />
+      <line x1="616" y1="110" x2="664" y2="94" {...artAmber} />
+      <line x1="616" y1="118" x2="664" y2="130" {...artAmber} />
+      {/* anchor resting in the open water */}
+      <g {...artTeal}>
+        <circle cx="850" cy="246" r="6" />
+        <line x1="850" y1="252" x2="850" y2="302" />
+        <line x1="834" y1="268" x2="866" y2="268" />
+        <path d="M826 284 Q826 306 850 302 Q874 306 874 284" />
+        <line x1="826" y1="284" x2="820" y2="292" />
+        <line x1="874" y1="284" x2="880" y2="292" />
+      </g>
     </g>
   );
 }
 
 function ArtScene() {
   return (
-    <div aria-hidden="true" className="pointer-events-none select-none mt-2 -mb-6">
+    <div aria-hidden="true" className="pointer-events-none select-none mt-4 -mb-4 sm:-mb-6">
       <svg className="hidden md:block w-full h-auto" viewBox="0 0 1200 340">
         <SceneContent />
       </svg>
-      <svg className="md:hidden w-full h-auto" viewBox="270 0 620 340">
+      <svg className="md:hidden w-full h-auto" viewBox="40 0 640 340">
         <SceneContent />
       </svg>
     </div>
