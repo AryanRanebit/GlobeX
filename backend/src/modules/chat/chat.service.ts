@@ -43,7 +43,7 @@ export const chatService = {
     // Deterministic buyer-finding answers from the saved pipeline - the LLM
     // agent has no buyer-search tool, so these queries get answered here with
     // zero LLM spend and never hit the generic fallback.
-    const buyerAnswer = await tryFindBuyersAnswer(dto.message, dto.session_id ?? randomUUID());
+    const buyerAnswer = await tryFindBuyersAnswer(dto.message, dto.session_id ?? randomUUID(), userId);
     if (buyerAnswer) {
       return buyerAnswer;
     }

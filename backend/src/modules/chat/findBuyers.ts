@@ -16,6 +16,7 @@
  */
 
 import { prisma } from '../../config/database';
+import { buyersService } from '../buyers/buyers.service';
 
 export interface ParsedBuyerQuery {
   product?: string;
@@ -115,11 +116,12 @@ const PRODUCT_HINTS: Record<string, { hs?: string; keywords: string[] }> = {
 
 const BUYER_INTENT_RE = /\b(find|search(?:ing)?|get|show|list|source|need|want|looking for|give me|suggest)\b[\s\S]{0,50}\b(buyers?|importers?|distributors?|wholesalers?|buying agents?)\b/i;
 const BUYER_NOUN_FIRST_RE = /\b(buyers?|importers?|distributors?|wholesalers?)\s+(for|in)\b/i;
+const EXPLICIT_DISCOVERY_CMD_RE = /\b(run|start|trigger|do)\b[\s\S]{0,24}\b(buyer\s+)?discovery\b/i;
 
 /** True when the message is asking to find/source buyers (not, say, "how do I
  *  verify this buyer's GST number"). */
 export function detectFindBuyers(message: string): boolean {
-  return BUYER_INTENT_RE.test(message) || BUYER_NOUN_FIRST_RE.test(message);
+  return BUYER_INTENT_RE.test(message) || BUYER_NOUN_FIRST_RE.test(message) || EXPLICIT_DISCOVERY_CMD_RE.test(message);
 }
 
 function escapeRegExp(s: string): string {
@@ -184,6 +186,133 @@ function discoveryLink(country?: string, product?: string): { label: string; url
   return { label: 'Open Buyer Discovery', url };
 }
 
+// ── Pending live-discovery offers (per chat session) ───────────────────────
+// The deterministic intercept bypasses the Python agent's session memory, so
+// the "want me to run a live discovery?" offer is tracked here instead.
+const PENDING_TTL_MS = 10 * 60 * 1000;
+
+export interface PendingDiscovery {
+  product?: string;
+  country?: string;
+  expiresAt: number;
+}
+
+const pendingDiscovery = new Map<string, PendingDiscovery>();
+
+/** Test hook: wipe all pending offers. */
+export function resetPendingDiscovery(): void {
+  pendingDiscovery.clear();
+}
+
+function setPending(sessionId: string, offer: { product?: string; country?: string }): void {
+  pendingDiscovery.set(sessionId, { ...offer, expiresAt: Date.now() + PENDING_TTL_MS });
+}
+
+function peekPending(sessionId: string): PendingDiscovery | null {
+  const p = pendingDiscovery.get(sessionId);
+  if (!p) return null;
+  if (Date.now() > p.expiresAt) {
+    pendingDiscovery.delete(sessionId);
+    return null;
+  }
+  return p;
+}
+
+function clearPending(sessionId: string): void {
+  pendingDiscovery.delete(sessionId);
+}
+
+/** Liberal yes-detection (English + Hinglish), only ever applied when a
+ *  discovery offer is actually pending for the session. */
+const CONFIRM_RE = /^\s*(yes|yeah|yep|yup|ok|okay|sure|haan+|han+|ha\b|go ahead|go for it|do it|karo|kar do|kardo|chalo|chal|theek hai|thik hai|bilkul|zaroor+z|zarur|please do|go)[.!\s]*$/i;
+const DENY_RE = /^\s*(no|nope|nah|nahi+|nhi|not now|later|cancel|ruk|ruk ja|rehne do|bas)[.!\s]*$/i;
+
+/** Explicit "spend now" phrasing. A plain "find buyers" question must NEVER
+ *  match this - the offer-then-confirm flow covers those. */
+const EXPLICIT_LIVE_RE = /\blive\b|\bdiscovery\b|\brun\b[\s\S]{0,24}\b(discovery|search)\b|\bgrounded\s+search\b/i;
+
+function hsCodeFor(product?: string): string | undefined {
+  if (!product) return undefined;
+  const hint = productKeywords(product).hs;
+  const m = hint?.match(/^HS (\d+)$/);
+  return m ? m[1] : undefined;
+}
+
+async function runLiveDiscovery(
+  userId: string,
+  product: string | undefined,
+  country: string | undefined,
+): Promise<DeterministicChatAnswer> {
+  const link = discoveryLink(country, product);
+  const productLabel = product ? `**${product}**` : 'your product';
+  const countryLabel = country ? ` in **${country}**` : '';
+
+  if (!product) {
+    // The discovery service needs a product; ask instead of guessing.
+    return {
+      session_id: '',
+      response: `What product should I search for${countryLabel}? For example: "find new buyers for cotton${country ? ` in ${country.toLowerCase()}` : ''} live".`,
+      intent: 'find_buyers',
+      tools_used: [],
+      rag_used: false,
+      tool_results: { awaiting: 'product' },
+    };
+  }
+
+  let result: Awaited<ReturnType<typeof buyersService.discover>>;
+  try {
+    // Exactly one grounded search per confirmation - no retries.
+    result = await buyersService.discover(userId, product, country ? [country] : [], {
+      hsCode: hsCodeFor(product),
+    });
+  } catch (err) {
+    return {
+      session_id: '',
+      response:
+        `The live Buyer Discovery search for ${productLabel}${countryLabel} failed just now (the AI provider returned an error). ` +
+        `Nothing was added to your pipeline and no retry was run. You can try again from the Buyer Discovery page.
+
+` +
+        `[${link.label}](${link.url})`,
+      intent: 'find_buyers',
+      tools_used: ['live_buyer_discovery'],
+      rag_used: false,
+      tool_results: { error: err instanceof Error ? err.message : 'discovery failed' },
+    };
+  }
+
+  const found = result.buyers ?? [];
+  if (found.length === 0) {
+    return {
+      session_id: '',
+      response:
+        `I ran one grounded AI search for ${productLabel}${countryLabel} and it found no verifiable buyers - nothing was added to your pipeline. ` +
+        `I'd rather show you nothing than invent companies. You can try a different product name or country.`,
+      intent: 'find_buyers',
+      tools_used: ['live_buyer_discovery'],
+      rag_used: false,
+      tool_results: { discovered: 0, provider: result.provider },
+    };
+  }
+
+  const shown = found.slice(0, 5);
+  const lines = shown.map((b) => `- **${b.companyName}** - ${b.industry}, ${b.country} (lead score ${b.leadScore})`);
+  return {
+    session_id: '',
+    response:
+      `Done - one grounded AI search for ${productLabel}${countryLabel} found ${found.length} buyer${found.length === 1 ? '' : 's'}, now saved in your pipeline with source citations:
+
+` +
+      lines.join('\n') +
+      (found.length > shown.length ? `\n- …and ${found.length - shown.length} more` : '') +
+      `\n\n[${link.label}](${link.url})`,
+    intent: 'find_buyers',
+    tools_used: ['live_buyer_discovery'],
+    rag_used: false,
+    tool_results: { discovered: found.length, provider: result.provider, buyers: found.map((b) => b.companyName) },
+  };
+}
+
 interface BuyerRow {
   id: string; companyName: string; country: string; industry: string;
   tags: string[]; leadScore: number;
@@ -203,10 +332,43 @@ export interface DeterministicChatAnswer {
  * return the ChatResponse. Returns null when the message is not a buyer
  * query, so the caller can continue to the LLM agent.
  */
-export async function tryFindBuyersAnswer(message: string, sessionId: string): Promise<DeterministicChatAnswer | null> {
+export async function tryFindBuyersAnswer(message: string, sessionId: string, userId: string): Promise<DeterministicChatAnswer | null> {
+  // 1. A pending live-discovery offer turns a bare "yes" into one grounded
+  //    search, and a bare "no" into a clean no-spend exit. Anything else is
+  //    treated as a new message (the offer stays valid until it expires).
+  const pending = peekPending(sessionId);
+  if (pending) {
+    if (CONFIRM_RE.test(message)) {
+      clearPending(sessionId);
+      const ans = await runLiveDiscovery(userId, pending.product, pending.country);
+      ans.session_id = sessionId;
+      return ans;
+    }
+    if (DENY_RE.test(message)) {
+      clearPending(sessionId);
+      return {
+        session_id: sessionId,
+        response: 'No problem - no AI search was run and nothing was spent. Your pipeline is unchanged.',
+        intent: 'find_buyers',
+        tools_used: [],
+        rag_used: false,
+        tool_results: { declined: true },
+      };
+    }
+  }
+
   if (!detectFindBuyers(message)) return null;
 
   const { product, country } = parseBuyerQuery(message);
+
+  // 2. Explicit live commands ("find new buyers ... live", "run discovery")
+  //    skip the pipeline answer and go straight to one grounded search. A
+  //    plain "find buyers" question never lands here.
+  if (EXPLICIT_LIVE_RE.test(message)) {
+    const ans = await runLiveDiscovery(userId, product, country);
+    ans.session_id = sessionId;
+    return ans;
+  }
   const buyers = (await prisma.buyer.findMany({
     select: { id: true, companyName: true, country: true, industry: true, tags: true, leadScore: true },
     orderBy: { leadScore: 'desc' },
@@ -237,6 +399,7 @@ export async function tryFindBuyersAnswer(message: string, sessionId: string): P
         ? `Want to run a live Buyer Discovery for ${productLabel} in **${country}**? It runs one grounded AI search and adds verified importers to your pipeline.\n\n`
         : `Want to run a live Buyer Discovery for **${country}**? It runs one grounded AI search and adds verified importers to your pipeline.\n\n`) +
       `[${link.label}](${link.url})`;
+    setPending(sessionId, { product, country });
   } else if (product && productMatches.length > 0) {
     const shown = productMatches.slice(0, 5);
     response =
@@ -257,6 +420,7 @@ export async function tryFindBuyersAnswer(message: string, sessionId: string): P
       (product
         ? `\n\nFor verified ${product} importers in ${country}, you can run a live Buyer Discovery (one grounded AI search).\n\n[${link.label}](${link.url})`
         : `\n\n[${link.label}](${link.url})`);
+    if (product) setPending(sessionId, { product, country });
   } else {
     // No country parsed and nothing product-matched in the whole pipeline
     const coverage = countriesInPipeline.length
@@ -266,6 +430,7 @@ export async function tryFindBuyersAnswer(message: string, sessionId: string): P
       `I couldn't find buyers matching ${productLabel || 'that request'} in your pipeline. ${coverage}\n\n` +
       `You can run a live Buyer Discovery (one grounded AI search) to add verified importers for a specific product and country.\n\n` +
       `[${link.label}](${link.url})`;
+    setPending(sessionId, { product, country });
   }
 
   return {
