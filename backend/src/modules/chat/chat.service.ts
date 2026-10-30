@@ -5,8 +5,10 @@
  * Falls back to a meaningful error when the service is unavailable.
  */
 
+import { randomUUID } from 'node:crypto';
 import { AppError } from '../../middleware/error.middleware';
 import type { ChatMessageDto } from './chat.schema';
+import { tryFindBuyersAnswer } from './findBuyers';
 
 const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL || 'http://localhost:8000/api/v1';
 
@@ -38,6 +40,14 @@ export const chatService = {
    * Send a message to the GlobeX AI agent and return a structured response.
    */
   async chat(dto: ChatMessageDto, userId: string): Promise<ChatResponse> {
+    // Deterministic buyer-finding answers from the saved pipeline - the LLM
+    // agent has no buyer-search tool, so these queries get answered here with
+    // zero LLM spend and never hit the generic fallback.
+    const buyerAnswer = await tryFindBuyersAnswer(dto.message, dto.session_id ?? randomUUID(), userId);
+    if (buyerAnswer) {
+      return buyerAnswer;
+    }
+
     let res: Response;
 
     try {
