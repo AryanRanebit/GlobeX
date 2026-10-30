@@ -37,6 +37,9 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
   const [isDiscovering, setIsDiscovering] = useState(false);
   const [discoverError, setDiscoverError] = useState(null);
 
+  // Contact enrichment state: buyerId -> { loading, status, email, note }
+  const [enrichState, setEnrichState] = useState({});
+
   // Sync the external global search query into local state
   // (render-time adjustment instead of an effect).
   const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
@@ -194,6 +197,60 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
       setEmailModalBuyer(null);
       setEmailSent(false);
     }, 1200);
+  };
+
+  // Contact enrichment ("Option C"): free website scrape first, Hunter.io
+  // fallback when configured on the backend. Quota exhaustion surfaces as
+  // an "API Credit Limit Reached" notice, never a silent failure.
+  const handleEnrichContact = async (buyer) => {
+    if (!buyer?.id) return;
+    setEnrichState((prev) => ({ ...prev, [buyer.id]: { loading: true } }));
+    try {
+      const res = await apiFetch(`/api/v1/buyers/${buyer.id}/enrich-contact`, { method: 'POST' });
+      if (res.status === 401) {
+        onRequireAuth?.();
+        setEnrichState((prev) => ({ ...prev, [buyer.id]: { loading: false } }));
+        return;
+      }
+      const json = await res.json();
+      const result = json?.data || {};
+      setEnrichState((prev) => ({
+        ...prev,
+        [buyer.id]: { loading: false, status: result.status, email: result.email, note: result.note },
+      }));
+      if (result.status === 'enriched' && result.email) {
+        setBuyers((prev) => prev.map((b) => (b.id === buyer.id ? { ...b, email: result.email } : b)));
+        setSelectedBuyer((prev) => (prev?.id === buyer.id ? { ...prev, email: result.email } : prev));
+      }
+    } catch (err) {
+      setEnrichState((prev) => ({
+        ...prev,
+        [buyer.id]: { loading: false, status: 'error', note: err.message || 'Enrichment request failed.' },
+      }));
+    }
+  };
+
+  // Honest status note for an enrichment attempt
+  const renderEnrichStatus = (buyerId) => {
+    const st = enrichState[buyerId];
+    if (!st || st.loading || !st.status || st.status === 'enriched') return null;
+    if (st.status === 'credit_limit_reached') {
+      return (
+        <div className="mt-2 p-2 rounded-lg bg-orange/10 border border-orange/30 text-[11px] text-orange-dark font-semibold">
+          API Credit Limit Reached - the contact-finder API free tier is exhausted. Website scraping is free and was already tried; add Hunter credits or try again next month.
+        </div>
+      );
+    }
+    const fallback = {
+      hunter_not_configured: 'No email published on the company website. The contact-finder API fallback is not configured on this deployment.',
+      not_found: 'No public email found on the company website or via the contact-finder API.',
+      no_website: 'No website on record for this buyer, so there is nothing to search.',
+      already_present: null,
+      error: st.note || 'Enrichment failed. Please try again.',
+    }[st.status];
+    const text = st.note || fallback;
+    if (!text) return null;
+    return <p className="mt-2 text-[11px] text-muted leading-relaxed">{text}</p>;
   };
 
   // Honest Badge renderer
@@ -457,6 +514,20 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
               <div className="p-3 bg-page rounded-lg border border-line">
                 <h4 className="text-[11px] font-bold text-muted uppercase tracking-wider mb-2">Contact Details</h4>
                 {selectedBuyer.email && <p className="text-xs text-blue font-mono">{selectedBuyer.email}</p>}
+                {selectedBuyer.phone && <p className="text-xs text-ink font-mono mt-1">{selectedBuyer.phone}</p>}
+                {!selectedBuyer.email && (
+                  <button
+                    onClick={() => handleEnrichContact(selectedBuyer)}
+                    disabled={enrichState[selectedBuyer.id]?.loading}
+                    className="btn-secondary mt-1 px-2.5 py-1 text-[11px] font-semibold inline-flex items-center gap-1.5 hover:bg-blue-pale hover:border-blue"
+                  >
+                    {enrichState[selectedBuyer.id]?.loading
+                      ? <Loader2 size={11} className="animate-spin" />
+                      : <Search size={11} />}
+                    <span>{enrichState[selectedBuyer.id]?.loading ? 'Searching public sources...' : 'Find Contact Email'}</span>
+                  </button>
+                )}
+                {renderEnrichStatus(selectedBuyer.id)}
                 {selectedBuyer.website && (
                   <p className="text-xs text-muted mt-1">
                     <a href={selectedBuyer.website} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1">

@@ -39,6 +39,9 @@ const envSchema = z.object({
 
   // UN Comtrade trade data
   COMTRADE_API_KEY: z.string().optional(),
+
+  // Hunter.io contact finder (optional fallback for buyer email enrichment)
+  HUNTER_API_KEY: z.string().optional(),
 });
 
 // Pre-process: convert empty strings to undefined so optional URL/string

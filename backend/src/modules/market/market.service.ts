@@ -2,6 +2,7 @@ import { prisma } from '../../config/database';
 import { marketResearchAgent } from '../agents/MarketResearchAgent';
 import type { AnalyzeMarketDto } from './market.schema';
 import { researchJobService } from './researchJob.service';
+import { tariffService, normalizeHsCode, type TariffInfo } from '../tariff/tariff.service';
 
 export interface CountryOpportunity {
   country: string;
@@ -12,6 +13,8 @@ export interface CountryOpportunity {
   marketSize?: string;
   trend?: string;
   insights?: string;
+  /** WITS/TRAINS MFN + India-preferential tariff (free source), when found */
+  tariff?: TariffInfo | null;
 }
 
 export interface MarketAnalysisResult {
@@ -60,6 +63,19 @@ export const marketService = {
 
     if (!agentResult || !Array.isArray(agentResult.recommendedCountries)) {
       throw new Error('Market research provider returned an invalid result structure.');
+    }
+
+    // ── 1b. Enrich markets with tariff/duty data (free WITS source) ────
+    // Runs in the background worker, so WITS latency does not block HTTP.
+    // A tariff failure never fails the analysis: the field stays null.
+    const tariffHs = normalizeHsCode(agentResult.candidateHsCodes?.[0]?.hs_code);
+    if (tariffHs && agentResult.recommendedCountries.length > 0) {
+      try {
+        await tariffService.enrichCountries(agentResult.recommendedCountries, tariffHs);
+      } catch (tariffErr) {
+        // enrichment is best-effort; log and continue
+        console.warn('Tariff enrichment failed:', (tariffErr as Error).message);
+      }
     }
 
     // ── 2. Link or create Product for the authenticated user ─────

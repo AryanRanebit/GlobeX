@@ -10,7 +10,8 @@ import {
   ExternalLink,
   Info,
   ChevronRight,
-  Printer
+  Printer,
+  Loader2
 } from 'lucide-react';
 import { TRADE_STATS } from '../../constants/tradeStats';
 import { apiFetch } from '../../lib/api';
@@ -50,6 +51,10 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   // Drill-down market modal
   const [selectedMarket, setSelectedMarket] = useState(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+
+  // Tariff/duty lookup (WITS via backend) for the drilled-down market
+  const [tariff, setTariff] = useState(null);
+  const [tariffLoading, setTariffLoading] = useState(false);
 
   // Sync the external global search query into local state
   // (render-time adjustment instead of an effect).
@@ -130,6 +135,27 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
     });
     return () => { active = false; };
   }, [selectedHs, fetchMarkets]);
+
+  // Fetch MFN + India-preferential tariff when a market dossier opens.
+  // Free WITS source; failures degrade to an honest "not available" note.
+  useEffect(() => {
+    if (!selectedMarket) {
+      Promise.resolve().then(() => setTariff(null));
+      return;
+    }
+    let active = true;
+    const country = selectedMarket.partnerIso3 || selectedMarket.countryCode || '';
+    if (!country) return;
+    Promise.resolve().then(() => {
+      if (active) { setTariffLoading(true); setTariff(null); }
+    });
+    apiFetch(`/api/v1/tariff?hs=${encodeURIComponent(resolvedHs)}&country=${encodeURIComponent(country)}`)
+      .then((r) => r.json())
+      .then((j) => { if (active && j?.success) setTariff(j.data); })
+      .catch(() => { /* tariff panel stays in its honest fallback state */ })
+      .finally(() => { if (active) setTariffLoading(false); });
+    return () => { active = false; };
+  }, [selectedMarket, resolvedHs]);
 
   // Filtered markets based on search term
   const filteredMarkets = useMemo(() => {
@@ -521,6 +547,52 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
                     Out of {formatUsd(meta?.worldTotalUsd || 0)} global total
                   </p>
                 </div>
+              </div>
+
+              {/* Tariff & Duty Panel (WITS / UNCTAD TRAINS) */}
+              <div className="p-4 rounded-xl bg-emerald-pale/30 border border-line">
+                <h4 className="text-xs font-bold text-soft uppercase tracking-wider mb-2">
+                  Import Tariff in {selectedMarket.partnerName} (HS {resolvedHs})
+                </h4>
+                {tariffLoading ? (
+                  <p className="text-xs text-muted flex items-center gap-1.5">
+                    <Loader2 size={12} className="animate-spin" />
+                    <span>Fetching MFN & preferential rates from WITS (World Bank)...</span>
+                  </p>
+                ) : tariff && tariff.status === 'ok' ? (
+                  <div className="space-y-1.5 text-xs">
+                    <p className="text-navy">
+                      <span className="font-bold">MFN duty: {tariff.mfnSimpleAverage}%</span>
+                      <span className="text-muted"> simple average ad valorem ({tariff.year}, range {tariff.mfnMinRate}-{tariff.mfnMaxRate}%)</span>
+                    </p>
+                    {tariff.preferentialSimpleAverage !== null && tariff.preferentialSimpleAverage !== undefined ? (
+                      <p className="text-emerald-ink font-semibold">
+                        Preferential rate for Indian exporters: {tariff.preferentialSimpleAverage}%
+                        {tariff.indiaFta ? ` under ${tariff.indiaFta.agreement}` : ''}
+                      </p>
+                    ) : tariff.indiaFta ? (
+                      <p className="text-soft">
+                        {tariff.indiaFta.agreement} ({tariff.indiaFta.statusLabel}): preferential access may apply with a certificate of origin.
+                      </p>
+                    ) : (
+                      <p className="text-muted">No India trade-agreement preference on record for this market; MFN rate applies.</p>
+                    )}
+                    {tariff.note && <p className="text-[11px] text-muted">{tariff.note}</p>}
+                    <a
+                      href={tariff.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue hover:underline inline-flex items-center gap-1 text-[11px]"
+                    >
+                      <span>Source: {tariff.source}</span>
+                      <ExternalLink size={10} />
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted">
+                    {tariff?.note || 'Tariff data is not available from free sources for this market and HS code.'}
+                  </p>
+                )}
               </div>
 
               {/* Data Semantics Honest Box */}

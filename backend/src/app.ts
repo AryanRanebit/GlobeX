@@ -23,6 +23,7 @@ import { dashboardRoutes } from './modules/dashboard/dashboard.routes';
 import { chatRoutes } from './modules/chat/chat.routes';
 import { agentsRoutes } from './modules/agents/agents.routes';
 import { tradeRoutes } from './modules/trade/trade.routes';
+import { tariffRoutes } from './modules/tariff/tariff.routes';
 
 export const createApp = () => {
   const app = express();
@@ -96,6 +97,7 @@ export const createApp = () => {
   app.use(`${BASE}/chat`, chatRoutes);
   app.use(`${BASE}/agents`, agentsRoutes);
   app.use(`${BASE}/trade`, tradeRoutes);
+  app.use(`${BASE}/tariff`, tariffRoutes);
   // Convenience alias for unversioned /api/trade
   app.use('/api/trade', tradeRoutes);
 

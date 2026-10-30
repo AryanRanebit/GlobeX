@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { Request, Response, NextFunction } from 'express';
 import { buyersService } from './buyers.service';
+import { contactEnrichmentService } from './contactEnrichment.service';
 import { sendSuccess } from '../../utils/apiResponse';
 
 const discoverSchema = z.object({
@@ -46,6 +47,23 @@ export const buyersController = {
     try {
       const buyer = await buyersService.getById(req.params.id);
       sendSuccess(res, buyer);
+    } catch (err) { next(err); }
+  },
+
+  /**
+   * POST /api/v1/buyers/:id/enrich-contact
+   * Find a public contact email: free website scrape first, Hunter.io
+   * fallback when HUNTER_API_KEY is configured. Quota exhaustion comes back
+   * as status 'credit_limit_reached' (HTTP 200) so the UI can explain it.
+   */
+  enrichContact: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await contactEnrichmentService.enrich(req.params.id);
+      if (result.status === 'error' && result.note === 'Buyer not found') {
+        res.status(404).json({ success: false, message: 'Buyer not found' });
+        return;
+      }
+      sendSuccess(res, result, 'Contact enrichment complete');
     } catch (err) { next(err); }
   },
 };
