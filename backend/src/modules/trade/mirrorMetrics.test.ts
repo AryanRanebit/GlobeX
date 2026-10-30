@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { selectMirrorPerReporter, computeIndiaShare } from './mirrorMetrics';
+import { selectMirrorPerReporter, computeIndiaShare, isShareConsistent, SHARE_INCONSISTENT_STATUS } from './mirrorMetrics';
 
 describe('selectMirrorPerReporter', () => {
   const rows = [
@@ -41,5 +41,24 @@ describe('computeIndiaShare', () => {
 
   it('returns null for zero/negative destination imports', () => {
     expect(computeIndiaShare(50_000_000, 0)).toBeNull();
+  });
+});
+
+describe('isShareConsistent (integrity guard)', () => {
+  it('accepts shares at or below 100%', () => {
+    expect(isShareConsistent(71.34)).toBe(true);
+    expect(isShareConsistent(100)).toBe(true);
+    expect(isShareConsistent(null)).toBe(true);
+  });
+
+  it('rejects shares above 100% (mirror under-reports)', () => {
+    // e.g. Iraq HS 100630 2024: India-reported exports $771M vs
+    // Iraq-reported world imports $3.0M
+    expect(isShareConsistent(25903.98)).toBe(false);
+    expect(isShareConsistent(100.01)).toBe(false);
+  });
+
+  it('exposes an honest status label for withheld shares', () => {
+    expect(SHARE_INCONSISTENT_STATUS).toMatch(/under-reports/i);
   });
 });

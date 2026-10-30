@@ -8,7 +8,7 @@
 import { prisma } from '../../config/database';
 import { comtradeClient } from './comtrade.client';
 import { logger } from '../../utils/logger';
-import { selectMirrorPerReporter, computeIndiaShare } from './mirrorMetrics';
+import { selectMirrorPerReporter, computeIndiaShare, isShareConsistent, SHARE_INCONSISTENT_STATUS } from './mirrorMetrics';
 
 export interface TradeMarketRow {
   rank?: number;
@@ -22,7 +22,10 @@ export interface TradeMarketRow {
   /** Period the destination import figure belongs to (may differ from requested year) */
   destinationMarketSizePeriod: string | null;
   indiaShareOfDestinationImportPct: number | null;
-  indiaShareStatus: 'Not available from free data' | 'Available';
+  indiaShareStatus:
+    | 'Not available from free data'
+    | 'Available'
+    | typeof SHARE_INCONSISTENT_STATUS;
   shareOfIndiaExportsPct?: number;
   shareOfTotal?: number; // Kept for backwards compatibility
   netWeightKg: number | null;
@@ -163,7 +166,11 @@ export const tradeService = {
       // India's market share: India-reported exports to the destination
       // divided by the destination's own import declarations from World
       // (mirror data). Never a proxy: null unless genuine mirror data exists.
-      const indiaSharePct = computeIndiaShare(r.tradeValueUsd, destImportTotal);
+      const rawShare = computeIndiaShare(r.tradeValueUsd, destImportTotal);
+      // Integrity guard: never print a share above 100% - it means the
+      // mirror series under-reports and the percentage would mislead.
+      const shareConsistent = isShareConsistent(rawShare);
+      const indiaSharePct = shareConsistent ? rawShare : null;
 
       const shareOfIndiaExports = worldTotal && worldTotal > 0
         ? (r.tradeValueUsd / worldTotal) * 100
@@ -180,7 +187,11 @@ export const tradeService = {
         destinationMarketSizeStatus: hasDestData ? 'Available (Destination-reported imports CIF)' : 'Not available from free data',
         destinationMarketSizePeriod: hasDestData ? destImportPeriod : null,
         indiaShareOfDestinationImportPct: indiaSharePct,
-        indiaShareStatus: indiaSharePct !== null ? 'Available' : 'Not available from free data',
+        indiaShareStatus: indiaSharePct !== null
+          ? 'Available'
+          : hasDestData && !shareConsistent
+            ? SHARE_INCONSISTENT_STATUS
+            : 'Not available from free data',
         shareOfIndiaExportsPct: shareOfIndiaExports,
         shareOfTotal: shareOfIndiaExports, // Compatibility
         netWeightKg: r.netWeightKg,

@@ -41,3 +41,17 @@ export function computeIndiaShare(
   if (destinationWorldImportUsd === null || destinationWorldImportUsd <= 0) return null;
   return (indiaExportUsd / destinationWorldImportUsd) * 100;
 }
+
+/**
+ * Integrity guard: a share above 100% means the destination's declared
+ * world imports are smaller than India alone reported shipping there - a
+ * known mirror-data artifact (under-declared imports, transit-hub leakage,
+ * partial-year aggregates). Such a percentage is misleading, so the share
+ * is withheld and flagged instead of printed.
+ */
+export function isShareConsistent(sharePct: number | null): boolean {
+  return sharePct === null || sharePct <= 100;
+}
+
+export const SHARE_INCONSISTENT_STATUS =
+  'Mirror figure under-reports vs India export record - share withheld';
