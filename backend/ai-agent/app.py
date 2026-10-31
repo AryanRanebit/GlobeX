@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 
 from database.models import init_db
 from rag.pipeline import rag_pipeline
+from services.semantic_cache import semantic_cache
 from routes.api import router
 from utils.config import get_settings
 from utils.logger import get_logger, setup_logging
@@ -56,6 +57,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         rag_pipeline.available = False
         rag_pipeline.reason = gemini_readiness.reason
         log.warning("RAG initialisation skipped", reason=rag_pipeline.reason)
+
+    # Semantic response cache: same Gemini embeddings + ChromaDB as RAG, so it
+    # only boots when Gemini is usable. ChromaDB is ephemeral on Render; the
+    # cache simply re-warms after a restart, which is acceptable.
+    if gemini_readiness.available:
+        try:
+            await semantic_cache.initialise(
+                client=rag_pipeline._client,
+                embeddings=rag_pipeline._embeddings,
+            )
+            if semantic_cache.available:
+                log.info("[OK] Semantic cache ready", **semantic_cache.stats())
+            else:
+                log.warning("Semantic cache degraded", reason=semantic_cache.reason)
+        except Exception as exc:
+            semantic_cache.available = False
+            semantic_cache.reason = "Semantic cache initialisation failed"
+            log.warning("Semantic cache init failed; continuing without it", error=str(exc))
 
     log.info("[INFO] GlobeX AI is live", host=settings.app_host, port=settings.app_port)
     yield

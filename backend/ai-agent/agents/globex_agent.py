@@ -20,6 +20,7 @@ from prompts.system_prompts import (
     SYSTEM_PROMPT,
 )
 from rag.pipeline import rag_pipeline
+from services.semantic_cache import EMPTY_RESPONSE_FALLBACK_PREFIX, semantic_cache
 from tools.trade_tools import ALL_TOOLS, TOOL_MAP
 from utils.config import get_settings
 from utils.logger import get_logger
@@ -131,6 +132,23 @@ class GlobeXAgent:
         """
         log.info("Agent processing message", session_id=session_id, message=user_message[:80])
 
+        # 0. Semantic response cache: one embedding call is far cheaper than
+        # intent classification + generation, so look before anything else.
+        # Only stable, tool-free, non-time-sensitive answers ever get stored
+        # (see SemanticCache.is_cacheable), so a hit is safe to return as-is.
+        cached = await semantic_cache.lookup(user_message)
+        if cached is not None:
+            await memory.add_message(session_id, "user", user_message)
+            await memory.add_message(session_id, "assistant", cached["response"])
+            return {
+                "response": cached["response"],
+                "intent": cached["intent"],
+                "tools_used": [],
+                "rag_used": False,
+                "tool_results": {},
+                "cache_hit": True,
+            }
+
         # 1. Classify intent (session context is a cheap DB read, no Gemini call)
         session_context = await memory.get_session_context_string(session_id)
         intent_data = await self._classify_intent(user_message, session_context)
@@ -200,10 +218,18 @@ class GlobeXAgent:
         if not response_text.strip():
             log.warning("LLM returned empty response", intent=intent, tool=tool_name)
             response_text = (
-                "I wasn't able to generate an answer for that just now. "
+                EMPTY_RESPONSE_FALLBACK_PREFIX
+                + " for that just now. "
                 "Please try rephrasing your question - for example, name the product "
                 "or HS code and the destination country you are interested in."
             )
+
+        # 6b. Cache the answer for future semantically-similar queries.
+        # store() applies is_cacheable() internally: greetings, off-topic
+        # refusals, tool-backed and time-sensitive turns are never cached.
+        await semantic_cache.store(
+            user_message, response_text, intent=intent, tools_used=tools_used
+        )
 
         # 7. Persist messages to memory
         await memory.add_message(session_id, "user", user_message)

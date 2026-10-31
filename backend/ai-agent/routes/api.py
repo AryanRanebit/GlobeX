@@ -26,6 +26,7 @@ from database.models import Session, get_db
 from memory.memory_manager import MemoryManager
 from rag.pipeline import rag_pipeline
 from services.buyer_discovery import BuyerDiscoveryError, discover_buyers
+from services.semantic_cache import semantic_cache
 from tools.trade_tools import (
     country_rules,
     duty_calculator,
@@ -84,6 +85,7 @@ class ChatResponse(BaseModel):
     tools_used: list[str]
     rag_used: bool
     tool_results: dict[str, Any]
+    cache_hit: bool = False  # True when answered from the semantic cache
 
 
 class SessionInfo(BaseModel):
@@ -1029,7 +1031,7 @@ Respond ONLY with a valid JSON object (no markdown, no backticks, no explanatory
 @router.get("/health")
 async def health() -> dict:
     if gemini_readiness.available and rag_pipeline.available:
-        return {"status": "ok", "service": "GlobeX AI", "version": "1.0.0", "capabilities": {"gemini": "operational", "rag": "operational"}}
+        return {"status": "ok", "service": "GlobeX AI", "version": "1.0.0", "capabilities": {"gemini": "operational", "rag": "operational"}, "semantic_cache": semantic_cache.stats()}
     reasons = []
     if not gemini_readiness.available:
         reasons.append(gemini_readiness.reason or "invalid or missing GOOGLE_API_KEY")
@@ -1046,4 +1048,5 @@ async def health() -> dict:
             "gemini": "operational" if gemini_readiness.available else "unavailable",
             "rag": "operational" if rag_pipeline.available else "unavailable",
         },
+        "semantic_cache": semantic_cache.stats(),
     }
