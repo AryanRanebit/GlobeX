@@ -12,14 +12,14 @@ const envSchema = z.object({
   DIRECT_URL: z.string().url().optional(),
 
   JWT_SECRET: z.string().min(32),
-  JWT_EXPIRES_IN: z.string().default('15m'),
+  JWT_EXPIRES_IN: z.string().default('4h'),
   JWT_REFRESH_SECRET: z.string().min(32),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
   ALLOWED_ORIGINS: z.string().default('http://localhost:3000'),
 
   RATE_LIMIT_WINDOW_MS: z.string().default('900000').transform(Number),
-  RATE_LIMIT_MAX_REQUESTS: z.string().default('100').transform(Number),
+  RATE_LIMIT_MAX_REQUESTS: z.string().default('600').transform(Number),
 
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
 

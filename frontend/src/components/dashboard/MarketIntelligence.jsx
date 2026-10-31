@@ -111,6 +111,10 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       setError(null);
     } catch (err) {
       console.error('Error fetching trade data:', err);
+      // Drop the previous product's results so stale totals never sit
+      // beside an error for the new search.
+      setMarkets([]);
+      setMeta(null);
       setError(err.message || 'Could not load official Comtrade data.');
     } finally {
       setLoading(false);

@@ -559,27 +559,22 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
         # Step 2: Determine appropriate HS code from candidate codes or product description
         target_hs = "TOTAL"
         matched_candidate = None
-        for cand in norm.candidate_hs_codes:
-            clean_code = cand.hs_code.replace(".", "").strip()
-            if clean_code.startswith("62") or "apparel" in norm.category.lower() or "garment" in request.product.lower():
-                target_hs = "62"
-                matched_candidate = cand
-                break
-
-        lower_query = (request.product + " " + (request.description or "")).lower()
-        if any(w in lower_query for w in ["apparel", "garment", "shirt", "clothing", "trouser", "dress", "jacket", "cotton"]):
-            target_hs = "62"
-
-        # Non-apparel products: use the top candidate HS code from product
-        # understanding (dots stripped, e.g. "0910.30" -> "091030") so the
-        # analysis is scoped to the product's commodity instead of HS TOTAL.
-        if target_hs == "TOTAL" and norm.candidate_hs_codes:
+        # Scope the analysis to the product's own HS code. Never swap in a
+        # neighbouring chapter (e.g. HS 61 knitwear -> HS 62 woven apparel):
+        # if no data is seeded for the product, we fall back to all goods
+        # with a prominent scope notice instead.
+        if norm.candidate_hs_codes:
             top_clean = norm.candidate_hs_codes[0].hs_code.replace(".", "").strip()
             if top_clean:
                 target_hs = top_clean
                 matched_candidate = norm.candidate_hs_codes[0]
 
         trade_info = await _fetch_trade_market_data(target_hs)
+        # Accept only data for the requested code or one of its parent headings.
+        if trade_info and target_hs != "TOTAL":
+            got = str(trade_info.get("meta", {}).get("cmdCode", target_hs)).replace(".", "").strip()
+            if got != "TOTAL" and not target_hs.startswith(got):
+                trade_info = None
         if not trade_info and target_hs != "TOTAL":
             trade_info = await _fetch_trade_market_data("TOTAL")
 
@@ -868,8 +863,12 @@ async def agent_outreach(request: OutreachAgentRequest) -> dict:
         
         The email should:
         1. Be written with a polite, professional {request.tone} tone.
-        2. Introduce the exporter, their product range, and standard certifications (e.g. ISO, GMP).
-        3. Explain why this partnership makes sense for the buyer.
+        2. Introduce the exporter using ONLY the details given above. Do NOT invent or
+           assume claims about the exporter's size, years in business, reputation, quality,
+           certifications, capacity, shelf life, delivery performance or existing customers.
+           If such details are not provided, either omit them or use conditional phrasing
+           (e.g. "we would be glad to share our product specifications and certifications").
+        3. Explain why a conversation could make sense for the buyer, based only on the buyer details above.
         4. End with a clear call-to-action (e.g., brief Zoom call, product catalogue).
         5. Be concise (under 200 words).
         

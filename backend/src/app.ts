@@ -44,6 +44,13 @@ export const createApp = () => {
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, message: 'Too many requests. Please try again later.' },
+    // High-frequency read-only GETs (trade data, history, job status polling)
+    // are exempt from the general limiter. Auth keeps its own strict limiter,
+    // and all writes/POSTs stay counted.
+    skip: (req) =>
+      req.method === 'GET' &&
+      (/^\/api\/(v\d+\/)?(trade|history)(\/|$)/.test(req.path) ||
+        /^\/api\/v\d+\/market\/analyze\/status\//.test(req.path)),
   });
 
   // Stricter limiter for auth routes
