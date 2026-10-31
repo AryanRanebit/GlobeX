@@ -205,29 +205,33 @@ US Import Duties:
         "category": "country_rules",
         "content": """
 India–Germany Trade:
-Germany is India's largest trading partner in Europe. As an EU member state, Germany follows
-EU Common Customs Policy. The importer in Germany must deal with both EU customs and German
-national requirements.
+Germany is India's largest trading partner in Europe. As an EU member state, Germany applies
+the EU-wide requirements covered in the "EU Export Requirements" document (CE marking, REACH,
+EORI number, GSP/Form A, standard import documents). This document covers only the
+Germany-specific layer on top of those EU-wide rules.
 
-EU Customs Requirements:
-1. EORI Number: Economic Operator Registration required for the German importer.
-2. Import Declaration: Filed with German customs (Zollamt) via ATLAS system.
-3. VAT: 19% German VAT applicable on import (claimable by VAT-registered businesses).
-4. CE Marking: Mandatory for applicable product categories.
-5. REACH/CLP: Chemical regulations must be complied with.
+German Import Process:
+1. Import Declaration: Filed electronically with German customs (Zollamt) through the ATLAS
+   system; a German customs broker usually handles this.
+2. Import VAT: 19% German VAT applies on imports (7% reduced rate for certain goods such as
+   food staples); VAT-registered businesses can reclaim it as input tax.
+3. Customs Duty: Assessed under the EU Common Customs Tariff and collected by German customs
+   at the port or airport of entry.
+4. Language: German authorities and buyers commonly expect product documentation, labels and
+   manuals in German, beyond what EU law strictly requires.
 
-India–EU GSP:
-India currently benefits from the EU's Generalised Scheme of Preferences (Standard GSP),
-providing reduced or zero duty on many product categories. Requires Form A or GSP Declaration.
+Germany-Specific Product Notes:
+- Textiles & Apparel: Country-of-origin labelling required; OEKO-TEX certification is strongly
+  valued by German buyers.
+- Machinery: German buyers expect complete technical documentation in German.
+- Food & Beverage: Germany's LFGB food safety standard applies in addition to EU hygiene rules.
+- Pharmaceuticals: Market access involves Germany's BfArM alongside the EMA process.
 
-Product-Specific Rules for Germany:
-- Textiles & Apparel: Must have country of origin label; OEKO-TEX certification valued.
-- Machinery: Must comply with EU Machinery Directive; CE mark essential.
-- Food & Beverage: EU food hygiene regulations; may need EU-approved establishment.
-- Pharmaceuticals: EMA approval required; GMP certification mandatory.
-- Electronics/EEE: RoHS and WEEE Directives compliance required.
-
-Port of Entry: Hamburg is Germany's main seaport. Frankfurt am Main is the major airport.
+Logistics & Market Access:
+- Hamburg is Germany's main seaport for cargo from India; Frankfurt am Main is the major
+  airport for air freight.
+- Germany is a common entry point even when the final buyer is elsewhere in the EU, since
+  goods cleared in Germany move freely within the single market.
 """,
     },
     {
