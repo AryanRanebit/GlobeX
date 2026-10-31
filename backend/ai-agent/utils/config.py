@@ -64,6 +64,18 @@ class Settings(BaseSettings):
     # score ~0.50, in-scope queries ~0.70+ on gemini-embedding-001).
     similarity_threshold: float = Field(0.6, alias="SIMILARITY_THRESHOLD")
 
+    # -- Semantic response cache -------------------------------------------
+    # Minimum cosine similarity for a cached query to answer a new one.
+    # Deliberately stricter than the RAG threshold: a near-paraphrase must
+    # match, a merely-related question must NOT get a recycled answer.
+    semantic_cache_threshold: float = Field(0.90, alias="SEMANTIC_CACHE_THRESHOLD")
+    # Cached answers expire after this many seconds (default 24h).
+    semantic_cache_ttl_seconds: int = Field(86400, alias="SEMANTIC_CACHE_TTL_SECONDS")
+    # Dedicated ChromaDB collection, separate from the RAG knowledge base.
+    semantic_cache_collection_name: str = Field(
+        "globex_semantic_cache", alias="SEMANTIC_CACHE_COLLECTION_NAME"
+    )
+
     # ── Logging ─────────────────────────────────────────────────────────────
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 
