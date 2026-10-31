@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     chunk_size: int = Field(1000, alias="CHUNK_SIZE")
     chunk_overlap: int = Field(200, alias="CHUNK_OVERLAP")
     retriever_k: int = Field(5, alias="RETRIEVER_K")
+    # Minimum cosine similarity for a retrieved chunk to be injected as context.
+    # Chunks below this cutoff are treated as irrelevant (out-of-scope queries
+    # score ~0.50, in-scope queries ~0.70+ on gemini-embedding-001).
+    similarity_threshold: float = Field(0.6, alias="SIMILARITY_THRESHOLD")
 
     # ── Logging ─────────────────────────────────────────────────────────────
     log_level: str = Field("INFO", alias="LOG_LEVEL")

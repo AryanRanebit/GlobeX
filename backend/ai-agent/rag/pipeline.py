@@ -164,27 +164,47 @@ class RAGPipeline:
         )
 
         retrieved: list[dict] = []
+        dropped = 0
         for doc, meta, dist in zip(
             results["documents"][0],
             results["metadatas"][0],
             results["distances"][0],
         ):
+            # ChromaDB cosine space returns distance = 1 - cosine similarity.
+            similarity = 1.0 - dist
+            if similarity < settings.similarity_threshold:
+                dropped += 1
+                continue
             retrieved.append(
                 {
                     "content": doc,
                     "metadata": meta,
                     "distance": round(dist, 4),
+                    "similarity": round(similarity, 4),
                 }
             )
 
-        log.info("RAG retrieval complete", query=query[:80], hits=len(retrieved))
+        log.info(
+            "RAG retrieval complete",
+            query=query[:80],
+            hits=len(retrieved),
+            dropped_below_threshold=dropped,
+            threshold=settings.similarity_threshold,
+        )
         return retrieved
 
     async def format_context(self, query: str, category_filter: str | None = None) -> str:
         """Retrieve and format context for LLM injection."""
         chunks = await self.retrieve(query, category_filter=category_filter)
         if not chunks:
-            return "No relevant trade knowledge found for this query."
+            # Explicit signal so the model does not treat missing context as
+            # hidden knowledge: nothing passed the similarity threshold.
+            return (
+                "No relevant trade knowledge found for this query in the knowledge base. "
+                "Answer from general knowledge only, do not attribute any regulation, "
+                "tariff or compliance detail to the knowledge base, and advise the user "
+                "to verify specifics with official sources."
+            )
 
         sections = []
         for c in chunks:
