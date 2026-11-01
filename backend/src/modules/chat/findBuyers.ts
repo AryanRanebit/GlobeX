@@ -128,12 +128,21 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** Mentions of India in this app almost always mean the exporter's home
+ *  country (where they manufacture or ship FROM), not a destination market.
+ *  Only treat India as the target when the message explicitly asks for
+ *  buyers/importers IN India. */
+const INDIA_AS_TARGET_RE = /\b(buyers?|importers?|distributors?|wholesalers?|buying agents?)\b[^.?!]{0,40}\bin\s+india\b/i;
+
 function findCountry(message: string): string | undefined {
   for (const [canonical, aliases] of Object.entries(COUNTRY_ALIASES)) {
     for (const alias of aliases) {
       const bare = alias.replace(/\./g, '');
       const re = new RegExp(`\\b${escapeRegExp(alias)}\\b`, bare.length <= 3 ? '' : 'i');
-      if (re.test(message)) return canonical;
+      if (re.test(message)) {
+        if (canonical === 'India' && !INDIA_AS_TARGET_RE.test(message)) continue;
+        return canonical;
+      }
     }
   }
   return undefined;
