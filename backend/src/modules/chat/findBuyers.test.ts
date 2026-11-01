@@ -51,6 +51,12 @@ describe('parseBuyerQuery', () => {
   it('does not confuse the pronoun us with the US', () => {
     expect(parseBuyerQuery('help us find buyers for cotton').country).toBeUndefined();
   });
+  it('treats India as the exporter origin unless buyers in India are explicitly requested', () => {
+    // Origin mention: "manufacture ... in India" must not target India
+    expect(parseBuyerQuery('I manufacture biodegradable bamboo toothbrushes in India. Find the best three countries to export them to, identify five genuine international buyers in each country').country).toBeUndefined();
+    // Explicit target: buyers IN India still resolves to India
+    expect(parseBuyerQuery('find buyers for cotton in India').country).toBe('India');
+  });
 });
 
 describe('tryFindBuyersAnswer', () => {

@@ -29,6 +29,13 @@ log = get_logger(__name__)
 settings = get_settings()
 
 # Intent → RAG category mapping
+OFF_TOPIC_REDIRECT = (
+    "I'm GlobeX, your export-market assistant - I can only help with international "
+    "trade topics like HS codes, export markets, buyers, duties and documentation. "
+    "I can't help with personal finance or other non-trade questions. Want to "
+    "explore export markets or buyers for one of your products instead?"
+)
+
 INTENT_CATEGORY_MAP: dict[str, str | None] = {
     "regulatory_query": "export_regulations",
     "document_query": "customs_procedures",
@@ -159,6 +166,20 @@ class GlobeXAgent:
         entities = intent_data.get("entities", {})
         log.info("Intent classified", intent=intent, needs_rag=needs_rag, tool=tool_name)
 
+        # 1b. Off-topic guardrail: decline deterministically so prompt phrasing
+        # cannot talk the model out of scope, and no LLM/RAG/tool spend occurs.
+        if intent == "off_topic":
+            await memory.add_message(session_id, "user", user_message)
+            await memory.add_message(session_id, "assistant", OFF_TOPIC_REDIRECT)
+            await self._update_memory(session_id, user_message, OFF_TOPIC_REDIRECT, entities, memory)
+            return {
+                "response": OFF_TOPIC_REDIRECT,
+                "intent": intent,
+                "tools_used": [],
+                "rag_used": False,
+                "tool_results": {},
+            }
+
         # 2. Retrieve RAG context (skip for greetings / off-topic to save tokens)
         rag_context = ""
         _skip_rag_intents = {"greeting", "off_topic"}
@@ -265,6 +286,14 @@ class GlobeXAgent:
         needs_tool = intent_data.get("needs_tool", False)
         tool_name = intent_data.get("tool_name")
         entities = intent_data.get("entities", {})
+
+        # Off-topic guardrail (see chat()): decline without any LLM spend.
+        if intent == "off_topic":
+            yield OFF_TOPIC_REDIRECT
+            await memory.add_message(session_id, "user", user_message)
+            await memory.add_message(session_id, "assistant", OFF_TOPIC_REDIRECT)
+            await self._update_memory(session_id, user_message, OFF_TOPIC_REDIRECT, entities, memory)
+            return
 
         rag_context = ""
         if needs_rag:
