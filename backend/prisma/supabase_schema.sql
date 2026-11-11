@@ -412,3 +412,11 @@ CREATE INDEX "analysis_history_userId_createdAt_idx" ON "analysis_history"("user
 
 -- AddForeignKey
 ALTER TABLE "analysis_history" ADD CONSTRAINT "analysis_history_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Server-only tables: never expose these through Supabase's client Data API.
+-- The Express backend uses Prisma with a trusted database role.
+ALTER TABLE public.analysis_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.trade_flows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comtrade_cache ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.analysis_history, public.trade_flows,
+  public.comtrade_cache FROM anon, authenticated;

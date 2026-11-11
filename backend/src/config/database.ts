@@ -47,6 +47,14 @@ async function ensureAnalysisHistoryTable(): Promise<void> {
     await prisma.$executeRawUnsafe(
       'CREATE INDEX IF NOT EXISTS "analysis_history_userId_createdAt_idx" ON "analysis_history"("userId", "createdAt")',
     );
+    // This table is server-only. Custom JWT auth is enforced by Express;
+    // Supabase client roles must never read saved analyses directly.
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE public.analysis_history ENABLE ROW LEVEL SECURITY',
+    );
+    await prisma.$executeRawUnsafe(
+      'REVOKE ALL ON TABLE public.analysis_history FROM anon, authenticated',
+    );
     await prisma.$executeRawUnsafe(`
       DO $$
       BEGIN
