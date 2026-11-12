@@ -179,7 +179,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
             <Loader2 size={28} className="animate-spin text-blue" />
             <p className="text-sm font-semibold text-navy">Analyzing {product} against official trade data...</p>
             <p className="text-xs text-muted">
-              Job {jobState || 'queued'} · This classifies your product, pulls verified UN Comtrade rows, and scores destinations. Usually 15-40 seconds.
+              Job {jobState || 'queued'} · This classifies your product, pulls verified UN Comtrade rows, and scores destinations. This status updates as the job moves.
             </p>
           </div>
         )}
