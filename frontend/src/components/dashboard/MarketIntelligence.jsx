@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Globe2,
   AlertTriangle,
@@ -83,7 +83,12 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
   // Fetch real trade markets from backend. Initial state is already
   // loading=true, so the effect never sets state synchronously; HS switches
   // and retries enter the loading state from their event handlers.
+  // Incremented on every fetch; a stale response for an older HS code is
+  // discarded instead of overwriting the newer search's results.
+  const requestId = useRef(0);
   const fetchMarkets = useCallback(async (hsCode) => {
+    const id = ++requestId.current;
+    const stale = () => id !== requestId.current;
     try {
       // Exact HS codes often have no rows while a parent heading does
       // (e.g. 620462 -> 6204 -> 62). Walk up prefixes until data appears.
@@ -105,11 +110,13 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
         used = code;
         if (j.data.length > 0) break;
       }
+      if (stale()) return;
       setMarkets(json.data);
       setMeta(json.meta);
       setResolvedHs(used);
       setError(null);
     } catch (err) {
+      if (stale()) return;
       console.error('Error fetching trade data:', err);
       // Drop the previous product's results so stale totals never sit
       // beside an error for the new search.
@@ -117,7 +124,7 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       setMeta(null);
       setError(err.message || 'Could not load official Comtrade data.');
     } finally {
-      setLoading(false);
+      if (!stale()) setLoading(false);
     }
   }, []);
 

@@ -6,7 +6,7 @@ import { TRADE_STATS } from '../../constants/tradeStats';
 
 const QUICK_SEARCH_CHIPS = [
   { code: '6204.62', label: 'Cotton Trousers' },
-  { code: '1006.30', label: 'Basmati Rice' },
+  { code: '1006.30', label: 'Rice' },
   { code: '7113.19', label: 'Gold Jewellery' },
   { code: '3004.90', label: 'Medicaments' },
 ];
