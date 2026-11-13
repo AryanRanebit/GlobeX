@@ -119,9 +119,11 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
       if (stale()) return;
       console.error('Error fetching trade data:', err);
       // Drop the previous product's results so stale totals never sit
-      // beside an error for the new search.
+      // beside an error for the new search. The heading badge also moves
+      // to the attempted code, so it cannot keep describing the old one.
       setMarkets([]);
       setMeta(null);
+      setResolvedHs(hsCode);
       setError(err.message || 'Could not load official Comtrade data.');
     } finally {
       if (!stale()) setLoading(false);
@@ -332,13 +334,13 @@ export default function MarketIntelligence({ searchQuery = '', onSearchChange, o
           <div className="px-2">
             <span className="text-muted block text-[11px]">Total Export Value</span>
             <span className="text-base font-bold text-navy font-heading">
-              {meta?.worldTotalUsd ? formatUsd(meta.worldTotalUsd) : 'Loading...'}
+              {loading ? 'Loading...' : (error || !meta?.worldTotalUsd) ? 'Not available' : formatUsd(meta.worldTotalUsd)}
             </span>
           </div>
           <div className="pl-4">
             <span className="text-muted block text-[11px]">Destinations</span>
             <span className="text-base font-bold text-blue font-heading">
-              {meta?.totalMarkets || filteredMarkets.length} Countries
+              {error ? '—' : `${meta?.totalMarkets || filteredMarkets.length} Countries`}
             </span>
           </div>
           <button

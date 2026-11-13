@@ -9,6 +9,7 @@ import FAQ from './components/sections/FAQ';
 import FinalCTA from './components/sections/FinalCTA';
 import Footer from './components/sections/Footer';
 import AuthModal from './components/AuthModal';
+import NotFound from './components/NotFound';
 import AiAgentsHub from './components/AiAgentsHub';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardHome from './components/dashboard/DashboardHome';
@@ -109,6 +110,13 @@ export default function App() {
     url.searchParams.delete('tab');
     window.history.pushState({}, '', url.pathname);
   };
+
+  // The app serves only '/' (dashboard tabs live in query params). Vercel
+  // rewrites every path here, so anything else is a real 404 for the user.
+  // The pathname never changes during a session, so hook order is stable.
+  if (window.location.pathname !== '/') {
+    return <NotFound />;
+  }
 
   if (isAuthenticated) {
     return (
