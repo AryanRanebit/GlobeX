@@ -1,17 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, 
-  TrendingUp, 
-  Mail, 
-  FileText, 
-  CheckCircle2, 
-  Terminal, 
-  Play, 
-  Check, 
-  Loader2, 
-  Globe, 
-  ArrowLeft
+import {
+  Search,
+  TrendingUp,
+  Mail,
+  FileText,
+  CheckCircle2,
+  Terminal,
+  Play,
+  Check,
+  Loader2,
+  Globe,
+  ArrowLeft,
+  Rocket,
+  AlertTriangle,
+  ChevronRight
 } from 'lucide-react';
+
+// Terminal log lines are typed instead of emoji-prefixed: the icon comes
+// from the same Lucide set as the rest of the product.
+const LOG_TYPE_STYLES = {
+  start:   { icon: Rocket,        cls: 'text-blue-light border-blue-light' },
+  success: { icon: CheckCircle2,  cls: 'text-emerald-light border-emerald-light' },
+  warn:    { icon: AlertTriangle, cls: 'text-orange border-orange' },
+  info:    { icon: ChevronRight,  cls: 'text-slate-300 border-slate-700' },
+};
 
 export default function AiAgentsHub({ onBackToLanding }) {
   const [activeAgent, setActiveAgent] = useState('discovery');
@@ -69,14 +81,14 @@ export default function AiAgentsHub({ onBackToLanding }) {
         'Honest limits: customs volumes, purchase history and contacts are NOT verified.'
       ],
       simulationLogs: [
-        '🚀 Initializing Buyer Discovery Agent...',
-        '🔍 Running grounded Google Search: importers of HS 6204.62 (women\'s cotton trousers) in the US and Germany...',
-        '📄 Reading search results: company websites, trade directories, public filings...',
-        '💡 Match: "Gap Inc." (United States) - apparel importer/retailer, source cited.',
-        '💡 Match: "H&M Group" (Sweden) - apparel importer/retailer, source cited.',
-        '💡 Match: "C&A" (Germany) - apparel importer/retailer, source cited.',
-        '🔗 Attaching source links. Dropping any suggestion without a citation...',
-        '✅ 3 source-backed prospects saved. Import volumes and contacts are NOT verified.'
+        { t: 'start', m: 'Initializing Buyer Discovery Agent...' },
+        { t: 'info', m: 'Running grounded Google Search: importers of HS 6204.62 (women\'s cotton trousers) in the US and Germany...' },
+        { t: 'info', m: 'Reading search results: company websites, trade directories, public filings...' },
+        { t: 'info', m: 'Match: "Gap Inc." (United States) - apparel importer/retailer, source cited.' },
+        { t: 'info', m: 'Match: "H&M Group" (Sweden) - apparel importer/retailer, source cited.' },
+        { t: 'info', m: 'Match: "C&A" (Germany) - apparel importer/retailer, source cited.' },
+        { t: 'info', m: 'Attaching source links. Dropping any suggestion without a citation...' },
+        { t: 'success', m: '3 source-backed prospects saved. Import volumes and contacts are NOT verified.' }
       ],
       outcome: {
         title: 'Discovered Prospects (HS 6204.62) - sources attached',
@@ -100,14 +112,14 @@ export default function AiAgentsHub({ onBackToLanding }) {
         'Marks growth, competition and destination market size as unavailable when the data is not seeded.'
       ],
       simulationLogs: [
-        '🚀 Initializing Market Intelligence Agent...',
-        '📊 Querying UN Comtrade 2025: India exports, HS 62 (apparel, not knitted)...',
-        '🔍 Ranking destinations by India-reported export value (FOB)...',
-        '📈 United States: $2.67B, 31.83% of India HS 62 exports',
-        '📈 United Kingdom: $793.51M, 9.46%',
-        '📈 United Arab Emirates: $628.61M, 7.49%',
-        'ℹ️ Growth, tariffs and competition: not available from the seeded data.',
-        '✅ Ranking complete. Figures are 2025 UN Comtrade values.'
+        { t: 'start', m: 'Initializing Market Intelligence Agent...' },
+        { t: 'info', m: 'Querying UN Comtrade 2025: India exports, HS 62 (apparel, not knitted)...' },
+        { t: 'info', m: 'Ranking destinations by India-reported export value (FOB)...' },
+        { t: 'info', m: 'United States: $2.67B, 31.83% of India HS 62 exports' },
+        { t: 'info', m: 'United Kingdom: $793.51M, 9.46%' },
+        { t: 'info', m: 'United Arab Emirates: $628.61M, 7.49%' },
+        { t: 'info', m: 'Growth, tariffs and competition: not available from the seeded data.' },
+        { t: 'success', m: 'Ranking complete. Figures are 2025 UN Comtrade values.' }
       ],
       outcome: {
         title: 'Top Destinations (UN Comtrade 2025, HS 62)',
@@ -131,15 +143,15 @@ export default function AiAgentsHub({ onBackToLanding }) {
         'Follows professional email compliance standards (CAN-SPAM/GDPR).'
       ],
       simulationLogs: [
-        '🚀 Initializing Outreach & RFP Agent...',
-        '📧 Fetching buyer profile: "C&A" (Germany) - a prospect saved by Buyer Discovery...',
-        '✍️ Using public web sources about the prospect to tailor the pitch (no purchase history is claimed)...',
-        '🌐 Selecting draft language: German (Deutsch) for high response rate...',
-        '📝 Generating personalized value proposition based on organic certifications...',
-        '⚙️ Applying tone setting: Formal corporate partner...',
-        '📧 Subject line optimized: Partnerschaftsanfrage: Bio-Baumwolltextilien direkt vom Hersteller',
-        '✨ Body draft created. Checking compliance with European GDPR laws...',
-        '✅ Outreach draft ready for approval.'
+        { t: 'start', m: 'Initializing Outreach & RFP Agent...' },
+        { t: 'info', m: 'Fetching buyer profile: "C&A" (Germany) - a prospect saved by Buyer Discovery...' },
+        { t: 'info', m: 'Using public web sources about the prospect to tailor the pitch (no purchase history is claimed)...' },
+        { t: 'info', m: 'Selecting draft language: German (Deutsch) for high response rate...' },
+        { t: 'info', m: 'Generating personalized value proposition based on organic certifications...' },
+        { t: 'info', m: 'Applying tone setting: Formal corporate partner...' },
+        { t: 'info', m: 'Subject line optimized: Partnerschaftsanfrage: Bio-Baumwolltextilien direkt vom Hersteller' },
+        { t: 'info', m: 'Body draft created. Checking compliance with European GDPR laws...' },
+        { t: 'success', m: 'Outreach draft ready for approval.' }
       ],
       outcome: {
         title: 'Generated Outreach (Deutsch)',
@@ -169,14 +181,14 @@ Sourcing-Team`
         'Tracks average port clearance days and regulatory risk indicators.'
       ],
       simulationLogs: [
-        '🚀 Initializing Compliance & Customs Agent...',
-        '📦 Target product: Spices & Condiments. Target country: Germany (EU)...',
-        '🔍 Accessing European Food Safety Authority (EFSA) regulatory database...',
-        '⚠️ Alert: Requires Phytosanitary Certificate issued by Indian authorities.',
-        '⚠️ Alert: Maximum residue limits (MRLs) for pesticides must conform to EU Regulation (EC) 396/2005.',
-        '📝 Checking labeling requirements: Must include botanical name, batch ID, and net weight in German.',
-        '⚖️ Port customs procedure: Standard customs entry with document clearance. Average delay: 2 days.',
-        '✅ Compliance check complete. 3 certificates required.'
+        { t: 'start', m: 'Initializing Compliance & Customs Agent...' },
+        { t: 'info', m: 'Target product: Spices & Condiments. Target country: Germany (EU)...' },
+        { t: 'info', m: 'Accessing European Food Safety Authority (EFSA) regulatory database...' },
+        { t: 'warn', m: 'Alert: Requires Phytosanitary Certificate issued by Indian authorities.' },
+        { t: 'warn', m: 'Alert: Maximum residue limits (MRLs) for pesticides must conform to EU Regulation (EC) 396/2005.' },
+        { t: 'info', m: 'Checking labeling requirements: Must include botanical name, batch ID, and net weight in German.' },
+        { t: 'info', m: 'Port customs procedure: Standard customs entry with document clearance. Average delay: 2 days.' },
+        { t: 'success', m: 'Compliance check complete. 3 certificates required.' }
       ],
       outcome: {
         title: 'EU Compliance Checklist',
@@ -200,12 +212,12 @@ Sourcing-Team`
         'Not a credit rating: no financial or customs data is connected.'
       ],
       simulationLogs: [
-        '🚀 Initializing Lead Scoring Agent...',
-        '📊 Scoring prospect: "C&A" (Germany) - saved from grounded search...',
-        '🔎 Evidence found: company identity, website domain, product/industry fit...',
-        '⚠️ Evidence missing: shipment volumes, credit history, supplier retention (no customs or registry data connected)...',
-        '🎛️ Missing signals score zero, not negative, and are listed in the breakdown...',
-        '✅ Score computed from available evidence only. This is not a credit rating.'
+        { t: 'start', m: 'Initializing Lead Scoring Agent...' },
+        { t: 'info', m: 'Scoring prospect: "C&A" (Germany) - saved from grounded search...' },
+        { t: 'info', m: 'Evidence found: company identity, website domain, product/industry fit...' },
+        { t: 'warn', m: 'Evidence missing: shipment volumes, credit history, supplier retention (no customs or registry data connected)...' },
+        { t: 'info', m: 'Missing signals score zero, not negative, and are listed in the breakdown...' },
+        { t: 'success', m: 'Score computed from available evidence only. This is not a credit rating.' }
       ],
       outcome: {
         title: 'Evidence Score: C&A (Germany)',
@@ -443,19 +455,19 @@ Sourcing-Team`
                     Click "Run Demo" above to watch the agent think and perform operations.
                   </div>
                 ) : (
-                  simulatedLogs.map((log, index) => (
-                    <div 
-                      key={index}
-                      className={`leading-relaxed border-l-2 pl-3 py-0.5 ${
-                        log && log.startsWith('🚀') ? 'text-blue-light border-blue-light' :
-                        log && log.startsWith('✅') ? 'text-emerald-light border-emerald-light' :
-                        log && log.startsWith('⚠️') ? 'text-orange border-orange' :
-                        'text-slate-300 border-slate-700'
-                      }`}
-                    >
-                      {log}
-                    </div>
-                  ))
+                  simulatedLogs.map((log, index) => {
+                    const style = LOG_TYPE_STYLES[log.t] || LOG_TYPE_STYLES.info;
+                    const LogIcon = style.icon;
+                    return (
+                      <div
+                        key={index}
+                        className={`leading-relaxed border-l-2 pl-3 py-0.5 flex items-start gap-2 ${style.cls}`}
+                      >
+                        <LogIcon size={13} className="mt-1 shrink-0" />
+                        <span>{log.m}</span>
+                      </div>
+                    );
+                  })
                 )}
                 {isSimulating && (
                   <div className="flex items-center gap-2 text-slate-400 pl-3.5 mt-1 border-l-2 border-slate-800">
