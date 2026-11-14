@@ -130,7 +130,6 @@ volumes:
 #   docker-compose down                          # Stop all services
 #   docker-compose logs -f backend               # View backend logs
 #   docker-compose logs -f chromadb              # View ChromaDB logs
-#   docker-compose exec backend npm run index-docs  # Index documents into ChromaDB
 #   docker-compose exec backend npm run db:seed  # Seed data
 #   docker-compose ps                            # Show running services
 #

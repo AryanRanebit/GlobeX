@@ -215,7 +215,6 @@ The backend is ready for AI integration. Each agent is stubbed with mock data.
 - **MarketResearchAgent** → Returns realistic mock market data
 - **LeadScoringAgent** → Deterministic scoring based on buyer data
 - **OutreachAgent** → Template-based email generation
-- **BuyerDiscoveryAgent** → Mock buyer data
 
 ### How to Plug in Real AI
 
