@@ -44,7 +44,7 @@ backend/                  Node.js + Express + TypeScript
                             calls the Node trade API for market research
 ```
 
-The Python RAG store is local/persistent by default; it does not require a separate Chroma server.
+The Python RAG store is local/persistent by default; it does not require a separate Chroma server. The repository also contains a separate Node-side Chroma/Featherless integration, which is not required for the basic three-service flow below.
 
 ## Local setup
 

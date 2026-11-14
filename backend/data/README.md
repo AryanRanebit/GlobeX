@@ -1,3 +1,3 @@
-# Reference trade-knowledge documents (.txt, .md).
-# The Node backend no longer indexes this folder; the Python ai-agent service
-# owns RAG and seeds its own knowledge base on startup.
+# Place your documents here for RAG indexing.
+# Supported formats: .txt, .md
+# Run: npm run index-docs
