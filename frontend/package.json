@@ -10,7 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.18.0",
     "motion": "^12.40.0",
@@ -19,7 +18,6 @@
     "react-globe.gl": "^2.38.0",
     "react-markdown": "^10.1.0",
     "recharts": "^3.10.1",
-    "tailwind-merge": "^3.6.0",
     "three": "^0.184.0"
   },
   "devDependencies": {

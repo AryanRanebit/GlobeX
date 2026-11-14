@@ -21,7 +21,7 @@ from prompts.system_prompts import (
 )
 from rag.pipeline import rag_pipeline
 from services.semantic_cache import EMPTY_RESPONSE_FALLBACK_PREFIX, semantic_cache
-from tools.trade_tools import ALL_TOOLS, TOOL_MAP
+from tools.trade_tools import TOOL_MAP
 from utils.config import get_settings
 from utils.logger import get_logger
 
@@ -112,10 +112,6 @@ class GlobeXAgent:
                 max_retries=0,
             )
         return self._classifier_llm_instance
-
-    @property
-    def _llm_with_tools(self):
-        return self._llm.bind_tools(ALL_TOOLS)
 
     # ── Public Entry Point ───────────────────────────────────────────────────
 

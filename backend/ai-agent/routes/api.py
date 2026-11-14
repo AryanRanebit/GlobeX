@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from agents.globex_agent import globex_agent
-from agents.product_understanding import understand_product, ProductNormalizationResult
+from agents.product_understanding import understand_product
 from database.models import Session, get_db
 from memory.memory_manager import MemoryManager
 from rag.pipeline import rag_pipeline
@@ -560,7 +560,6 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
 
         # Step 2: Determine appropriate HS code from candidate codes or product description
         target_hs = "TOTAL"
-        matched_candidate = None
         # Scope the analysis to the product's own HS code. Never swap in a
         # neighbouring chapter (e.g. HS 61 knitwear -> HS 62 woven apparel):
         # if no data is seeded for the product, we fall back to all goods
@@ -569,7 +568,6 @@ async def agent_market_research(request: MarketResearchRequest) -> dict:
             top_clean = norm.candidate_hs_codes[0].hs_code.replace(".", "").strip()
             if top_clean:
                 target_hs = top_clean
-                matched_candidate = norm.candidate_hs_codes[0]
 
         trade_info = await _fetch_trade_market_data(target_hs)
         # Accept only data for the requested code or one of its parent headings.
@@ -724,56 +722,6 @@ Strict constraints:
     except Exception as exc:
         log.error("Market research agent failed", error=str(exc))
         raise HTTPException(status_code=503, detail="Gemini or trade-data service is unavailable. Please try again.")
-
-
-def _compute_heuristic_lead_score(buyer: dict, product: dict | None = None) -> dict:
-    score = 50
-    factors = []
-    
-    buyer_ind = str(buyer.get("industry") or "").lower()
-    prod_name = str((product or {}).get("productName") or "").lower()
-    if buyer_ind and (buyer_ind in prod_name or prod_name in buyer_ind or any(k in buyer_ind for k in ["food", "apparel", "textile", "retail", "import", "trade", "distribut"])):
-        score += 20
-        factors.append({"factor": "Target trade category alignment", "impact": "positive", "weight": 20})
-    else:
-        factors.append({"factor": "Commercial trade fit assessment", "impact": "neutral", "weight": 0})
-        
-    if buyer.get("isVerified"):
-        score += 15
-        factors.append({"factor": "Verified importer entity registry", "impact": "positive", "weight": 15})
-    else:
-        score -= 5
-        factors.append({"factor": "Pending third-party verification", "impact": "negative", "weight": -5})
-        
-    vol = str(buyer.get("importVolume") or "").lower()
-    if "high" in vol or "large" in vol:
-        score += 15
-        factors.append({"factor": "High estimated import volume", "impact": "positive", "weight": 15})
-    elif "medium" in vol:
-        score += 10
-        factors.append({"factor": "Moderate commercial import volume", "impact": "positive", "weight": 10})
-    else:
-        factors.append({"factor": "Unconfirmed or low volume profile", "impact": "neutral", "weight": 0})
-        
-    if buyer.get("email"):
-        score += 10
-        factors.append({"factor": "Direct verified contact channel available", "impact": "positive", "weight": 10})
-    else:
-        score -= 10
-        factors.append({"factor": "Direct email pending (inquiry channel needed)", "impact": "negative", "weight": -10})
-
-    if buyer.get("website"):
-        score += 5
-        factors.append({"factor": "Active commercial web presence", "impact": "positive", "weight": 5})
-
-    score = max(20, min(95, score))
-    company = buyer.get("companyName") or "Target Importer"
-    return {
-        "score": score,
-        "confidence": 0.8,
-        "factors": factors,
-        "reasoning": f"Rule-based trade heuristic analysis for {company}: Evaluated verification status, category alignment, and contact accessibility (indicative estimate)."
-    }
 
 
 @router.post("/agents/lead-scoring", summary="Agent Lead Scoring")

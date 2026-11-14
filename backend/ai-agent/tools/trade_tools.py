@@ -15,7 +15,7 @@ import httpx
 
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from utils.config import get_settings
 from utils.logger import get_logger
@@ -41,31 +41,6 @@ def _clean_json_content(content: Any) -> str:
 
 
 # ── Pydantic Schemas ─────────────────────────────────────────────────────────
-
-class HSCodeResult(BaseModel):
-    hs_code: str
-    description: str
-    chapter: str
-    heading: str
-    unit: str
-    export_policy: str
-    notes: str
-
-
-class DutyResult(BaseModel):
-    product: str
-    country: str
-    product_value_usd: float
-    hs_code: str
-    basic_customs_duty_pct: float
-    igst_pct: float
-    social_welfare_surcharge_pct: float
-    other_levies_pct: float
-    total_duty_pct: float
-    estimated_duty_usd: float
-    landed_cost_usd: float
-    notes: str
-
 
 class CountryRulesResult(BaseModel):
     country: str
