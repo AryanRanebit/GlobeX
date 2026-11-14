@@ -59,33 +59,6 @@ export interface IMarketResearchAgent {
   analyze(input: MarketResearchInput): Promise<MarketResearchOutput>;
 }
 
-// ─── Buyer Discovery Agent ────────────────────────────────────────────────────
-
-export interface BuyerDiscoveryInput {
-  product: string;
-  targetCountries: string[];
-  industry?: string;
-}
-
-export interface BuyerDiscoveryOutput {
-  buyers: {
-    companyName: string;
-    country: string;
-    countryCode: string;
-    industry: string;
-    website?: string | null;
-    email?: string | null;
-    estimatedLeadScore: number | null;
-    source: string;
-    sourceUrl?: string | null;
-  }[];
-  searchedAt: string;
-}
-
-export interface IBuyerDiscoveryAgent {
-  discover(input: BuyerDiscoveryInput): Promise<BuyerDiscoveryOutput>;
-}
-
 // ─── Lead Scoring Agent ───────────────────────────────────────────────────────
 
 export interface LeadScoringInput {
@@ -160,8 +133,4 @@ export interface ComplianceOutput {
     processingTime?: string;
   }[];
   summary: string;
-}
-
-export interface IComplianceAgent {
-  getRequirements(input: ComplianceInput): Promise<ComplianceOutput>;
 }

@@ -26,16 +26,10 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
-  FEATHERLESS_API_KEY: z.string().optional(),
-  LLM_MODEL: z.string().default('Qwen/Qwen3-32B'),
   N8N_WEBHOOK_URL: z.string().url().optional(),
 
   // Python AI microservice
   AGENT_SERVICE_URL: z.string().url().default('http://localhost:8000/api/v1'),
-
-  // ChromaDB vector store
-  CHROMA_HOST: z.string().url().default('http://localhost:8001'),
-  CHROMA_COLLECTION: z.string().default('globex_docs'),
 
   // UN Comtrade trade data
   COMTRADE_API_KEY: z.string().optional(),
