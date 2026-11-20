@@ -41,29 +41,55 @@ vi.mock('../src/utils/logger', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), http: vi.fn() },
 }));
 
-import { passwordResetService } from '../src/modules/auth/passwordReset.service';
+import { passwordResetService, configureResetDelivery } from '../src/modules/auth/passwordReset.service';
 import { leadEvidenceService } from '../src/modules/leads/leadEvidence.service';
 
 beforeEach(() => vi.clearAllMocks());
 
 describe('password reset mechanics', () => {
-  it('unknown email: no token created, no enumeration signal', async () => {
-    userFindUnique.mockResolvedValue(null);
-    const r = await passwordResetService.requestReset('nobody@example.com');
-    expect(r.delivered).toBe(false);
+  it('fails closed when no delivery is configured: no token created', async () => {
+    configureResetDelivery(null);
+    userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
+    await passwordResetService.requestReset('user@example.com');
     expect(prtCreate).not.toHaveBeenCalled();
   });
 
-  it('known email: supersedes old tokens and stores only the hash', async () => {
-    userFindUnique.mockResolvedValue({ id: 'u1' });
+  it('unknown email: no token created, no enumeration signal', async () => {
+    const sent: [string, string][] = [];
+    configureResetDelivery({ sendReset: async (e, t) => { sent.push([e, t]); } });
+    userFindUnique.mockResolvedValue(null);
+    await passwordResetService.requestReset('nobody@example.com');
+    expect(prtCreate).not.toHaveBeenCalled();
+    expect(sent).toEqual([]);
+  });
+
+  it('known email: supersedes old tokens, stores only the hash, raw token goes only to delivery', async () => {
+    const sent: [string, string][] = [];
+    configureResetDelivery({ sendReset: async (e, t) => { sent.push([e, t]); } });
+    userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
     prtCreate.mockResolvedValue({});
     const r = await passwordResetService.requestReset('user@example.com');
-    expect(r.delivered).toBe(true);
+    expect(r).toBeUndefined(); // nothing usable returned to the controller
+    expect(sent).toHaveLength(1);
+    expect(sent[0][0]).toBe('user@example.com');
+    const rawToken = sent[0][1];
+    expect(rawToken).toMatch(/^[0-9a-f]{64}$/); // 32 bytes = 256 bits, hex
     expect(prtUpdateMany).toHaveBeenCalledWith(expect.objectContaining({ where: { userId: 'u1', usedAt: null } }));
     const arg = prtCreate.mock.calls[0][0];
     expect(arg.data.tokenHash).toMatch(/^[0-9a-f]{64}$/);
-    expect(arg.data.tokenHash).not.toBe(r.rawToken);
+    expect(arg.data.tokenHash).not.toBe(rawToken); // only the hash is stored
     expect(arg.data.expiresAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('delivery failure kills the token so nothing usable is left behind', async () => {
+    configureResetDelivery({ sendReset: async () => { throw new Error('smtp down'); } });
+    userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
+    prtCreate.mockResolvedValue({});
+    prtUpdateMany.mockResolvedValue({ count: 1 });
+    await passwordResetService.requestReset('user@example.com');
+    // second updateMany call (after the supersede one) marks the new token used
+    expect(prtUpdateMany).toHaveBeenCalledTimes(2);
+    expect(prtUpdateMany.mock.calls[1][0].data.usedAt).toBeInstanceOf(Date);
   });
 
   it('reset fails closed on unknown token', async () => {

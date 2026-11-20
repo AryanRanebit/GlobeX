@@ -137,12 +137,11 @@ export const authController = {
 
   forgotPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const result = await passwordResetService.requestReset(req.body.email);
-      // Same message either way: no account enumeration. The raw token is
-      // exposed only outside production so the flow can be wired and tested
-      // locally until an email provider is integrated.
-      const data = process.env.NODE_ENV === 'production' ? null : (result.delivered ? { token: result.rawToken } : null);
-      sendSuccess(res, data, 'If an account exists for that email, a reset link has been sent');
+      await passwordResetService.requestReset(req.body.email);
+      // Uniform response: no account enumeration, and never a token in the
+      // API response. The raw token only ever travels through the injected
+      // delivery channel (email once wired).
+      sendSuccess(res, null, 'If an account exists for that email, a reset link has been sent');
     } catch (err) { next(err); }
   },
 

@@ -1,12 +1,20 @@
-import { REQUIREMENT_ENTRIES, RequirementEntry } from './requirements.content';
+import { COVERAGE_GAPS, REQUIREMENT_ENTRIES, RequirementEntry } from './requirements.content';
 
 export interface RequirementsLookup {
   /** True only when committed entries exist for this exact pair. */
   covered: boolean;
+  /**
+   * Always false today: committed entries are partial source-checked
+   * guidance, not a complete clearance for the pair. Kept explicit in the
+   * response so no caller can present this list as exhaustive.
+   */
+  exhaustive: false;
   destination: string;
   hsCode: string;
-  /** Latest checkedAt across matching entries; null when uncovered. */
-  checkedAt: string | null;
+  /** Latest sourceCheckedAt across matching entries; null when uncovered. */
+  sourceCheckedAt: string | null;
+  /** Known rule areas with no coverage for this pair. Empty when uncovered. */
+  gaps: string[];
   requirements: RequirementEntry[];
 }
 
@@ -27,10 +35,21 @@ export const requirementsService = {
         e.destination === dest &&
         e.hsPrefixes.some((p) => hs.startsWith(p)),
     );
-    const checkedAt = matches.length
-      ? matches.reduce((max, e) => (e.checkedAt > max ? e.checkedAt : max), matches[0].checkedAt)
+    const gapSet = COVERAGE_GAPS.find(
+      (g) => g.destination === dest && g.hsPrefixes.some((p) => hs.startsWith(p)),
+    );
+    const sourceCheckedAt = matches.length
+      ? matches.reduce((max, e) => (e.sourceCheckedAt > max ? e.sourceCheckedAt : max), matches[0].sourceCheckedAt)
       : null;
-    return { covered: matches.length > 0, destination: dest, hsCode: hs, checkedAt, requirements: matches };
+    return {
+      covered: matches.length > 0,
+      exhaustive: false,
+      destination: dest,
+      hsCode: hs,
+      sourceCheckedAt,
+      gaps: matches.length ? gapSet?.gaps ?? [] : [],
+      requirements: matches,
+    };
   },
 
   /** Pairs with committed coverage, for listing/discovery. */

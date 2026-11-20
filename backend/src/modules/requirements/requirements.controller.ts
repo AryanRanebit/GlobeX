@@ -13,7 +13,7 @@ export const requirementsController = {
     try {
       const { hs, destination } = lookupQuery.parse(req.query);
       const data = requirementsService.lookup(hs, destination);
-      sendSuccess(res, data, data.covered ? 'Requirements found' : 'No verified coverage for this product/destination pair');
+      sendSuccess(res, data, data.covered ? 'Partial source-checked guidance (not exhaustive; confirm applicability per shipment)' : 'No source-checked coverage for this product/destination pair');
     } catch (err) { next(err); }
   },
 

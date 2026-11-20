@@ -10,10 +10,13 @@ describe('requirements content framework', () => {
     expect(r.requirements.length).toBeGreaterThan(0);
     for (const e of r.requirements) {
       expect(e.sourceUrl).toMatch(/^https:\/\//);
-      expect(e.checkedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(['verified', 'unverified']).toContain(e.status);
+      expect(e.sourceCheckedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(e.conditions.length).toBeGreaterThan(10);
+      expect(['source-checked', 'unchecked']).toContain(e.status);
     }
-    expect(r.checkedAt).toBeTruthy();
+    expect(r.sourceCheckedAt).toBeTruthy();
+    expect(r.exhaustive).toBe(false);
+    expect(r.gaps.length).toBeGreaterThan(0);
   });
 
   it('tolerates dotted HS codes', () => {
@@ -26,7 +29,8 @@ describe('requirements content framework', () => {
     const r = requirementsService.lookup('091030', 'DE');
     expect(r.covered).toBe(false);
     expect(r.requirements).toEqual([]);
-    expect(r.checkedAt).toBeNull();
+    expect(r.sourceCheckedAt).toBeNull();
+    expect(r.gaps).toEqual([]);
   });
 
   it('unknown product for a covered destination stays unknown', () => {
