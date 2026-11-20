@@ -23,6 +23,101 @@ function nextAction(c) {
 
 const emptyForm = { productName: '', hsCode: '', form: '', composition: '', quantity: '', targetCountry: '', notes: '' };
 
+
+// Destination names a user may type -> ISO 3166-1 alpha-2. Unknown names pass
+// through unchanged; the backend then reports no coverage (unknown stays
+// unknown) rather than a guessed match.
+const COUNTRY_CODE = {
+  'united states': 'US', 'united states of america': 'US', 'usa': 'US', 'us': 'US', 'america': 'US',
+  'united arab emirates': 'AE', 'uae': 'AE',
+  'united kingdom': 'GB', 'uk': 'GB', 'great britain': 'GB',
+  'germany': 'DE', 'netherlands': 'NL', 'france': 'FR', 'singapore': 'SG', 'saudi arabia': 'SA',
+};
+
+function destinationCode(name) {
+  const n = (name || '').trim().toLowerCase();
+  return COUNTRY_CODE[n] || (name || '').trim().toUpperCase();
+}
+
+/**
+ * Requirements panel: shows committed source-checked entries for the case's
+ * HS code + destination, each with its conditions, official source link and
+ * source-check date, plus the known-uncovered rule areas. The response can
+ * never be read as complete clearance: it always carries a partial-coverage
+ * label and gaps. No coverage -> unknown, not cleared.
+ */
+function RequirementsPanel({ hsCode, targetCountry }) {
+  const [state, setState] = useState({ status: 'loading' });
+
+  useEffect(() => {
+    if (!hsCode || !targetCountry) { setState({ status: 'idle' }); return; }
+    let cancelled = false;
+    setState({ status: 'loading' });
+    const params = new URLSearchParams({ hs: hsCode, destination: destinationCode(targetCountry) });
+    apiFetch(`/api/v1/requirements?${params}`)
+      .then(async (res) => {
+        if (cancelled) return;
+        if (!res.ok) { setState({ status: 'error' }); return; }
+        const body = await res.json();
+        setState({ status: 'ok', data: body.data });
+      })
+      .catch(() => { if (!cancelled) setState({ status: 'error' }); });
+    return () => { cancelled = true; };
+  }, [hsCode, targetCountry]);
+
+  if (!targetCountry) {
+    return <p className="text-xs text-muted">Requirements attach to a product AND a destination. Choose a target country first.</p>;
+  }
+  if (state.status === 'loading') return <p className="text-xs text-muted">Checking source-checked requirements…</p>;
+  if (state.status === 'error') {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+        <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">Requirements could not be loaded. Treat them as unknown, not cleared, and confirm with your customs broker or the destination country's official portal before shipping.</p>
+      </div>
+    );
+  }
+  const data = state.data;
+  if (!data || !data.covered) {
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
+        <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">
+          Nothing source-checked is on file for this product-country pair yet, so treat requirements as unknown, not cleared. Confirm them with your customs broker or the destination country's official portal before shipping. Entries checked against official sources will appear here with the source link and the date they were checked.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="bg-blue-pale border border-blue-soft rounded-lg p-3">
+        <p className="text-xs text-navy">
+          Partial source-checked guidance for this pair — each entry links the official source and the date it was checked. This is not complete clearance: the conditions on each entry and the not-yet-covered areas below still apply. Confirm applicability for your product and shipment against the official source.
+        </p>
+      </div>
+      {data.requirements.map((r) => (
+        <div key={r.id} className="border border-line rounded-lg p-3 flex flex-col gap-1">
+          <p className="text-sm font-semibold text-navy">{r.title}</p>
+          <p className="text-xs text-ink">{r.detail}</p>
+          <p className="text-[11px] text-muted"><span className="font-medium">Conditions:</span> {r.conditions}</p>
+          <p className="text-[11px] text-muted">
+            Source: <a href={r.sourceUrl} target="_blank" rel="noreferrer" className="text-blue underline break-all">{r.sourceUrl}</a>
+            {' '}(checked {r.sourceCheckedAt})
+          </p>
+        </div>
+      ))}
+      {Array.isArray(data.gaps) && data.gaps.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <p className="text-xs font-semibold text-amber-800 mb-1">Not yet covered — still unknown:</p>
+          <ul className="list-disc pl-4">
+            {data.gaps.map((g, i) => <li key={i} className="text-xs text-amber-800">{g}</li>)}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ExportCase({ onNavigate }) {
   const [cases, setCases] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -246,7 +341,6 @@ export default function ExportCase({ onNavigate }) {
   // ── Detail view ──────────────────────────────────────────────────────────
   const action = nextAction(selected);
   const hasMarkets = Array.isArray(selected.markets) && selected.markets.length > 0;
-  const hasReqs = Array.isArray(selected.requirements) && selected.requirements.length > 0;
 
   return (
     <div className="flex flex-col gap-5 max-w-3xl">
@@ -382,19 +476,7 @@ export default function ExportCase({ onNavigate }) {
       {/* Requirements */}
       <section className="bg-surface border border-line rounded-xl p-4 flex flex-col gap-2">
         <h3 className="font-semibold text-navy text-sm flex items-center gap-2"><FileCheck size={15} /> Requirements</h3>
-        {!selected.targetCountry ? (
-          <p className="text-xs text-muted">Requirements attach to a product AND a destination. Choose a target country first.</p>
-        ) : (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
-            <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800">
-              Nothing verified is on file for this product-country pair yet, so treat requirements as unknown, not cleared. Confirm them with your customs broker or the destination country's official portal before shipping. Entries verified against official sources will appear here with the source link and the date they were checked.
-            </p>
-          </div>
-        )}
-        {hasReqs && selected.requirements.map((r, i) => (
-          <div key={i} className="text-sm text-navy py-1 border-b border-line last:border-0">{r.title || r.name || JSON.stringify(r)}</div>
-        ))}
+        <RequirementsPanel hsCode={selected.hsCode} targetCountry={selected.targetCountry} />
       </section>
 
       {/* Leads */}
