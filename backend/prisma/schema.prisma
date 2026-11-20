@@ -31,6 +31,7 @@ model User {
   products      Product[]
   researchJobs  ResearchJob[]
   analysisHistories AnalysisHistory[]
+  exportCases    ExportCase[]
 
   @@index([email])
   @@index([industry])
@@ -358,4 +359,25 @@ model AnalysisHistory {
 
   @@index([userId, createdAt])
   @@map("analysis_history")
+}
+
+model ExportCase {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productName   String
+  hsCode        String?
+  form          String?
+  composition   String?
+  quantity      String?
+  targetCountry String?
+  stage         String   @default("product")
+  markets       Json?
+  requirements  Json?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@map("export_cases")
 }

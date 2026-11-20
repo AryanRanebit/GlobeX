@@ -25,6 +25,7 @@ import { agentsRoutes } from './modules/agents/agents.routes';
 import { tradeRoutes } from './modules/trade/trade.routes';
 import { tariffRoutes } from './modules/tariff/tariff.routes';
 import { historyRoutes } from './modules/history/history.routes';
+import { exportCaseRoutes } from './modules/exportCase/exportCase.routes';
 
 export const createApp = () => {
   const app = express();
@@ -109,6 +110,7 @@ export const createApp = () => {
   // Convenience alias for unversioned /api/trade
   app.use('/api/trade', tradeRoutes);
   app.use(`${BASE}/history`, historyRoutes);
+  app.use(`${BASE}/export-cases`, exportCaseRoutes);
   // Convenience alias for unversioned /api/history
   app.use('/api/history', historyRoutes);
 
