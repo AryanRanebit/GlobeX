@@ -11,16 +11,16 @@ import type { SignupDto, LoginDto, UpdateProfileDto } from './auth.schema';
  * Resolves the account for an already-normalized (trimmed, lowercased) email.
  *
  * - Exact match wins: the normal path for every account stored lowercase.
- * - One case-insensitive match: a legacy row stored with capital letters
- *   before normalization. Safe to use - it can only be that one account.
+ * - One case-insensitive match: a single account (stored lowercase, or a
+ *   legacy row with capital letters from before normalization). Safe to
+ *   use - it can only be that one account.
  * - Two or more matches: duplicate accounts differing only by letter case
  *   already exist. Fail CLOSED with 409 rather than authenticate whichever
- *   row the database happened to return first.
+ *   row the database happened to return first. The collision check runs
+ *   BEFORE any exact-match preference, so an exact lowercase row never
+ *   masks a duplicate pair.
  */
 async function resolveUserByEmail(email: string) {
-  const exact = await authRepository.findByEmail(email);
-  if (exact) return exact;
-
   const matches = await authRepository.findAllByEmailInsensitive(email);
   if (matches.length > 1) {
     throw new AppError(

@@ -2,10 +2,11 @@
 // Auth email resolution tests (offline: repository, jwt and bcrypt mocked)
 //
 // Locks in deterministic, fail-closed behaviour for capital-letter emails:
-//  - exact (lowercase-normalized) match wins;
-//  - exactly one case-insensitive match = one legacy mixed-case row, allowed;
-//  - two or more = a case-variant collision, REFUSED with 409 before any
-//    password check, so the wrong account can never be authenticated.
+//  - exactly one case-insensitive match = that one account (stored lowercase,
+//    or a legacy mixed-case row), allowed;
+//  - two or more case-insensitive matches = a case-variant collision, REFUSED
+//    with 409 before any exact-match preference, any password check or any
+//    token creation, so the wrong account can never be authenticated.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -42,6 +43,7 @@ vi.mock('bcryptjs', () => ({
 }));
 
 import { authService } from '../src/modules/auth/auth.service';
+import { generateTokenPair } from '../src/utils/jwt';
 
 const legacyRow = {
   id: 'user-legacy',
@@ -74,31 +76,30 @@ beforeEach(() => {
 });
 
 describe('Password login email resolution', () => {
-  it('exact lowercase match signs in without the fallback', async () => {
-    mocks.findByEmail.mockResolvedValue(otherRow);
+  it('a single lowercase row signs in', async () => {
+    mocks.findAllByEmailInsensitive.mockResolvedValue([otherRow]);
     const result = await authService.login({ email: 'test@example.com', password: 'x' });
     expect(result.user.id).toBe('user-other');
-    expect(mocks.findAllByEmailInsensitive).not.toHaveBeenCalled();
   });
 
-  it('a single legacy mixed-case row signs in via the fallback', async () => {
-    mocks.findByEmail.mockResolvedValue(null);
+  it('a single legacy mixed-case row signs in', async () => {
     mocks.findAllByEmailInsensitive.mockResolvedValue([legacyRow]);
     const result = await authService.login({ email: 'test@example.com', password: 'x' });
     expect(result.user.id).toBe('user-legacy');
   });
 
-  it('a case-variant collision fails closed with 409 before any password check', async () => {
-    mocks.findByEmail.mockResolvedValue(null);
+  it('a lowercase + mixed-case duplicate pair fails closed with 409 - no exact-match preference, no password check, no tokens', async () => {
+    // otherRow (test@example.com, lowercase) + legacyRow (Test@Example.COM):
+    // an exact lowercase row exists and must NOT mask the collision.
     mocks.findAllByEmailInsensitive.mockResolvedValue([legacyRow, otherRow]);
     await expect(
       authService.login({ email: 'test@example.com', password: 'x' }),
     ).rejects.toMatchObject({ statusCode: 409 });
     expect(mocks.compare).not.toHaveBeenCalled();
+    expect(generateTokenPair).not.toHaveBeenCalled();
   });
 
   it('unknown email stays a 401', async () => {
-    mocks.findByEmail.mockResolvedValue(null);
     mocks.findAllByEmailInsensitive.mockResolvedValue([]);
     await expect(
       authService.login({ email: 'nobody@example.com', password: 'x' }),
@@ -106,7 +107,6 @@ describe('Password login email resolution', () => {
   });
 
   it('wrong password on a legacy row stays a 401', async () => {
-    mocks.findByEmail.mockResolvedValue(null);
     mocks.findAllByEmailInsensitive.mockResolvedValue([legacyRow]);
     mocks.compare.mockResolvedValue(false);
     await expect(
@@ -146,26 +146,24 @@ describe('Google login email resolution', () => {
 
   it('signs into the existing account even when Google returns capitals', async () => {
     stubGoogleUserinfo('Test@Example.COM');
-    mocks.findByEmail.mockResolvedValue(null);
     mocks.findAllByEmailInsensitive.mockResolvedValue([legacyRow]);
     const result = await authService.googleLogin('google-access-token');
     expect(result.user.id).toBe('user-legacy');
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it('fails closed with 409 on a case-variant collision', async () => {
+  it('fails closed with 409 on a lowercase + mixed-case duplicate pair - no exact-match preference, no tokens, no create', async () => {
     stubGoogleUserinfo('test@example.com');
-    mocks.findByEmail.mockResolvedValue(null);
     mocks.findAllByEmailInsensitive.mockResolvedValue([legacyRow, otherRow]);
     await expect(authService.googleLogin('google-access-token')).rejects.toMatchObject({
       statusCode: 409,
     });
+    expect(generateTokenPair).not.toHaveBeenCalled();
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
   it('creates a brand-new Google account with a lowercase email', async () => {
     stubGoogleUserinfo('NewPerson@Example.COM');
-    mocks.findByEmail.mockResolvedValue(null);
     mocks.findAllByEmailInsensitive.mockResolvedValue([]);
     mocks.create.mockImplementation(async (data: any) => ({ id: 'new-google', refreshToken: null, isActive: true, role: 'USER', password: null, ...data }));
     await authService.googleLogin('google-access-token');
