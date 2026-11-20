@@ -98,7 +98,7 @@ export default function DashboardHome() {
             {[
               { icon: PackageSearch, step: '1', title: 'Add your product', text: 'Type what you export - e.g. turmeric or cotton trousers. No codes needed.' },
               { icon: BarChart3, step: '2', title: 'Compare markets', text: 'See real 2025 export values by destination, from official UN Comtrade data.' },
-              { icon: Users, step: '3', title: 'Find buyers', text: 'Run Buyer Discovery to get verified importers, each with its source link.' },
+              { icon: Users, step: '3', title: 'Find buyers', text: 'Run Buyer Discovery to get prospective importers, each with its source link and evidence badge.' },
               { icon: Mail, step: '4', title: 'Send a local pitch', text: 'Draft in English with AI, then localize to the buyer\'s language in one click.' },
             ].map(({ icon: StepIcon, step, title, text }) => (
               <div key={step} className="flex gap-3">

@@ -479,7 +479,7 @@ export default function History({ onNavigate }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               { icon: Globe2, title: 'Explore new markets', sub: 'Search any HS code or product in Market Intelligence', tab: 'markets' },
-              { icon: Users, title: 'Discover buyers', sub: 'Find verified importers for your product', tab: 'buyers' },
+              { icon: Users, title: 'Discover buyers', sub: 'Find prospective importers, each with its source link', tab: 'buyers' },
               { icon: MessageSquare, title: 'Ask AI Copilot', sub: 'Trade questions answered with cited data', tab: 'copilot' },
             ].map(({ icon: Icon, title, sub, tab }) => (
               <button
