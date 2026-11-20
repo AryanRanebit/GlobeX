@@ -31,6 +31,11 @@ function hashToken(token: string): string {
 }
 
 export const passwordResetService = {
+  /** Uniform availability signal: safe to expose, reveals nothing about accounts. */
+  isAvailable(): boolean {
+    return delivery !== null;
+  },
+
   /**
    * Start a reset. From the caller's point of view the outcome is always the
    * same ("if an account exists..."), so the endpoint cannot be used to

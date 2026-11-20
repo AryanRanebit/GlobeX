@@ -58,6 +58,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
   const [resetToken, setResetToken] = useState('');
   const [resetPass, setResetPass] = useState('');
   const [resetConfirm, setResetConfirm] = useState('');
+  const [resetAvailable, setResetAvailable] = useState(null); // null = not checked yet
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -116,6 +117,17 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     setSuccess('');
     setFieldErrors({});
   };
+
+  // The forgot view must not promise an email that cannot be sent: check
+  // whether reset delivery is actually available before offering it.
+  useEffect(() => {
+    if (tab !== 'forgot') return;
+    let cancelled = false;
+    apiFetch('/api/v1/auth/password-reset/status')
+      .then(async (r) => { const j = await r.json(); if (!cancelled) setResetAvailable(!!(r.ok && j.data?.available)); })
+      .catch(() => { if (!cancelled) setResetAvailable(false); });
+    return () => { cancelled = true; };
+  }, [tab]);
 
   // Reset to the initial tab whenever the modal (re)opens or the requested
   // initial tab changes - render-time adjustment instead of an effect.
@@ -310,7 +322,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
         </h2>
         <p className="text-[12px] text-muted mb-4">
           {tab === 'signup' ? 'Start your free trial — no credit card required.'
-            : tab === 'forgot' ? 'Enter your account email and we will send a reset link.'
+            : tab === 'forgot' ? 'Enter your account email to request a reset link.'
             : tab === 'reset' ? 'Paste the code from the reset email and choose a new password.'
             : 'Sign in to continue to GlobeX.'}
         </p>
@@ -350,6 +362,11 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-1" noValidate>
           {tab === 'forgot' ? (
+            resetAvailable === false ? (
+              <div className="px-3 py-2.5 rounded bg-amber-50 border border-amber-200 text-[12px] text-amber-800">
+                Password reset by email is not available yet, so no link can be sent. You can keep signing in with your current password.
+              </div>
+            ) : (
             <>
               <InputField id="forgot-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onBlur={() => blurValidate('forgot-email')} autoComplete="email" error={fieldErrors['forgot-email']} />
               <button type="button" onClick={() => switchTab('reset')}
@@ -358,6 +375,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
                 Already have a reset code? Enter it
               </button>
             </>
+            )
           ) : tab === 'reset' ? (
             <>
               <InputField id="reset-token" label="Reset code" placeholder="Paste the code from the email" value={resetToken} onChange={e => setResetToken(e.target.value)} onBlur={() => blurValidate('reset-token')} error={fieldErrors['reset-token']} />
@@ -383,6 +401,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
             </>
           )}
 
+          {!(tab === 'forgot' && resetAvailable === false) && (
           <button id="auth-submit-btn" type="submit" disabled={loading}
             className="btn-primary w-full py-2 text-[13px] flex items-center justify-center gap-1.5 mt-1 disabled:opacity-60 disabled:cursor-not-allowed">
             {loading
@@ -390,6 +409,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
               : <>{tab === 'signup' ? 'Create Account' : tab === 'forgot' ? 'Send reset link' : tab === 'reset' ? 'Reset password' : 'Sign In'} <ArrowRight size={13} /></>
             }
           </button>
+          )}
         </form>
 
         {tab === 'signin' && (

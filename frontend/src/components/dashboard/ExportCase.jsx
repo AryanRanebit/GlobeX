@@ -120,12 +120,15 @@ function RequirementsPanel({ hsCode, targetCountry }) {
 
 
 /**
- * Case buyer tracking: leads linked to THIS case, each carrying its own
- * follow-up state (status, next action and date). Linking associates an
- * existing lead with the case; unlinking removes the association, not the
- * lead. Evidence rows on a lead live under Buyer Discovery.
+ * Case buyer tracking. The follow-up state (status, next action, due date)
+ * belongs to the LEAD, not to the case: it is the same wherever the lead
+ * appears. A lead can be linked to one case at a time, so linking a lead
+ * that is already linked elsewhere MOVES the association (the UI warns
+ * first). Linking also checks market/product context and asks before
+ * linking a lead that does not match this case. Evidence rows on a lead
+ * live under Buyer Discovery.
  */
-function CaseLeads({ caseId, leads, onChanged }) {
+function CaseLeads({ caseId, caseProduct, caseTarget, leads, onChanged }) {
   const [allLeads, setAllLeads] = useState(null);
   const [pick, setPick] = useState('');
   const [busy, setBusy] = useState(false);
@@ -142,6 +145,24 @@ function CaseLeads({ caseId, leads, onChanged }) {
   const linkable = (allLeads || []).filter((l) => !linkedIds.has(l.id));
 
   const setCase = async (leadId, value) => {
+    if (value) {
+      const lead = (allLeads || []).find((l) => l.id === leadId);
+      const warnings = [];
+      if (lead?.exportCaseId && lead.exportCaseId !== caseId) {
+        warnings.push('It is currently linked to another case; linking here will move it.');
+      }
+      const leadCountry = (lead?.buyer?.country || '').trim().toLowerCase();
+      const target = (caseTarget || '').trim().toLowerCase();
+      if (lead && target && leadCountry && leadCountry !== target && !target.startsWith(leadCountry) && !leadCountry.startsWith(target)) {
+        warnings.push(`Its country (${lead.buyer.country}) does not match this case's target (${caseTarget}).`);
+      }
+      const leadProduct = (lead?.product?.productName || '').trim().toLowerCase();
+      const caseProd = (caseProduct || '').trim().toLowerCase();
+      if (leadProduct && caseProd && leadProduct !== caseProd && !caseProd.includes(leadProduct) && !leadProduct.includes(caseProd)) {
+        warnings.push(`Its product (${lead.product.productName}) does not match this case's product (${caseProduct}).`);
+      }
+      if (warnings.length && !window.confirm(`Link this lead anyway?\n\n${warnings.join('\n')}`)) return;
+    }
     setBusy(true); setErr('');
     try {
       const res = await apiFetch(`/api/v1/leads/${leadId}`, { method: 'PATCH', body: JSON.stringify({ exportCaseId: value }) });
@@ -179,7 +200,9 @@ function CaseLeads({ caseId, leads, onChanged }) {
             className="border border-line rounded-lg px-2 py-2 text-sm flex-1 min-w-0">
             <option value="">Link an existing lead…</option>
             {linkable.map((l) => (
-              <option key={l.id} value={l.id}>{l.buyer?.companyName || 'Lead'} {l.buyer?.country ? `(${l.buyer.country})` : ''}</option>
+              <option key={l.id} value={l.id}>
+                {l.buyer?.companyName || 'Lead'}{l.buyer?.country ? ` (${l.buyer.country})` : ''}{l.exportCaseId ? ' — linked to another case' : ''}
+              </option>
             ))}
           </select>
           <button onClick={() => pick && setCase(pick, caseId)} disabled={!pick || busy}
@@ -561,9 +584,9 @@ export default function ExportCase({ onNavigate }) {
       <section className="bg-surface border border-line rounded-xl p-4 flex flex-col gap-2">
         <h3 className="font-semibold text-navy text-sm flex items-center gap-2"><Users size={15} /> Buyer leads for this case</h3>
         <p className="text-xs text-muted">
-          Leads linked here are tracked under this case with their own follow-up state. Buyer Discovery runs a grounded web search and spends Gemini credit; it only runs when you start it. Every lead carries its source link, and a public web presence alone does not confirm import activity.
+          Linked leads show their follow-up state (status, next action), which belongs to the lead and is the same wherever it appears. A lead links to one case at a time; linking one that is linked elsewhere moves it. Buyer Discovery runs a grounded web search and spends Gemini credit; it only runs when you start it. Every lead carries its source link, and a public web presence alone does not confirm import activity.
         </p>
-        <CaseLeads caseId={selected.id} leads={selected.leads} onChanged={() => refreshSelected(selected.id)} />
+        <CaseLeads caseId={selected.id} caseProduct={selected.productName} caseTarget={selected.targetCountry} leads={selected.leads} onChanged={() => refreshSelected(selected.id)} />
         <button onClick={() => onNavigate && onNavigate('buyers')} className="self-start px-3 py-2 rounded-lg bg-navy text-white text-sm font-semibold">
           Open Buyer Discovery
         </button>

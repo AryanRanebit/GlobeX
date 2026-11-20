@@ -47,6 +47,13 @@ import { leadEvidenceService } from '../src/modules/leads/leadEvidence.service';
 beforeEach(() => vi.clearAllMocks());
 
 describe('password reset mechanics', () => {
+  it('availability reflects injected delivery, never account state', async () => {
+    configureResetDelivery(null);
+    expect(passwordResetService.isAvailable()).toBe(false);
+    configureResetDelivery({ sendReset: async () => {} });
+    expect(passwordResetService.isAvailable()).toBe(true);
+  });
+
   it('fails closed when no delivery is configured: no token created', async () => {
     configureResetDelivery(null);
     userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
