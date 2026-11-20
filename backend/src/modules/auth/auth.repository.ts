@@ -3,10 +3,13 @@ import { prisma } from '../../config/database';
 export const authRepository = {
   findByEmail: (email: string) => prisma.user.findUnique({ where: { email } }),
 
-  // Matches rows stored before emails were lowercased on the way in, so
-  // those accounts keep working instead of becoming unreachable duplicates.
-  findByEmailInsensitive: (email: string) =>
-    prisma.user.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } }),
+  // Up to 2 rows matching case-insensitively: lets the service tell "one
+  // legacy mixed-case account" apart from a collision it must refuse.
+  findAllByEmailInsensitive: (email: string) =>
+    prisma.user.findMany({
+      where: { email: { equals: email, mode: 'insensitive' } },
+      take: 2,
+    }),
 
   findById: (id: string) =>
     prisma.user.findUnique({

@@ -314,7 +314,21 @@ export default function History({ onNavigate }) {
       if (!res.ok || (json && json.success === false)) {
         throw new Error((json && json.message) || 'Could not delete this entry.');
       }
-      setEntries((prev) => prev.filter((x) => x.id !== entry.id));
+      const remaining = entries.filter((x) => x.id !== entry.id);
+      setEntries(remaining);
+      // Keep the stats strip in sync without a refetch. uniqueHsCodes is
+      // recomputed from the entries we hold (the list fetches up to 100).
+      setStats((prev) => prev ? {
+        ...prev,
+        total: Math.max(0, (prev.total ?? 0) - 1),
+        fullAnalyses: entry.analysisType === 'full_analysis'
+          ? Math.max(0, (prev.fullAnalyses ?? 0) - 1)
+          : prev.fullAnalyses,
+        marketSearches: entry.analysisType === 'market_search'
+          ? Math.max(0, (prev.marketSearches ?? 0) - 1)
+          : prev.marketSearches,
+        uniqueHsCodes: new Set(remaining.map((x) => x.hsCode).filter(Boolean)).size,
+      } : prev);
       if (openEntry?.id === entry.id) setOpenEntry(null);
     } catch (err) {
       setError(err.message || 'Could not delete this entry.');
