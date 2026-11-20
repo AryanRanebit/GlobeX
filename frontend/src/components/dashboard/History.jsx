@@ -12,7 +12,8 @@ import {
   Boxes,
   Users,
   MessageSquare,
-  ArrowRight
+  ArrowRight,
+  Trash2
 } from 'lucide-react';
 import { apiFetch } from '../../lib/api';
 import AnalysisModal from './AnalysisModal';
@@ -278,6 +279,7 @@ export default function History({ onNavigate }) {
   const [error, setError] = useState(null);
   const [openingId, setOpeningId] = useState(null);
   const [openEntry, setOpenEntry] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
@@ -302,6 +304,24 @@ export default function History({ onNavigate }) {
     Promise.resolve().then(() => { if (active) fetchHistory(); });
     return () => { active = false; };
   }, [fetchHistory]);
+
+  const deleteEntry = async (entry) => {
+    if (!window.confirm(`Delete "${entryTitle(entry)}" from your history? This cannot be undone.`)) return;
+    setDeletingId(entry.id);
+    try {
+      const res = await apiFetch(`/api/v1/history/${entry.id}`, { method: 'DELETE' });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || (json && json.success === false)) {
+        throw new Error((json && json.message) || 'Could not delete this entry.');
+      }
+      setEntries((prev) => prev.filter((x) => x.id !== entry.id));
+      if (openEntry?.id === entry.id) setOpenEntry(null);
+    } catch (err) {
+      setError(err.message || 'Could not delete this entry.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const openStoredEntry = async (entry) => {
     setOpeningId(entry.id);
@@ -376,28 +396,43 @@ export default function History({ onNavigate }) {
             const Icon = meta.icon;
             const subtitle = entrySubtitle(entry);
             return (
-              <button
+              <div
                 key={entry.id}
-                onClick={() => openStoredEntry(entry)}
-                disabled={openingId === entry.id}
-                className="w-full flex items-center gap-4 px-4 sm:px-5 py-4 text-left hover:bg-mist/60 transition-colors"
+                className="w-full flex items-center gap-2 px-4 sm:px-5 py-4 hover:bg-mist/60 transition-colors"
               >
-                <div className="w-9 h-9 rounded-lg bg-blue-pale border border-blue-border flex items-center justify-center shrink-0">
-                  <Icon size={16} className="text-blue" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-navy truncate">{entryTitle(entry)}</p>
-                  <p className="text-xs text-muted truncate">
-                    {subtitle ? `${subtitle} · ` : ''}{formatWhen(entry.createdAt)}
-                  </p>
-                </div>
-                <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full border text-[11px] font-semibold ${meta.badge}`}>
-                  {meta.label}
-                </span>
-                {openingId === entry.id
-                  ? <Loader2 size={16} className="animate-spin text-faint shrink-0" />
-                  : <ChevronRight size={16} className="text-faint shrink-0" />}
-              </button>
+                <button
+                  onClick={() => openStoredEntry(entry)}
+                  disabled={openingId === entry.id}
+                  className="flex-1 min-w-0 flex items-center gap-4 text-left"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-blue-pale border border-blue-border flex items-center justify-center shrink-0">
+                    <Icon size={16} className="text-blue" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-navy truncate">{entryTitle(entry)}</p>
+                    <p className="text-xs text-muted truncate">
+                      {subtitle ? `${subtitle} · ` : ''}{formatWhen(entry.createdAt)}
+                    </p>
+                  </div>
+                  <span className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full border text-[11px] font-semibold ${meta.badge}`}>
+                    {meta.label}
+                  </span>
+                  {openingId === entry.id
+                    ? <Loader2 size={16} className="animate-spin text-faint shrink-0" />
+                    : <ChevronRight size={16} className="text-faint shrink-0" />}
+                </button>
+                <button
+                  onClick={() => deleteEntry(entry)}
+                  disabled={deletingId === entry.id}
+                  className="p-2 text-faint hover:text-red-dark rounded-lg hover:bg-red-pale transition-colors shrink-0"
+                  aria-label="Delete this saved analysis"
+                  title="Delete this saved analysis"
+                >
+                  {deletingId === entry.id
+                    ? <Loader2 size={15} className="animate-spin" />
+                    : <Trash2 size={15} />}
+                </button>
+              </div>
             );
           })}
         </div>

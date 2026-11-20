@@ -9,7 +9,9 @@ import type { SignupDto, LoginDto, UpdateProfileDto } from './auth.schema';
 
 export const authService = {
   async signup(dto: SignupDto) {
-    const existingUser = await authRepository.findByEmail(dto.email);
+    // Case-insensitive: blocks a second account that differs only by letter
+    // casing, including rows stored before emails were normalized.
+    const existingUser = await authRepository.findByEmailInsensitive(dto.email);
     if (existingUser) throw new AppError('Email already in use', 400);
 
     const hashedPassword = await bcrypt.hash(dto.password, 12);
@@ -30,7 +32,11 @@ export const authService = {
   },
 
   async login(dto: LoginDto) {
-    const user = await authRepository.findByEmail(dto.email);
+    // The schema has already trimmed and lowercased the email. Fall back to
+    // a case-insensitive match so accounts created with capital letters
+    // before normalization can still sign in.
+    let user = await authRepository.findByEmail(dto.email);
+    if (!user) user = await authRepository.findByEmailInsensitive(dto.email);
     if (!user) throw new AppError('Invalid email or password', 401);
     if (!user.isActive) throw new AppError('Account is disabled', 403);
 
@@ -65,11 +71,13 @@ export const authService = {
     const payload = await res.json() as { email?: string; name?: string };
     if (!payload || !payload.email) throw new AppError('Invalid Google Token payload', 401);
 
-    const email = payload.email;
+    const email = payload.email.trim().toLowerCase();
     const name = payload.name || 'Google User';
 
-    // 2. Check if user exists
+    // 2. Check if user exists (exact first, then case-insensitive for
+    // accounts stored before emails were normalized)
     let user = await authRepository.findByEmail(email);
+    if (!user) user = await authRepository.findByEmailInsensitive(email);
 
     // 3. Create if new
     if (!user) {

@@ -9,5 +9,6 @@ router.use(authenticate);
 
 router.get('/', historyController.list);
 router.get('/:id', historyController.getById);
+router.delete('/:id', historyController.remove);
 
 export { router as historyRoutes };
