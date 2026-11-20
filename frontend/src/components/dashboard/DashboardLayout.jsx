@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   LayoutDashboard,
+  Briefcase,
   History,
   Users,
   Globe2,
@@ -46,6 +47,7 @@ export default function DashboardLayout({ children, currentPage, onNavigate, onL
 
   const menuItems = [
     { id: 'dashboard', label: 'Overview', icon: LayoutDashboard },
+    { id: 'cases', label: 'Export Cases', icon: Briefcase },
     { id: 'buyers', label: 'Buyer Discovery', icon: Users },
     { id: 'markets', label: 'Market Intelligence', icon: Globe2 },
     { id: 'copilot', label: 'AI Copilot', icon: MessageSquare },

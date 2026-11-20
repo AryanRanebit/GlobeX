@@ -18,6 +18,7 @@ import MarketIntelligence from './components/dashboard/MarketIntelligence';
 import AICopilot from './components/dashboard/AICopilot';
 import EmailDrafter from './components/dashboard/EmailDrafter';
 import History from './components/dashboard/History';
+import ExportCase from './components/dashboard/ExportCase';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
@@ -145,6 +146,7 @@ export default function App() {
         onSearchChange={setSearchQuery}
       >
         {dashboardPage === 'dashboard' && <DashboardHome />}
+        {dashboardPage === 'cases' && <ExportCase onNavigate={setDashboardPage} />}
         {dashboardPage === 'buyers' && (
           <BuyerDiscovery 
             searchQuery={searchQuery} 
