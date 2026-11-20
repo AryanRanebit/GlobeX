@@ -31,9 +31,13 @@ export default function ExportCase({ onNavigate }) {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [markets, setMarkets] = useState(null);
+  const [marketsMeta, setMarketsMeta] = useState(null);
   const [marketsLoading, setMarketsLoading] = useState(false);
   const [marketsError, setMarketsError] = useState(null);
   const [picked, setPicked] = useState({});
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [clearsNotice, setClearsNotice] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -115,6 +119,8 @@ export default function ExportCase({ onNavigate }) {
         if (j.data.length > 0) break;
       }
       setMarkets(json.data.slice(0, 10));
+      // Year/source come from the endpoint's own meta, never assumed.
+      setMarketsMeta(json.meta && typeof json.meta === 'object' ? json.meta : null);
     } catch (e) {
       setMarketsError(e.message);
     } finally {
@@ -123,15 +129,56 @@ export default function ExportCase({ onNavigate }) {
   };
 
   const saveShortlist = async () => {
+    const year = marketsMeta && marketsMeta.year;
     const chosen = (markets || []).filter((m) => picked[m.partnerName]).map((m) => ({
       partnerName: m.partnerName,
       partnerIso3: m.partnerIso3,
       tradeValueUsd: m.tradeValueUsd,
-      dataYear: 2025,
-      source: 'UN Comtrade (India-reported exports), via GlobeX trade table',
+      dataYear: typeof year === 'number' ? year : null,
+      source: 'UN Comtrade (India-reported exports), via the GlobeX trade endpoint',
     }));
     if (chosen.length === 0) return;
     await patchCase({ markets: chosen, stage: 'requirements' });
+  };
+
+  const startEdit = () => {
+    setEditForm({
+      productName: selected.productName || '',
+      hsCode: selected.hsCode || '',
+      form: selected.form || '',
+      composition: selected.composition || '',
+      quantity: selected.quantity || '',
+      targetCountry: selected.targetCountry || '',
+      notes: selected.notes || '',
+    });
+    setClearsNotice(false);
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    const patch = {};
+    const normHs = editForm.hsCode.replace(/[.\s]/g, '');
+    if (editForm.productName.trim() !== selected.productName) patch.productName = editForm.productName.trim();
+    if (normHs !== (selected.hsCode || '')) patch.hsCode = normHs;
+    for (const k of ['form', 'composition', 'quantity', 'targetCountry', 'notes']) {
+      const v = editForm[k].trim();
+      if (v !== (selected[k] || '')) patch[k] = v === '' ? null : v;
+    }
+    if (Object.keys(patch).length === 0) { setEditing(false); return; }
+    // Stale-state rule: a changed product or HS code invalidates the saved
+    // shortlist and requirements; a changed target invalidates requirements.
+    // Clear them in the same patch so old data never looks current.
+    if (patch.productName !== undefined || patch.hsCode !== undefined) {
+      patch.markets = null;
+      patch.requirements = null;
+      patch.stage = 'product';
+    } else if (patch.targetCountry !== undefined) {
+      patch.requirements = null;
+    }
+    await patchCase(patch);
+    setEditing(false);
+    setMarkets(null);
+    setPicked({});
   };
 
   // ── List view ────────────────────────────────────────────────────────────
@@ -213,15 +260,51 @@ export default function ExportCase({ onNavigate }) {
       </div>
 
       <div>
-        <h2 className="text-xl font-bold text-navy font-heading">{selected.productName}</h2>
-        <p className="text-sm text-muted mt-1">
-          HS {selected.hsCode || <span className="text-amber-700 font-medium">not confirmed</span>}
-          {selected.form ? ` · ${selected.form}` : ''}
-          {selected.quantity ? ` · ${selected.quantity}` : ''}
-          {selected.targetCountry ? ` · Target: ${selected.targetCountry}` : ' · Target country not chosen'}
-        </p>
-        {selected.composition && <p className="text-xs text-muted mt-1">{selected.composition}</p>}
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-navy font-heading">{selected.productName}</h2>
+          {!editing && <button onClick={startEdit} className="text-sm text-emerald-ink hover:underline">Edit details</button>}
+        </div>
+        {!editing && (
+          <>
+            <p className="text-sm text-muted mt-1">
+              HS {selected.hsCode || <span className="text-amber-700 font-medium">not confirmed</span>}
+              {selected.form ? ` · ${selected.form}` : ''}
+              {selected.quantity ? ` · ${selected.quantity}` : ''}
+              {selected.targetCountry ? ` · Target: ${selected.targetCountry}` : ' · Target country not chosen'}
+            </p>
+            {selected.composition && <p className="text-xs text-muted mt-1">{selected.composition}</p>}
+          </>
+        )}
       </div>
+
+      {editing && (
+        <div className="bg-surface border border-line rounded-xl p-4 flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input className="border border-line rounded-lg px-3 py-2 text-sm" placeholder="Product name"
+              value={editForm.productName} onChange={(e) => { setEditForm({ ...editForm, productName: e.target.value }); setClearsNotice(true); }} />
+            <input className="border border-line rounded-lg px-3 py-2 text-sm" placeholder="HS code (blank = unconfirmed)"
+              value={editForm.hsCode} onChange={(e) => { setEditForm({ ...editForm, hsCode: e.target.value }); setClearsNotice(true); }} />
+            <input className="border border-line rounded-lg px-3 py-2 text-sm" placeholder="Form"
+              value={editForm.form} onChange={(e) => setEditForm({ ...editForm, form: e.target.value })} />
+            <input className="border border-line rounded-lg px-3 py-2 text-sm" placeholder="Quantity"
+              value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: e.target.value })} />
+            <input className="border border-line rounded-lg px-3 py-2 text-sm" placeholder="Target country"
+              value={editForm.targetCountry} onChange={(e) => { setEditForm({ ...editForm, targetCountry: e.target.value }); setClearsNotice(true); }} />
+          </div>
+          <textarea className="border border-line rounded-lg px-3 py-2 text-sm" rows={2} placeholder="Composition"
+            value={editForm.composition} onChange={(e) => setEditForm({ ...editForm, composition: e.target.value })} />
+          {clearsNotice && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2">
+              Changing the product, HS code or target clears the saved market shortlist and requirements in the same save, so outdated data never looks current.
+            </p>
+          )}
+          <div className="flex gap-2">
+            <button disabled={saving || editForm.productName.trim().length < 2} onClick={saveEdit}
+              className="px-3 py-2 rounded-lg bg-navy text-white text-sm font-semibold disabled:opacity-50">Save changes</button>
+            <button onClick={() => setEditing(false)} className="px-3 py-2 rounded-lg text-sm text-muted hover:text-navy">Cancel</button>
+          </div>
+        </div>
+      )}
 
       {/* Stage stepper */}
       <div className="flex items-center gap-1 flex-wrap">
@@ -255,7 +338,7 @@ export default function ExportCase({ onNavigate }) {
             {markets && markets.length === 0 && <p className="text-sm text-muted">No 2025 trade rows on file for HS {selected.hsCode}. That is a data gap, not proof of no trade.</p>}
             {markets && markets.length > 0 && (
               <>
-                <p className="text-xs text-muted">Top destinations by India-reported export value, 2025. Trade volume is context, not guaranteed demand. Tick markets to shortlist.</p>
+                <p className="text-xs text-muted">Top destinations by India-reported export value{marketsMeta?.year ? `, ${marketsMeta.year}` : ''}. Trade volume is context, not guaranteed demand. Tick markets to shortlist.</p>
                 <div className="flex flex-col gap-1">
                   {markets.map((m) => (
                     <label key={m.partnerName} className="flex items-center gap-2 text-sm py-1 border-b border-line last:border-0">
@@ -275,11 +358,11 @@ export default function ExportCase({ onNavigate }) {
         )}
         {hasMarkets && (
           <>
-            <p className="text-xs text-muted">Shortlist saved from UN Comtrade 2025 (India-reported exports):</p>
+            <p className="text-xs text-muted">Shortlist saved from UN Comtrade (India-reported exports):</p>
             {selected.markets.map((m) => (
               <div key={m.partnerName} className="flex items-center justify-between text-sm py-1 border-b border-line last:border-0">
                 <span className="text-navy">{m.partnerName}</span>
-                <span className="text-muted text-xs">{fmtUsd(m.tradeValueUsd)} · {m.dataYear}</span>
+                <span className="text-muted text-xs">{fmtUsd(m.tradeValueUsd)}{m.dataYear ? ` · ${m.dataYear}` : ''}</span>
               </div>
             ))}
             {!selected.targetCountry && (
