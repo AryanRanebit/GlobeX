@@ -388,7 +388,7 @@ export default function ExportCase({ onNavigate }) {
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex gap-2">
             <AlertTriangle size={15} className="text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-800">
-              Verified requirements for this product-country pair are not on file yet. The Compliance tab currently holds demo content for a few countries; do not treat it as guidance for a real shipment. Each verified entry (official source + check date) lands here in roadmap step 3.
+              Nothing verified is on file for this product-country pair yet, so treat requirements as unknown, not cleared. Confirm them with your customs broker or the destination country's official portal before shipping. Entries verified against official sources will appear here with the source link and the date they were checked.
             </p>
           </div>
         )}
