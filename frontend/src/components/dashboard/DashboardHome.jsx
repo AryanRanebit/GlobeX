@@ -48,12 +48,16 @@ export default function DashboardHome() {
     apiFetch('/api/v1/buyers')
       .then(res => res.ok ? res.json() : null)
       .then(data => {
-        if (data && typeof data.total === 'number') {
+        // Live shape: { success, data: [...buyers], meta: { pagination: { total } } }.
+        // The page array can be shorter than the real total, so prefer the
+        // pagination total; it is what keeps the counter off the dash.
+        if (typeof data?.meta?.pagination?.total === 'number') {
+          setBuyerCount(data.meta.pagination.total);
+        } else if (data && typeof data.total === 'number') {
           setBuyerCount(data.total);
         } else if (Array.isArray(data?.buyers)) {
           setBuyerCount(data.buyers.length);
         } else if (Array.isArray(data?.data)) {
-          // Live API shape: { success, message, data: [...buyers] }
           setBuyerCount(data.data.length);
         }
       })

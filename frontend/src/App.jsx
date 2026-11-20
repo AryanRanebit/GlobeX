@@ -59,6 +59,18 @@ export default function App() {
     return () => window.removeEventListener('popstate', handleUrlParams);
   }, []);
 
+  // When any API call reports the session as unrecoverable (refresh failed),
+  // drop to the sign-in prompt instead of leaving broken screens up.
+  useEffect(() => {
+    const onSessionExpired = () => {
+      setIsAuthenticated(false);
+      setAuthInitialTab('signin');
+      setAuthOpen(true);
+    };
+    window.addEventListener('globex:session-expired', onSessionExpired);
+    return () => window.removeEventListener('globex:session-expired', onSessionExpired);
+  }, []);
+
   // Scroll to top on page navigation
   useEffect(() => {
     window.scrollTo(0, 0);
