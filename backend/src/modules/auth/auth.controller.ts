@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
 import { passwordResetService } from './passwordReset.service';
+import { AppError } from '../../middleware/error.middleware';
 import { sendSuccess, sendCreated } from '../../utils/apiResponse';
 
 /**
@@ -137,7 +138,11 @@ export const authController = {
 
   forgotPassword: async (req: Request, res: Response, next: NextFunction) => {
     try {
-      await passwordResetService.requestReset(req.body.email);
+      const result = await passwordResetService.requestReset(req.body.email);
+      if (!result.configured) {
+        // Honest product state, uniform for every email: no account signal.
+        throw new AppError('Password reset by email is not set up yet. Please contact support to reset your password.', 503);
+      }
       // Uniform response: no account enumeration, and never a token in the
       // API response. The raw token only ever travels through the injected
       // delivery channel (email once wired).

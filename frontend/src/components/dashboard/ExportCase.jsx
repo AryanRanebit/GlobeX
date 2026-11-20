@@ -118,6 +118,84 @@ function RequirementsPanel({ hsCode, targetCountry }) {
   );
 }
 
+
+/**
+ * Case buyer tracking: leads linked to THIS case, each carrying its own
+ * follow-up state (status, next action and date). Linking associates an
+ * existing lead with the case; unlinking removes the association, not the
+ * lead. Evidence rows on a lead live under Buyer Discovery.
+ */
+function CaseLeads({ caseId, leads, onChanged }) {
+  const [allLeads, setAllLeads] = useState(null);
+  const [pick, setPick] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    apiFetch('/api/v1/leads')
+      .then(async (r) => { const j = await r.json(); setAllLeads(j.data || []); })
+      .catch(() => setAllLeads([]));
+  }, []);
+
+  const linked = Array.isArray(leads) ? leads : [];
+  const linkedIds = new Set(linked.map((l) => l.id));
+  const linkable = (allLeads || []).filter((l) => !linkedIds.has(l.id));
+
+  const setCase = async (leadId, value) => {
+    setBusy(true); setErr('');
+    try {
+      const res = await apiFetch(`/api/v1/leads/${leadId}`, { method: 'PATCH', body: JSON.stringify({ exportCaseId: value }) });
+      const j = await res.json();
+      if (!res.ok || !j.success) throw new Error(j.message || `Save failed (${res.status})`);
+      setPick('');
+      onChanged();
+    } catch (e) { setErr(e.message); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      {linked.length === 0 ? (
+        <p className="text-xs text-muted">No buyers are tracked under this case yet. Link an existing lead below, or shortlist buyers in Buyer Discovery first.</p>
+      ) : linked.map((l) => (
+        <div key={l.id} className="border border-line rounded-lg p-3 flex flex-col gap-0.5">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-navy">{l.buyer?.companyName || 'Buyer'}{l.buyer?.country ? ` · ${l.buyer.country}` : ''}</p>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-pale text-navy">{l.status}</span>
+          </div>
+          <p className="text-[11px] text-muted">Lead score {l.leadScore ?? 'n/a'}</p>
+          <p className="text-[11px] text-muted">
+            {l.nextAction ? <>Next: {l.nextAction}{l.nextActionAt ? ` — due ${new Date(l.nextActionAt).toLocaleDateString()}` : ''}</> : 'No follow-up action set.'}
+          </p>
+          <button onClick={() => setCase(l.id, null)} disabled={busy}
+            className="self-start text-[11px] text-muted hover:text-navy underline disabled:opacity-50">
+            Remove from this case
+          </button>
+        </div>
+      ))}
+      {allLeads !== null && linkable.length > 0 && (
+        <div className="flex items-center gap-2">
+          <select value={pick} onChange={(e) => setPick(e.target.value)}
+            className="border border-line rounded-lg px-2 py-2 text-sm flex-1 min-w-0">
+            <option value="">Link an existing lead…</option>
+            {linkable.map((l) => (
+              <option key={l.id} value={l.id}>{l.buyer?.companyName || 'Lead'} {l.buyer?.country ? `(${l.buyer.country})` : ''}</option>
+            ))}
+          </select>
+          <button onClick={() => pick && setCase(pick, caseId)} disabled={!pick || busy}
+            className="px-3 py-2 rounded-lg bg-navy text-white text-sm font-semibold disabled:opacity-50">
+            Link
+          </button>
+        </div>
+      )}
+      {allLeads !== null && allLeads.length === 0 && (
+        <p className="text-[11px] text-muted">You have no leads yet. Buyer Discovery creates them.</p>
+      )}
+      {err && <p className="text-[11px] text-red-600">{err}</p>}
+    </div>
+  );
+}
+
 export default function ExportCase({ onNavigate }) {
   const [cases, setCases] = useState(null);
   const [selected, setSelected] = useState(null);
@@ -481,10 +559,11 @@ export default function ExportCase({ onNavigate }) {
 
       {/* Leads */}
       <section className="bg-surface border border-line rounded-xl p-4 flex flex-col gap-2">
-        <h3 className="font-semibold text-navy text-sm flex items-center gap-2"><Users size={15} /> Buyer leads</h3>
+        <h3 className="font-semibold text-navy text-sm flex items-center gap-2"><Users size={15} /> Buyer leads for this case</h3>
         <p className="text-xs text-muted">
-          Buyer Discovery runs a grounded web search and spends Gemini credit; it only runs when you start it. Every lead carries its source link, and a public web presence alone does not confirm import activity.
+          Leads linked here are tracked under this case with their own follow-up state. Buyer Discovery runs a grounded web search and spends Gemini credit; it only runs when you start it. Every lead carries its source link, and a public web presence alone does not confirm import activity.
         </p>
+        <CaseLeads caseId={selected.id} leads={selected.leads} onChanged={() => refreshSelected(selected.id)} />
         <button onClick={() => onNavigate && onNavigate('buyers')} className="self-start px-3 py-2 rounded-lg bg-navy text-white text-sm font-semibold">
           Open Buyer Discovery
         </button>

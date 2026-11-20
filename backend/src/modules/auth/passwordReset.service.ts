@@ -38,16 +38,17 @@ export const passwordResetService = {
    * Returns nothing a caller could use: the raw token only ever flows into
    * the injected delivery.
    */
-  async requestReset(email: string): Promise<void> {
+  async requestReset(email: string): Promise<{ configured: boolean }> {
     if (!delivery) {
       // Fail closed: without a delivery channel a token could never reach the
-      // user, so none is created. Same external behavior either way.
+      // user, so none is created. Unconfigured state is uniform for every
+      // email, so surfacing it honestly leaks nothing about accounts.
       logger.warn('Password reset requested but no reset delivery is configured');
-      return;
+      return { configured: false };
     }
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return;
+      return { configured: true };
     }
     // One live reset at a time: supersede any earlier unused tokens.
     await prisma.passwordResetToken.updateMany({
@@ -72,6 +73,7 @@ export const passwordResetService = {
         data: { usedAt: new Date() },
       });
     }
+    return { configured: true };
   },
 
   /**

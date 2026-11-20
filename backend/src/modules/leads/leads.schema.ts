@@ -3,6 +3,7 @@ import { LeadStatus } from '../../types/prisma';
 
 export const createLeadSchema = z.object({
   buyerId: z.string().uuid(),
+  exportCaseId: z.string().uuid().nullish(),
   productId: z.string().uuid().optional(),
   notes: z.string().max(2000).optional(),
   nextAction: z.string().max(500).optional(),
@@ -11,6 +12,7 @@ export const createLeadSchema = z.object({
 
 export const updateLeadSchema = z.object({
   status: z.nativeEnum(LeadStatus).optional(),
+  exportCaseId: z.string().uuid().nullable().optional(),
   leadScore: z.number().min(0).max(100).optional(),
   notes: z.string().max(2000).optional(),
   nextAction: z.string().max(500).optional(),

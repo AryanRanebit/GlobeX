@@ -350,7 +350,14 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-1" noValidate>
           {tab === 'forgot' ? (
-            <InputField id="forgot-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onBlur={() => blurValidate('forgot-email')} autoComplete="email" error={fieldErrors['forgot-email']} />
+            <>
+              <InputField id="forgot-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onBlur={() => blurValidate('forgot-email')} autoComplete="email" error={fieldErrors['forgot-email']} />
+              <button type="button" onClick={() => switchTab('reset')}
+                className="self-start text-[12px] text-blue font-medium hover:text-blue-dark"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                Already have a reset code? Enter it
+              </button>
+            </>
           ) : tab === 'reset' ? (
             <>
               <InputField id="reset-token" label="Reset code" placeholder="Paste the code from the email" value={resetToken} onChange={e => setResetToken(e.target.value)} onBlur={() => blurValidate('reset-token')} error={fieldErrors['reset-token']} />

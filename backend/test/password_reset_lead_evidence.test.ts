@@ -50,7 +50,8 @@ describe('password reset mechanics', () => {
   it('fails closed when no delivery is configured: no token created', async () => {
     configureResetDelivery(null);
     userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
-    await passwordResetService.requestReset('user@example.com');
+    const r = await passwordResetService.requestReset('user@example.com');
+    expect(r.configured).toBe(false);
     expect(prtCreate).not.toHaveBeenCalled();
   });
 
@@ -58,7 +59,8 @@ describe('password reset mechanics', () => {
     const sent: [string, string][] = [];
     configureResetDelivery({ sendReset: async (e, t) => { sent.push([e, t]); } });
     userFindUnique.mockResolvedValue(null);
-    await passwordResetService.requestReset('nobody@example.com');
+    const r = await passwordResetService.requestReset('nobody@example.com');
+    expect(r.configured).toBe(true); // same as known email: no enumeration
     expect(prtCreate).not.toHaveBeenCalled();
     expect(sent).toEqual([]);
   });
@@ -69,7 +71,7 @@ describe('password reset mechanics', () => {
     userFindUnique.mockResolvedValue({ id: 'u1', email: 'user@example.com' });
     prtCreate.mockResolvedValue({});
     const r = await passwordResetService.requestReset('user@example.com');
-    expect(r).toBeUndefined(); // nothing usable returned to the controller
+    expect(r).toEqual({ configured: true }); // nothing usable returned to the controller
     expect(sent).toHaveLength(1);
     expect(sent[0][0]).toBe('user@example.com');
     const rawToken = sent[0][1];

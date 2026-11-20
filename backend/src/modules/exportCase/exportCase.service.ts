@@ -21,7 +21,15 @@ export const exportCaseService = {
   },
 
   async getForUser(userId: string, id: string) {
-    return prisma.exportCase.findFirst({ where: { id, userId } });
+    return prisma.exportCase.findFirst({
+      where: { id, userId },
+      include: {
+        leads: {
+          include: { buyer: { select: { companyName: true, country: true } } },
+          orderBy: { updatedAt: 'desc' },
+        },
+      },
+    });
   },
 
   async createForUser(userId: string, input: CreateExportCaseInput) {

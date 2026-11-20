@@ -46,7 +46,9 @@ describe('owner scoping', () => {
   it('get is scoped to the requester', async () => {
     findFirst.mockResolvedValue(null);
     await exportCaseService.getForUser(OTHER, 'case-9');
-    expect(findFirst).toHaveBeenCalledWith({ where: { id: 'case-9', userId: OTHER } });
+    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 'case-9', userId: OTHER } }));
+    // linked leads come along for case-level buyer tracking
+    expect(findFirst.mock.calls[0][0].include?.leads).toBeTruthy();
   });
 
   it('update writes with id AND userId, never id alone', async () => {
