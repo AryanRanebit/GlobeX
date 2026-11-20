@@ -35,6 +35,18 @@ function capResult(result: unknown): unknown {
 
 export const historyService = {
   /**
+   * Deletes one history entry owned by the user. Returns false when no
+   * matching entry exists (wrong id or not the owner's).
+   */
+  async removeForUser(userId: string, id: string): Promise<boolean> {
+    const result = await prisma.analysisHistory.deleteMany({
+      where: { id, userId },
+    });
+    return result.count > 0;
+  },
+
+
+  /**
    * Records a Market Intelligence search (GET /api/trade/markets) for a
    * signed-in user. Duplicate searches for the same HS code within the
    * dedupe window are skipped so casual browsing does not spam the list.

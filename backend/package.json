@@ -1,7 +1,7 @@
 {
   "name": "globex-ai-backend",
   "version": "1.0.0",
-  "description": "GlobeX AI \u2014 AI-powered Export Growth Platform for Indian Businesses",
+  "description": "GlobeX AI — AI-powered Export Growth Platform for Indian Businesses",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts --ext ts,json --ignore node_modules --ignore dist",
@@ -17,7 +17,8 @@
     "lint": "eslint src --ext .ts",
     "format": "prettier --write src",
     "test": "vitest run",
-    "seed:mirror": "tsx prisma/seed_mirror_imports.ts"
+    "seed:mirror": "tsx prisma/seed_mirror_imports.ts",
+    "test:offline": "vitest run --exclude 'test/auth.test.ts' --exclude 'test/buyer_discovery.test.ts' --exclude 'test/market_workflow.test.ts' --exclude 'test/research_job.test.ts' --exclude 'test/trade.test.ts'"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",

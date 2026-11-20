@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { LeadStatus } from '../../types/prisma';
 import { leadsService } from './leads.service';
+import { leadEvidenceService } from './leadEvidence.service';
 import { sendSuccess, sendCreated } from '../../utils/apiResponse';
 
 export const leadsController = {
@@ -24,6 +25,19 @@ export const leadsController = {
   },
   getStats: async (req: Request, res: Response, next: NextFunction) => {
     try { sendSuccess(res, await leadsService.getStats(req.user!.userId), 'Lead stats fetched'); }
+    catch (err) { next(err); }
+  },
+
+  addEvidence: async (req: Request, res: Response, next: NextFunction) => {
+    try { sendCreated(res, await leadEvidenceService.add(req.user!.userId, req.params.id, req.body), 'Evidence added'); }
+    catch (err) { next(err); }
+  },
+  listEvidence: async (req: Request, res: Response, next: NextFunction) => {
+    try { sendSuccess(res, await leadEvidenceService.list(req.user!.userId, req.params.id), 'Evidence fetched'); }
+    catch (err) { next(err); }
+  },
+  removeEvidence: async (req: Request, res: Response, next: NextFunction) => {
+    try { await leadEvidenceService.remove(req.user!.userId, req.params.id, req.params.evidenceId); sendSuccess(res, null, 'Evidence removed'); }
     catch (err) { next(err); }
   },
 };

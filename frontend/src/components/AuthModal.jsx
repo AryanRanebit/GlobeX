@@ -54,6 +54,11 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
   const [signupConfirm, setSignupConfirm] = useState('');
   const [signinEmail, setSigninEmail] = useState('');
   const [signinPass, setSigninPass] = useState('');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [resetPass, setResetPass] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetAvailable, setResetAvailable] = useState(null); // null = not checked yet
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -113,6 +118,17 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     setFieldErrors({});
   };
 
+  // The forgot view must not promise an email that cannot be sent: check
+  // whether reset delivery is actually available before offering it.
+  useEffect(() => {
+    if (tab !== 'forgot') return;
+    let cancelled = false;
+    apiFetch('/api/v1/auth/password-reset/status')
+      .then(async (r) => { const j = await r.json(); if (!cancelled) setResetAvailable(!!(r.ok && j.data?.available)); })
+      .catch(() => { if (!cancelled) setResetAvailable(false); });
+    return () => { cancelled = true; };
+  }, [tab]);
+
   // Reset to the initial tab whenever the modal (re)opens or the requested
   // initial tab changes - render-time adjustment instead of an effect.
   const [prevOpenTab, setPrevOpenTab] = useState({ isOpen, initialTab });
@@ -129,8 +145,12 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     if (fields.includes('signup-confirm') && signupConfirm !== signupPass) errs['signup-confirm'] = "Passwords don't match.";
     if (fields.includes('signin-email') && !EMAIL_RE.test(signinEmail)) errs['signin-email'] = 'Enter a valid email address.';
     if (fields.includes('signin-password') && !signinPass) errs['signin-password'] = 'Please enter your password.';
+    if (fields.includes('forgot-email') && !EMAIL_RE.test(forgotEmail)) errs['forgot-email'] = 'Enter a valid email address.';
+    if (fields.includes('reset-token') && resetToken.trim().length < 20) errs['reset-token'] = 'Paste the full reset code from the email.';
+    if (fields.includes('reset-password') && resetPass.length < 8) errs['reset-password'] = 'Password must be at least 8 characters.';
+    if (fields.includes('reset-confirm') && resetConfirm !== resetPass) errs['reset-confirm'] = "Passwords don't match.";
     return errs;
-  }, [signupName, signupEmail, signupPass, signupConfirm, signinEmail, signinPass]);
+  }, [signupName, signupEmail, signupPass, signupConfirm, signinEmail, signinPass, forgotEmail, resetToken, resetPass, resetConfirm]);
 
   const blurValidate = (field) => {
     const errs = validate([field]);
@@ -174,7 +194,11 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
 
     const fields = tab === 'signup'
       ? ['signup-name', 'signup-email', 'signup-password', 'signup-confirm']
-      : ['signin-email', 'signin-password'];
+      : tab === 'forgot'
+        ? ['forgot-email']
+        : tab === 'reset'
+          ? ['reset-token', 'reset-password', 'reset-confirm']
+          : ['signin-email', 'signin-password'];
     const errs = validate(fields);
     setFieldErrors(errs);
     if (Object.values(errs).some(Boolean)) return;
@@ -182,7 +206,35 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
     setLoading(true);
 
     try {
-      if (tab === 'signup') {
+      if (tab === 'forgot') {
+        const res = await apiFetch('/api/v1/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email: forgotEmail })
+        });
+        if (res.ok) {
+          // The backend gives the same answer whether or not the account
+          // exists, so this screen cannot confirm an account either.
+          setSuccess('If an account exists for that email, a reset link has been sent.');
+          switchTab('reset');
+          setSuccess('If an account exists for that email, a reset link has been sent. Paste the code from the email below.');
+        } else {
+          const data = await res.json();
+          setError(data.errors?.[0]?.message || data.message || 'Could not start a reset. Please try again.');
+        }
+      } else if (tab === 'reset') {
+        const res = await apiFetch('/api/v1/auth/reset-password', {
+          method: 'POST',
+          body: JSON.stringify({ token: resetToken.trim(), password: resetPass })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setResetToken(''); setResetPass(''); setResetConfirm('');
+          switchTab('signin');
+          setSuccess('Password has been reset. Sign in with your new password.');
+        } else {
+          setError(data.errors?.[0]?.message || data.message || 'Invalid or expired reset code. Request a new one.');
+        }
+      } else if (tab === 'signup') {
         const res = await apiFetch('/api/v1/auth/signup', {
           method: 'POST',
           body: JSON.stringify({
@@ -263,13 +315,20 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
         </div>
 
         <h2 id="auth-modal-title" className="text-lg font-semibold text-navy mb-0.5">
-          {tab === 'signup' ? 'Create your account' : 'Welcome back'}
+          {tab === 'signup' ? 'Create your account'
+            : tab === 'forgot' ? 'Reset your password'
+            : tab === 'reset' ? 'Enter your reset code'
+            : 'Welcome back'}
         </h2>
         <p className="text-[12px] text-muted mb-4">
-          {tab === 'signup' ? 'Start your free trial — no credit card required.' : 'Sign in to continue to GlobeX.'}
+          {tab === 'signup' ? 'Start your free trial — no credit card required.'
+            : tab === 'forgot' ? 'Enter your account email to request a reset link.'
+            : tab === 'reset' ? 'Paste the code from the reset email and choose a new password.'
+            : 'Sign in to continue to GlobeX.'}
         </p>
 
         {/* Tab switcher */}
+        {(tab === 'signup' || tab === 'signin') && (
         <div className="flex gap-0.5 bg-page rounded p-0.5 mb-4">
           {['signup', 'signin'].map(t => (
             <button key={t} id={`auth-tab-${t}`} onClick={() => switchTab(t)}
@@ -281,6 +340,7 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
             </button>
           ))}
         </div>
+        )}
 
         {/* OAuth / SSO is not wired up yet - hidden until a provider is connected.
         <button id="auth-google-btn" type="button" ...>Continue with Google</button>
@@ -301,7 +361,28 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 mt-1" noValidate>
-          {tab === 'signup' ? (
+          {tab === 'forgot' ? (
+            resetAvailable === false ? (
+              <div className="px-3 py-2.5 rounded bg-amber-50 border border-amber-200 text-[12px] text-amber-800">
+                Password reset by email is not available yet, so no link can be sent. You can keep signing in with your current password.
+              </div>
+            ) : (
+            <>
+              <InputField id="forgot-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} onBlur={() => blurValidate('forgot-email')} autoComplete="email" error={fieldErrors['forgot-email']} />
+              <button type="button" onClick={() => switchTab('reset')}
+                className="self-start text-[12px] text-blue font-medium hover:text-blue-dark"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                Already have a reset code? Enter it
+              </button>
+            </>
+            )
+          ) : tab === 'reset' ? (
+            <>
+              <InputField id="reset-token" label="Reset code" placeholder="Paste the code from the email" value={resetToken} onChange={e => setResetToken(e.target.value)} onBlur={() => blurValidate('reset-token')} error={fieldErrors['reset-token']} />
+              <InputField id="reset-password" label="New password" type="password" placeholder="Min. 8 characters" icon={Lock} value={resetPass} onChange={e => setResetPass(e.target.value)} onBlur={() => blurValidate('reset-password')} autoComplete="new-password" error={fieldErrors['reset-password']} />
+              <InputField id="reset-confirm" label="Confirm new password" type="password" placeholder="Repeat password" icon={Lock} value={resetConfirm} onChange={e => setResetConfirm(e.target.value)} onBlur={() => blurValidate('reset-confirm')} autoComplete="new-password" error={fieldErrors['reset-confirm']} />
+            </>
+          ) : tab === 'signup' ? (
             <>
               <InputField id="signup-name" label="Full Name" placeholder="Rajesh Kumar" icon={User} value={signupName} onChange={e => setSignupName(e.target.value)} onBlur={() => blurValidate('signup-name')} autoComplete="name" error={fieldErrors['signup-name']} />
               <InputField id="signup-email" label="Work Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={signupEmail} onChange={e => setSignupEmail(e.target.value)} onBlur={() => blurValidate('signup-email')} autoComplete="email" error={fieldErrors['signup-email']} />
@@ -312,17 +393,23 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
             <>
               <InputField id="signin-email" label="Email" type="email" placeholder="rajesh@company.com" icon={Mail} value={signinEmail} onChange={e => setSigninEmail(e.target.value)} onBlur={() => blurValidate('signin-email')} autoComplete="email" error={fieldErrors['signin-email']} />
               <InputField id="signin-password" label="Password" type="password" placeholder="Your password" icon={Lock} value={signinPass} onChange={e => setSigninPass(e.target.value)} onBlur={() => blurValidate('signin-password')} autoComplete="current-password" error={fieldErrors['signin-password']} />
-              {/* "Forgot password?" link removed - no reset flow exists yet. */}
+              <button type="button" onClick={() => switchTab('forgot')}
+                className="self-start text-[12px] text-blue font-medium hover:text-blue-dark"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                Forgot password?
+              </button>
             </>
           )}
 
+          {!(tab === 'forgot' && resetAvailable === false) && (
           <button id="auth-submit-btn" type="submit" disabled={loading}
             className="btn-primary w-full py-2 text-[13px] flex items-center justify-center gap-1.5 mt-1 disabled:opacity-60 disabled:cursor-not-allowed">
             {loading
-              ? <><Loader2 size={14} className="animate-spin" /> {tab === 'signup' ? 'Creating...' : 'Signing in...'}</>
-              : <>{tab === 'signup' ? 'Create Account' : 'Sign In'} <ArrowRight size={13} /></>
+              ? <><Loader2 size={14} className="animate-spin" /> {tab === 'signup' ? 'Creating...' : tab === 'forgot' ? 'Sending...' : tab === 'reset' ? 'Resetting...' : 'Signing in...'}</>
+              : <>{tab === 'signup' ? 'Create Account' : tab === 'forgot' ? 'Send reset link' : tab === 'reset' ? 'Reset password' : 'Sign In'} <ArrowRight size={13} /></>
             }
           </button>
+          )}
         </form>
 
         {tab === 'signin' && (
@@ -332,6 +419,15 @@ export default function AuthModal({ isOpen, onClose, initialTab = 'signup' }) {
           </button>
         )}
 
+        {(tab === 'forgot' || tab === 'reset') && (
+          <p className="text-[11px] text-muted text-center mt-4">
+            <button onClick={() => switchTab('signin')}
+              className="text-blue font-semibold hover:text-blue-dark"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit', padding: 0 }}>
+              Back to sign in
+            </button>
+          </p>
+        )}
         <p className="text-[11px] text-muted text-center mt-4">
           {tab === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
           <button onClick={() => switchTab(tab === 'signup' ? 'signin' : 'signup')}

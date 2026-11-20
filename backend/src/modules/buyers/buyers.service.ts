@@ -1,9 +1,26 @@
 import { buyersRepository } from './buyers.repository';
+
 import { AppError } from '../../middleware/error.middleware';
 import type { BuyerSearchDto } from './buyers.schema';
 import { runBuyerDiscovery } from './buyerDiscovery.engine';
 import { ProviderError } from './buyerDiscovery.providers';
 import type { IBuyerDataProvider } from './buyerDiscovery.types';
+
+// A discovery run calls the paid Gemini provider synchronously and can take
+// over a minute. The frontend disables the Run button while one is in
+// flight, but a same-tick double click, a second tab, or a retried request
+// would otherwise start (and pay for) a duplicate run. Guard per
+// user+product+countries here too. Single Render instance, so an in-memory
+// map is sufficient.
+const discoveryInFlight = new Set<string>();
+
+function discoveryKey(userId: string, product: string, targetCountries: string[]): string {
+  const countries = (Array.isArray(targetCountries) ? targetCountries : [])
+    .map((c) => String(c).trim().toLowerCase())
+    .sort()
+    .join(',');
+  return `${userId}:${(product || '').trim().toLowerCase()}:${countries}`;
+}
 
 export const buyersService = {
   async search(dto: BuyerSearchDto) {
@@ -39,6 +56,14 @@ export const buyersService = {
       providerOverride?: IBuyerDataProvider;
     },
   ) {
+    const key = discoveryKey(userId, product, targetCountries);
+    if (discoveryInFlight.has(key)) {
+      throw new AppError(
+        'A buyer discovery for this product and country is already running. Please wait for it to finish.',
+        429,
+      );
+    }
+    discoveryInFlight.add(key);
     try {
       const result = await runBuyerDiscovery(
         {
@@ -57,6 +82,8 @@ export const buyersService = {
         throw new AppError(err.message, code);
       }
       throw err;
+    } finally {
+      discoveryInFlight.delete(key);
     }
   },
 

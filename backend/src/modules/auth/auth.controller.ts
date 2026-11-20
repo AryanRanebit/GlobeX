@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
+import { passwordResetService } from './passwordReset.service';
+import { AppError } from '../../middleware/error.middleware';
 import { sendSuccess, sendCreated } from '../../utils/apiResponse';
 
 /**
@@ -131,6 +133,33 @@ export const authController = {
     try {
       const user = await authService.updateProfile(req.user!.userId, req.body);
       sendSuccess(res, user, 'Profile updated');
+    } catch (err) { next(err); }
+  },
+
+  passwordResetStatus: async (_req: Request, res: Response, next: NextFunction) => {
+    try {
+      sendSuccess(res, { available: passwordResetService.isAvailable() }, 'Password reset availability');
+    } catch (err) { next(err); }
+  },
+
+  forgotPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const result = await passwordResetService.requestReset(req.body.email);
+      if (!result.configured) {
+        // Honest product state, uniform for every email: no account signal.
+        throw new AppError('Password reset by email is not available yet.', 503);
+      }
+      // Uniform response: no account enumeration, and never a token in the
+      // API response. The raw token only ever travels through the injected
+      // delivery channel (email once wired).
+      sendSuccess(res, null, 'If an account exists for that email, a reset link has been sent');
+    } catch (err) { next(err); }
+  },
+
+  resetPassword: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      await passwordResetService.resetPassword(req.body.token, req.body.password);
+      sendSuccess(res, null, 'Password has been reset');
     } catch (err) { next(err); }
   },
 };

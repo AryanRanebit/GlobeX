@@ -18,6 +18,7 @@ import MarketIntelligence from './components/dashboard/MarketIntelligence';
 import AICopilot from './components/dashboard/AICopilot';
 import EmailDrafter from './components/dashboard/EmailDrafter';
 import History from './components/dashboard/History';
+import ExportCase from './components/dashboard/ExportCase';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
@@ -57,6 +58,18 @@ export default function App() {
     handleUrlParams();
     window.addEventListener('popstate', handleUrlParams);
     return () => window.removeEventListener('popstate', handleUrlParams);
+  }, []);
+
+  // When any API call reports the session as unrecoverable (refresh failed),
+  // drop to the sign-in prompt instead of leaving broken screens up.
+  useEffect(() => {
+    const onSessionExpired = () => {
+      setIsAuthenticated(false);
+      setAuthInitialTab('signin');
+      setAuthOpen(true);
+    };
+    window.addEventListener('globex:session-expired', onSessionExpired);
+    return () => window.removeEventListener('globex:session-expired', onSessionExpired);
   }, []);
 
   // Scroll to top on page navigation
@@ -133,6 +146,7 @@ export default function App() {
         onSearchChange={setSearchQuery}
       >
         {dashboardPage === 'dashboard' && <DashboardHome />}
+        {dashboardPage === 'cases' && <ExportCase onNavigate={setDashboardPage} />}
         {dashboardPage === 'buyers' && (
           <BuyerDiscovery 
             searchQuery={searchQuery} 

@@ -43,6 +43,35 @@ export const historyController = {
   /**
    * @swagger
    * /history/{id}:
+   *   delete:
+   *     summary: Delete one saved analysis owned by the requester
+   *     tags: [Analysis History]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: Entry deleted
+   *       404:
+   *         description: Entry not found (or not owned by the requester)
+   */
+  remove: async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const removed = await historyService.removeForUser(req.user!.userId, req.params.id);
+      if (!removed) {
+        return sendError(res, 'History entry not found', 404);
+      }
+      return sendSuccess(res, null, 'History entry deleted');
+    } catch (err) {
+      next(err);
+    }
+  },
+
+  /**
+   * @swagger
+   * /history/{id}:
    *   get:
    *     summary: Get one saved analysis including its stored result snapshot
    *     tags: [Analysis History]

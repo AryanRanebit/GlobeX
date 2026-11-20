@@ -241,7 +241,7 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
   const renderVerificationBadge = (buyer) => {
     if (buyer.isVerified && buyer.verificationEvidence?.sourceUrl) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-pale text-emerald-ink border border-emerald-border" title={`Verified against ${buyer.sourceProvider}`}>
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-pale text-emerald-ink border border-emerald-border" title={`Customs/import evidence on file via ${buyer.sourceProvider}. A public web presence alone never earns this badge.`}>
           <ShieldCheck size={12} className="text-emerald" />
           Verified Importer
         </span>
@@ -376,8 +376,8 @@ export default function BuyerDiscovery({ searchQuery = '', onSearchChange, onReq
               </div>
             ) : filteredBuyers.length === 0 ? (
               <EmptyState
-                title="No verified buyers yet"
-                description="UN Comtrade contains aggregate country trade statistics, not individual corporate importer records. Run the Buyer Discovery agent to search for prospective commercial importers with verified web or corporate registry evidence."
+                title="No buyers found yet"
+                description="UN Comtrade contains aggregate country trade statistics, not individual corporate importer records. Run the Buyer Discovery agent to search for prospective commercial importers; each result carries its public source link, and a public web presence alone does not confirm import activity."
                 actionLabel="Discover Prospective Buyers"
                 onAction={() => setIsDiscoverModalOpen(true)}
               />

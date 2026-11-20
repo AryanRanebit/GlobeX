@@ -1,23 +1,17 @@
-/**
- * Shared API client for all backend calls.
- *
- * Resolution order for the backend origin:
- *   1. VITE_API_BASE_URL (set on Vercel / production builds, e.g.
- *      https://globex-api.onrender.com) - required for production.
- *   2. Empty string -> relative /api paths. In development these hit the
- *      Vite dev-server proxy (frontend/vite.config.js -> http://localhost:3000).
- *
- * No localhost fallback is ever baked into a build: a production deploy
- * without VITE_API_BASE_URL fails visibly instead of silently calling
- * localhost:3000 from the user's browser.
- */
 const API_ORIGIN = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
 
 /**
- * Standard headers: JSON content type plus the Bearer token from
- * localStorage when the user is signed in. Callers can override or extend
- * via the `extra` argument.
+ * Session handling. The backend issues an access token (short-lived) and a
+ * refresh token at login. Before this file handled 401s, an expired access
+ * token meant every screen failed with raw "Invalid or expired token" errors
+ * until the user logged in again. Now a 401 triggers one refresh attempt and
+ * the original request is replayed once. If the refresh itself fails, the
+ * session is cleared and a 'globex:session-expired' event notifies the app so
+ * it can show the sign-in prompt instead of broken screens.
  */
+
+const SESSION_EXPIRED_EVENT = 'globex:session-expired';
+
 export function authHeaders(extra: Record<string, string> = {}): Record<string, string> {
   let token: string | null = null;
   try {
@@ -32,13 +26,78 @@ export function authHeaders(extra: Record<string, string> = {}): Record<string, 
   };
 }
 
+function storeTokens(tokens: { accessToken?: string; refreshToken?: string }): boolean {
+  if (!tokens || typeof tokens.accessToken !== 'string' || !tokens.accessToken) return false;
+  localStorage.setItem('token', tokens.accessToken);
+  if (typeof tokens.refreshToken === 'string' && tokens.refreshToken) {
+    localStorage.setItem('refreshToken', tokens.refreshToken);
+  }
+  return true;
+}
+
+function clearSession(): void {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+}
+
+// Single in-flight refresh so several simultaneous 401s share one attempt.
+let refreshPromise: Promise<boolean> | null = null;
+
+async function doRefresh(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (!refreshToken) return false;
+  try {
+    const res = await fetch(`${API_ORIGIN}/api/v1/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+    if (!res.ok) return false;
+    const body = await res.json().catch(() => null);
+    const tokens = body?.data ?? body;
+    return storeTokens(tokens ?? {});
+  } catch {
+    return false;
+  }
+}
+
+function tryRefresh(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+function notifySessionExpired(): void {
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+  }
+}
+
 /**
- * fetch() wrapper that targets the configured backend origin and attaches
- * auth headers. `path` is the full API path, e.g. '/api/v1/buyers'.
+ * fetch() wrapper that targets the configured backend origin, attaches auth
+ * headers, and transparently refreshes an expired access token once.
+ * Auth endpoints are excluded: a 401 there is a real login failure, not an
+ * expired session.
  */
-export function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
-  return fetch(`${API_ORIGIN}${path}`, {
+export async function apiFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  const call = () => fetch(`${API_ORIGIN}${path}`, {
     ...options,
     headers: authHeaders((options.headers as Record<string, string>) || {}),
   });
+
+  let res = await call();
+  if (res.status !== 401 || path.startsWith('/api/v1/auth/')) return res;
+
+  if (await tryRefresh()) {
+    res = await call();
+  }
+  if (res.status === 401) {
+    clearSession();
+    notifySessionExpired();
+  }
+  return res;
 }
+
+export const __testing = { SESSION_EXPIRED_EVENT, storeTokens, clearSession };

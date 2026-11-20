@@ -1,8 +1,15 @@
 import { z } from 'zod';
 
+// Emails are normalized before they reach the service layer: a user who
+// signs up as "Rajesh@Spices.In" and later types "rajesh@spices.in" must
+// land on the same account. Without this, Postgres compares emails
+// case-sensitively and capital-letter logins fail with "Invalid email or
+// password".
+const emailSchema = z.string().trim().toLowerCase().email();
+
 export const signupSchema = z.object({
   name: z.string().min(2).max(100),
-  email: z.string().email(),
+  email: emailSchema,
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters'),
@@ -12,7 +19,7 @@ export const signupSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: emailSchema,
   password: z.string().min(1),
 });
 
@@ -30,3 +37,12 @@ export const refreshTokenSchema = z.object({
 export type SignupDto = z.infer<typeof signupSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
 export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(20).max(200),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
