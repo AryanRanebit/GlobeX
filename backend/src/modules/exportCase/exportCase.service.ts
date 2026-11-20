@@ -36,6 +36,18 @@ export const exportCaseService = {
     const data = Object.fromEntries(
       Object.entries(input).filter(([, v]) => v !== undefined),
     );
+    // Stale-state invalidation, enforced server-side so no client (current,
+    // older, or hand-rolled) can leave derived state looking current after
+    // the product identity changes. A product/HS change invalidates the
+    // market shortlist and requirements and restarts the journey; a target
+    // change invalidates requirements only (the shortlist stays valid).
+    if (data.productName !== undefined || data.hsCode !== undefined) {
+      data.markets = null;
+      data.requirements = null;
+      data.stage = 'product';
+    } else if (data.targetCountry !== undefined) {
+      data.requirements = null;
+    }
     const result = await prisma.exportCase.updateMany({
       where: { id, userId },
       data,

@@ -111,3 +111,44 @@ describe('validation', () => {
     expect(updateExportCaseSchema.safeParse({ stage: 'requirements' }).success).toBe(true);
   });
 });
+
+describe('server-side stale-state invalidation', () => {
+  it('HS change forces shortlist+requirements cleared and stage reset, even if client sends them', async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    findFirst.mockResolvedValue({ id: 'case-1' });
+    await exportCaseService.updateForUser(USER, 'case-1', {
+      hsCode: '090831',
+      markets: [{ partnerName: 'X' }] as never,
+      requirements: [{ title: 'Y' }] as never,
+      stage: 'leads',
+    });
+    expect(updateMany.mock.calls[0][0].data).toEqual({
+      hsCode: '090831', markets: null, requirements: null, stage: 'product',
+    });
+  });
+
+  it('product name change alone also invalidates', async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    findFirst.mockResolvedValue({ id: 'case-1' });
+    await exportCaseService.updateForUser(USER, 'case-1', { productName: 'Cardamom' });
+    expect(updateMany.mock.calls[0][0].data).toEqual({
+      productName: 'Cardamom', markets: null, requirements: null, stage: 'product',
+    });
+  });
+
+  it('target change clears requirements but keeps the shortlist and stage', async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    findFirst.mockResolvedValue({ id: 'case-1' });
+    await exportCaseService.updateForUser(USER, 'case-1', { targetCountry: 'Germany', stage: 'outreach' });
+    expect(updateMany.mock.calls[0][0].data).toEqual({
+      targetCountry: 'Germany', stage: 'outreach', requirements: null,
+    });
+  });
+
+  it('unrelated edits leave derived state untouched', async () => {
+    updateMany.mockResolvedValue({ count: 1 });
+    findFirst.mockResolvedValue({ id: 'case-1' });
+    await exportCaseService.updateForUser(USER, 'case-1', { notes: 'call freight forwarder' });
+    expect(updateMany.mock.calls[0][0].data).toEqual({ notes: 'call freight forwarder' });
+  });
+});
