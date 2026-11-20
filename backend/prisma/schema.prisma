@@ -21,6 +21,7 @@ model User {
   isActive      Boolean        @default(true)
   refreshToken  String?
   lastLoginAt   DateTime?
+  passwordResetTokens PasswordResetToken[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   auditLogs     AuditLog[]
@@ -111,6 +112,7 @@ model Lead {
   buyer        Buyer      @relation(fields: [buyerId], references: [id], onDelete: Cascade)
   product      Product?   @relation(fields: [productId], references: [id])
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  evidence     LeadEvidence[]
 
   @@index([userId])
   @@index([buyerId])
@@ -380,4 +382,31 @@ model ExportCase {
 
   @@index([userId])
   @@map("export_cases")
+}
+
+model LeadEvidence {
+  id         String   @id @default(uuid())
+  leadId     String
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  kind       String
+  sourceUrl  String?
+  summary    String
+  capturedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([leadId])
+  @@map("lead_evidence")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }

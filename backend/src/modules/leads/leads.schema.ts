@@ -17,5 +17,16 @@ export const updateLeadSchema = z.object({
   nextActionAt: z.string().datetime().optional(),
 }).refine((d) => Object.keys(d).length > 0, { message: 'At least one field required' });
 
+export const leadEvidenceKinds = ['directory-listing', 'trade-data', 'website', 'manual', 'other'] as const;
+
+export const createLeadEvidenceSchema = z.object({
+  kind: z.enum(leadEvidenceKinds),
+  sourceUrl: z.string().url().max(2000).optional(),
+  summary: z.string().min(3).max(1000),
+  capturedAt: z.string().datetime().optional(),
+});
+
+export type CreateLeadEvidenceDto = z.infer<typeof createLeadEvidenceSchema>;
+
 export type CreateLeadDto = z.infer<typeof createLeadSchema>;
 export type UpdateLeadDto = z.infer<typeof updateLeadSchema>;
