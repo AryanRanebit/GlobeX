@@ -14,6 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import Term from '../ui/Jargon';
+import FollowUpQueue from './FollowUpQueue';
 
 // Lazy-load the charts row: keeps recharts out of the first paint and shows
 // skeleton cards (same dimensions, no layout shift) while the chunk loads.
@@ -174,6 +175,8 @@ export default function DashboardHome() {
             </div>
 
           </div>
+
+          <FollowUpQueue />
 
           {/* Charts Row (lazy-loaded) */}
           <Suspense fallback={<ChartsSkeleton />}>
