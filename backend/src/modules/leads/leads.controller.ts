@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { LeadStatus } from '../../types/prisma';
 import { leadsService } from './leads.service';
 import { leadEvidenceService } from './leadEvidence.service';
+import { followUpService } from './followUp.service';
 import { sendSuccess, sendCreated } from '../../utils/apiResponse';
 
 export const leadsController = {
@@ -21,6 +22,10 @@ export const leadsController = {
   },
   delete: async (req: Request, res: Response, next: NextFunction) => {
     try { await leadsService.delete(req.params.id, req.user!.userId); sendSuccess(res, null, 'Lead deleted'); }
+    catch (err) { next(err); }
+  },
+  followUps: async (req: Request, res: Response, next: NextFunction) => {
+    try { sendSuccess(res, await followUpService.queueForUser(req.user!.userId), 'Follow-up queue fetched'); }
     catch (err) { next(err); }
   },
   getStats: async (req: Request, res: Response, next: NextFunction) => {

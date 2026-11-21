@@ -9,6 +9,7 @@ router.use(authenticate);
 
 router.post('/', validate(createLeadSchema), leadsController.create);
 router.get('/', leadsController.getAll);
+router.get('/follow-ups', leadsController.followUps);
 router.get('/stats', leadsController.getStats);
 router.patch('/:id', validate(updateLeadSchema), leadsController.update);
 router.delete('/:id', leadsController.delete);
