@@ -4,6 +4,7 @@ import { createApp } from '../src/app';
 import { connectDatabase, disconnectDatabase, prisma } from '../src/config/database';
 import { researchJobWorker } from '../src/modules/market/researchJob.worker';
 import { marketResearchAgent } from '../src/modules/agents/MarketResearchAgent';
+import { tariffService } from '../src/modules/tariff/tariff.service';
 
 const app = createApp();
 
@@ -96,6 +97,8 @@ describe('GlobeX — Phase 6: Resilient Research Job Execution Test Suite', () =
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(marketResearchAgent, 'analyze').mockResolvedValue(DEFAULT_MOCK_OUTPUT);
+    // Job execution enriches markets via live WITS HTTP calls; keep tests offline.
+    vi.spyOn(tariffService, 'enrichCountries').mockResolvedValue(undefined as any);
   });
 
   describe('1. Prompt Job Creation and Persistence (Requirements 1, 2, 4)', () => {

@@ -167,6 +167,12 @@ describe('Phase 7 — Deduplication', () => {
     expect(result[0].providerReference).toBe('ref-a'); // first seen wins
   });
 
+  it('merges name variants that share a domain within the same country', () => {
+    const c1 = makeCandidate({ companyName: 'MKY KSA', normalizedName: 'mky ksa' });
+    const c2 = makeCandidate({ companyName: 'Mohammad Khemais Al Yarabi (MKY KSA)', normalizedName: 'mohammad khemais al yarabi' });
+    expect(deduplicateCandidates([c1, c2])).toHaveLength(1);
+  });
+
   it('keeps candidates with different countryCode', () => {
     const c1 = makeCandidate({ countryCode: 'DE' });
     const c2 = makeCandidate({ countryCode: 'US' });

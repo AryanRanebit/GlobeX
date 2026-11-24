@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app';
 import { connectDatabase, disconnectDatabase, prisma } from '../src/config/database';
+import { tariffService } from '../src/modules/tariff/tariff.service';
 
 const app = createApp();
 
@@ -14,6 +15,9 @@ describe('GlobeX — Market Intelligence End-to-End Workflow & Authorization', (
 
   beforeAll(async () => {
     await connectDatabase();
+
+    // Job execution enriches markets via live WITS HTTP calls; keep tests offline.
+    vi.spyOn(tariffService, 'enrichCountries').mockResolvedValue(undefined as any);
 
     // Mock global fetch for upstream AI agent service
     global.fetch = vi.fn(async (url: any, options: any) => {

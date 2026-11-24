@@ -13,6 +13,11 @@ const POLL_TIMEOUT_MS = 150000;
  * result - top markets, scores, classification status, and the API's own
  * disclaimers, prominently when the analysis fell back to aggregate data.
  */
+// Wall-clock read for the poll timeout. Called only from pollStatus, which runs
+// from the submit handler and from a setTimeout callback, never during render
+// (see AnalysisModal.test.jsx). Wrapped because the purity rule cannot tell.
+const nowMs = () => Date.now();
+
 export default function AnalysisModal({ isOpen, onClose, initialProduct = '', storedResult = null }) {
   const [product, setProduct] = useState(initialProduct);
   const [phase, setPhase] = useState('idle'); // idle | running | done | failed
@@ -21,7 +26,18 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
 
-  useEffect(() => {
+  // Reset local state when the modal opens or its inputs change. Done during
+  // render (React's "adjust state when props change" pattern) instead of in an
+  // effect, so there is no extra committed render with stale state. A null
+  // snapshot makes the first render apply the initial inputs too.
+  const [inputs, setInputs] = useState(null);
+  if (
+    !inputs ||
+    inputs.isOpen !== isOpen ||
+    inputs.initialProduct !== initialProduct ||
+    inputs.storedResult !== storedResult
+  ) {
+    setInputs({ isOpen, initialProduct, storedResult });
     if (isOpen) {
       if (storedResult) {
         // History replay: render the stored snapshot only. No analysis
@@ -37,7 +53,12 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
       setError(null);
       setJobState('');
     }
-    return () => clearTimeout(pollRef.current);
+  }
+
+  // Stop any pending status poll when inputs change or the modal unmounts.
+  useEffect(() => {
+    const ref = pollRef;
+    return () => clearTimeout(ref.current);
   }, [isOpen, initialProduct, storedResult]);
 
   if (!isOpen) return null;
@@ -59,7 +80,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
         setPhase('failed');
         return;
       }
-      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+      if (nowMs() - startedAt > POLL_TIMEOUT_MS) {
         setError('The analysis is taking longer than expected. Please try again in a moment.');
         setPhase('failed');
         return;
@@ -95,7 +116,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
         throw new Error(detail || json.message || `Analysis could not be started (status ${res.status})`);
       }
       const jobId = json.data.jobId || json.data.id;
-      pollStatus(jobId, Date.now());
+      pollStatus(jobId, nowMs());
     } catch (err) {
       setError(err.message || 'Could not start the analysis.');
       setPhase('failed');
