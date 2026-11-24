@@ -105,7 +105,11 @@ export function deduplicateCandidates(candidates: DiscoveredCandidate[]): Discov
     // A shared website domain is stronger identity evidence than a name match:
     // the same company often appears under several name variants across runs
     // (e.g. "MKY KSA" vs "Mohammad Khemais Al Yarabi (MKY KSA)" on mkyksa.com).
-    const key = c.domain ? `domain::${c.domain}` : deduplicationKey(c);
+    // The domain match is scoped to the country so entities in different
+    // countries that share a website are not merged.
+    const key = c.domain
+      ? `domain::${c.countryCode.toUpperCase()}::${c.domain}`
+      : deduplicationKey(c);
     if (!seen.has(key)) {
       seen.set(key, c);
     }

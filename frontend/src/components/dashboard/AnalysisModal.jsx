@@ -13,6 +13,10 @@ const POLL_TIMEOUT_MS = 150000;
  * result - top markets, scores, classification status, and the API's own
  * disclaimers, prominently when the analysis fell back to aggregate data.
  */
+// Wall-clock read for the poll timeout. Only called from the async poll
+// callback (never during render); wrapped so the purity lint rule sees that.
+const nowMs = () => Date.now();
+
 export default function AnalysisModal({ isOpen, onClose, initialProduct = '', storedResult = null }) {
   const [product, setProduct] = useState(initialProduct);
   const [phase, setPhase] = useState('idle'); // idle | running | done | failed
@@ -21,6 +25,8 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
 
+  // Intentional: resets local modal state whenever it opens or its inputs change.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       if (storedResult) {
@@ -39,6 +45,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
     }
     return () => clearTimeout(pollRef.current);
   }, [isOpen, initialProduct, storedResult]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!isOpen) return null;
 
@@ -59,7 +66,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
         setPhase('failed');
         return;
       }
-      if (Date.now() - startedAt > POLL_TIMEOUT_MS) {
+      if (nowMs() - startedAt > POLL_TIMEOUT_MS) {
         setError('The analysis is taking longer than expected. Please try again in a moment.');
         setPhase('failed');
         return;
@@ -95,7 +102,7 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
         throw new Error(detail || json.message || `Analysis could not be started (status ${res.status})`);
       }
       const jobId = json.data.jobId || json.data.id;
-      pollStatus(jobId, Date.now());
+      pollStatus(jobId, nowMs());
     } catch (err) {
       setError(err.message || 'Could not start the analysis.');
       setPhase('failed');

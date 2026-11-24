@@ -200,7 +200,8 @@ describe('GlobeX — Phase 6: Resilient Research Job Execution Test Suite', () =
 
       // Poll status until succeeded
       let statusData: any = null;
-      for (let i = 0; i < 30; i++) {
+      // Allow up to ~10s: job execution takes ~1.7s on a cold local DB.
+      for (let i = 0; i < 200; i++) {
         const statusRes = await request(app)
           .get(`/api/v1/market/analyze/status/${jobId}`)
           .set('Authorization', `Bearer ${userAToken}`);

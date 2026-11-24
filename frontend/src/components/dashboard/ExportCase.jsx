@@ -50,9 +50,12 @@ function RequirementsPanel({ hsCode, targetCountry }) {
   const [state, setState] = useState({ status: 'loading' });
 
   useEffect(() => {
+    // Intentional: reflects the request lifecycle for the current props.
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!hsCode || !targetCountry) { setState({ status: 'idle' }); return; }
     let cancelled = false;
     setState({ status: 'loading' });
+    /* eslint-enable react-hooks/set-state-in-effect */
     const params = new URLSearchParams({ hs: hsCode, destination: destinationCode(targetCountry) });
     apiFetch(`/api/v1/requirements?${params}`)
       .then(async (res) => {
@@ -246,6 +249,8 @@ export default function ExportCase({ onNavigate }) {
     }
   }, []);
 
+  // Intentional: initial data load on mount (load sets state after the fetch).
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   const refreshSelected = async (id) => {
