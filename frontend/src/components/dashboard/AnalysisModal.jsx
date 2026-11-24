@@ -13,8 +13,9 @@ const POLL_TIMEOUT_MS = 150000;
  * result - top markets, scores, classification status, and the API's own
  * disclaimers, prominently when the analysis fell back to aggregate data.
  */
-// Wall-clock read for the poll timeout. Only called from the async poll
-// callback (never during render); wrapped so the purity lint rule sees that.
+// Wall-clock read for the poll timeout. Called only from pollStatus, which runs
+// from the submit handler and from a setTimeout callback, never during render
+// (see AnalysisModal.test.jsx). Wrapped because the purity rule cannot tell.
 const nowMs = () => Date.now();
 
 export default function AnalysisModal({ isOpen, onClose, initialProduct = '', storedResult = null }) {
@@ -25,9 +26,18 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
   const [error, setError] = useState(null);
   const pollRef = useRef(null);
 
-  // Intentional: resets local modal state whenever it opens or its inputs change.
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
+  // Reset local state when the modal opens or its inputs change. Done during
+  // render (React's "adjust state when props change" pattern) instead of in an
+  // effect, so there is no extra committed render with stale state. A null
+  // snapshot makes the first render apply the initial inputs too.
+  const [inputs, setInputs] = useState(null);
+  if (
+    !inputs ||
+    inputs.isOpen !== isOpen ||
+    inputs.initialProduct !== initialProduct ||
+    inputs.storedResult !== storedResult
+  ) {
+    setInputs({ isOpen, initialProduct, storedResult });
     if (isOpen) {
       if (storedResult) {
         // History replay: render the stored snapshot only. No analysis
@@ -43,9 +53,13 @@ export default function AnalysisModal({ isOpen, onClose, initialProduct = '', st
       setError(null);
       setJobState('');
     }
-    return () => clearTimeout(pollRef.current);
+  }
+
+  // Stop any pending status poll when inputs change or the modal unmounts.
+  useEffect(() => {
+    const ref = pollRef;
+    return () => clearTimeout(ref.current);
   }, [isOpen, initialProduct, storedResult]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!isOpen) return null;
 

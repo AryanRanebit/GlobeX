@@ -46,27 +46,28 @@ function destinationCode(name) {
  * never be read as complete clearance: it always carries a partial-coverage
  * label and gaps. No coverage -> unknown, not cleared.
  */
-function RequirementsPanel({ hsCode, targetCountry }) {
-  const [state, setState] = useState({ status: 'loading' });
+export function RequirementsPanel({ hsCode, targetCountry }) {
+  // The fetch outcome is stored with the request key it belongs to. Status is
+  // derived from it, so a changed hs/country shows "loading" immediately with
+  // no setState in the effect, and a late response for an old key is ignored.
+  const [fetched, setFetched] = useState({ key: null, status: 'loading' });
+  const key = hsCode && targetCountry ? `${hsCode}|${targetCountry}` : null;
+  const state = !key ? { status: 'idle' } : fetched.key === key ? fetched : { status: 'loading' };
 
   useEffect(() => {
-    // Intentional: reflects the request lifecycle for the current props.
-    /* eslint-disable react-hooks/set-state-in-effect */
-    if (!hsCode || !targetCountry) { setState({ status: 'idle' }); return; }
+    if (!key) return undefined;
     let cancelled = false;
-    setState({ status: 'loading' });
-    /* eslint-enable react-hooks/set-state-in-effect */
     const params = new URLSearchParams({ hs: hsCode, destination: destinationCode(targetCountry) });
     apiFetch(`/api/v1/requirements?${params}`)
       .then(async (res) => {
         if (cancelled) return;
-        if (!res.ok) { setState({ status: 'error' }); return; }
+        if (!res.ok) { setFetched({ key, status: 'error' }); return; }
         const body = await res.json();
-        setState({ status: 'ok', data: body.data });
+        if (!cancelled) setFetched({ key, status: 'ok', data: body.data });
       })
-      .catch(() => { if (!cancelled) setState({ status: 'error' }); });
+      .catch(() => { if (!cancelled) setFetched({ key, status: 'error' }); });
     return () => { cancelled = true; };
-  }, [hsCode, targetCountry]);
+  }, [key, hsCode, targetCountry]);
 
   if (!targetCountry) {
     return <p className="text-xs text-muted">Requirements attach to a product AND a destination. Choose a target country first.</p>;
@@ -238,20 +239,25 @@ export default function ExportCase({ onNavigate }) {
   const [editForm, setEditForm] = useState(emptyForm);
   const [clearsNotice, setClearsNotice] = useState(false);
 
-  const load = useCallback(async () => {
+  // isStale lets the mount effect drop a response that arrives after unmount.
+  const load = useCallback(async (isStale = () => false) => {
     try {
       const res = await apiFetch('/api/v1/export-cases?limit=50');
       const j = await res.json();
+      if (isStale()) return;
       if (j.success && Array.isArray(j.data)) setCases(j.data);
       else setError(j.message || 'Could not load export cases');
     } catch {
-      setError('Could not load export cases');
+      if (!isStale()) setError('Could not load export cases');
     }
   }, []);
 
-  // Intentional: initial data load on mount (load sets state after the fetch).
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    let stale = false;
+    // setState happens only after the awaited fetch, never synchronously here.
+    Promise.resolve().then(() => load(() => stale));
+    return () => { stale = true; };
+  }, [load]);
 
   const refreshSelected = async (id) => {
     const res = await apiFetch(`/api/v1/export-cases/${id}`);
